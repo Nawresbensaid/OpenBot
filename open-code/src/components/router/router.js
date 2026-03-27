@@ -1,10 +1,10 @@
-import {Outlet, Route, Routes, useNavigate} from 'react-router-dom'
+import { Outlet, Route, Routes, useNavigate } from 'react-router-dom'
 import Home from "../../pages/home";
 import Playground from "../../pages/playground";
-import {PathName} from "../../utils/constants";
-import {useContext} from "react";
-import {ThemeContext} from "../../App";
-import {Box, Container, Grid, Typography} from "@mui/material";
+import { PathName } from "../../utils/constants";
+import { useContext } from "react";
+import { ThemeContext } from "../../App";
+import { Box, Container, Grid, Typography } from "@mui/material";
 
 /**
  * Router to maintain different paths of the application
@@ -14,17 +14,17 @@ import {Box, Container, Grid, Typography} from "@mui/material";
 export const RouterComponent = () => {
     return (
         <Routes>
-            <Route path={PathName.home} element={<Outlet/>}>
-                <Route index element={<Home/>}/>
-                <Route path={PathName.playGround} element={<Playground/>}/>
-                <Route path="*" element={<NotFound/>}/>
+            <Route path={PathName.home} element={<Outlet />}>
+                <Route index element={<Home />} />
+                <Route path={PathName.playGround} element={<Playground />} />
+                <Route path="*" element={<NotFound />} />
             </Route>
         </Routes>
     )
 }
 
 function NotFound() {
-    const {theme} = useContext(ThemeContext)
+    const { theme } = useContext(ThemeContext)
     let navigate = useNavigate();
     const openHomePage = () => {
         navigate(`/`);
@@ -41,10 +41,10 @@ function NotFound() {
             <Container maxWidth="md">
                 <Grid container spacing={2}>
                     <Grid xs={6}>
-                        <Typography style={{color: theme === "dark" ? "white" : "black"}} variant="h1">
+                        <Typography style={{ color: theme === "dark" ? "white" : "black" }} variant="h1">
                             404
                         </Typography>
-                        <Typography style={{color: theme === "dark" ? "white" : "black"}} variant="h6">
+                        <Typography style={{ color: theme === "dark" ? "white" : "black" }} variant="h6">
                             The page you’re looking for doesn’t exist.
                         </Typography>
                         <button onClick={openHomePage}>Go to home page</button>

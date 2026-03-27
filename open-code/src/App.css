@@ -1,15 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+
+/* ===== APP.CSS — THÈME UNIVERS KIDS ===== */
+
 * {
     margin: 0;
+    box-sizing: border-box;
 }
 
-#dark {
-    background-color: #202020;
+/* ── Fond principal ── */
+body,
+#root {
+    background: transparent !important;
+    color: #e8f4ff !important;
+    min-height: 100vh;
 }
 
+#dark,
 #light {
-    background-color: #ffffff;
+    background: transparent !important;
 }
 
+/* ── Fonts ── */
 @font-face {
     font-family: 'Gilroy';
     src: url('assets/font/Gilroy/Gilroy-Black.ttf') format('truetype');
@@ -17,28 +28,293 @@
 
 @font-face {
     font-family: 'Gilroy-Regular';
-    /*400*/
     src: url('assets/font/Gilroy/Gilroy-Regular.ttf') format('truetype');
 }
 
 @font-face {
     font-family: 'Gilroy-Medium';
-    /*500*/
     src: url('assets/font/Gilroy/Gilroy-Medium.ttf') format('truetype');
 }
 
 @font-face {
     font-family: 'Gilroy-SemiBold';
-    /*600*/
     src: url('assets/font/Gilroy/Gilroy-SemiBold.ttf') format('truetype');
 }
 
 @font-face {
     font-family: 'Gilroy-Bold';
-    /*700*/
     src: url('assets/font/Gilroy/Gilroy-Bold.ttf') format('truetype');
 }
 
+/* ── Header ── */
+header,
+nav,
+.navbar,
+[class*="header"],
+[class*="Header"],
+[class*="appBar"],
+[class*="AppBar"] {
+    background: linear-gradient(90deg, #0d1440 0%, #1a2a6c 50%, #0d1440 100%) !important;
+    border-bottom: 2px solid rgba(108, 190, 255, 0.3) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
 
+/* ── Logo ── */
+[class*="logo"],
+[class*="Logo"] {
+    color: #6cbefd !important;
+    font-family: 'Gilroy-Bold', sans-serif !important;
+    text-shadow: 0 0 20px rgba(108, 190, 255, 0.6) !important;
+    font-size: 1.4rem !important;
+}
 
+/* ── Boutons ── */
+button,
+[class*="btn"],
+[class*="Btn"],
+[class*="button"],
+[class*="Button"] {
+    background: linear-gradient(135deg, rgba(108, 190, 255, 0.15), rgba(80, 130, 255, 0.1)) !important;
+    color: #e8f4ff !important;
+    border: 1px solid rgba(108, 190, 255, 0.3) !important;
+    border-radius: 10px !important;
+    font-family: 'Gilroy-Bold', sans-serif !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
 
+button:hover,
+[class*="btn"]:hover {
+    background: linear-gradient(135deg, rgba(108, 190, 255, 0.28), rgba(80, 130, 255, 0.2)) !important;
+    border-color: rgba(108, 190, 255, 0.6) !important;
+    box-shadow: 0 4px 15px rgba(108, 190, 255, 0.25) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ── Bouton Upload Code ── */
+[class*="upload"],
+[class*="Upload"] {
+    background: linear-gradient(135deg, #1a6fc4, #0d4a8a) !important;
+    color: white !important;
+    border: none !important;
+    box-shadow: 0 4px 15px rgba(26, 111, 196, 0.4) !important;
+}
+
+/* ── Panels ── */
+[class*="panel"],
+[class*="Panel"],
+[class*="card"],
+[class*="Card"] {
+    background: rgba(13, 20, 64, 0.8) !important;
+    border: 1px solid rgba(108, 190, 255, 0.15) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+/* ── Textes ── */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: #e8f4ff !important;
+    font-family: 'Gilroy-Bold', sans-serif !important;
+}
+
+p,
+span,
+label {
+    color: #c8ddf0 !important;
+}
+
+a {
+    color: #6cbefd !important;
+    text-decoration: none !important;
+}
+
+a:hover {
+    color: #ffffff !important;
+    text-shadow: 0 0 10px rgba(108, 190, 255, 0.6) !important;
+}
+
+/* ── Inputs ── */
+input,
+textarea,
+select {
+    background: rgba(13, 21, 48, 0.9) !important;
+    color: #e8f4ff !important;
+    border: 1.5px solid rgba(108, 190, 255, 0.25) !important;
+    border-radius: 8px !important;
+    font-family: 'Gilroy-Medium', sans-serif !important;
+    padding: 8px 12px !important;
+}
+
+input:focus,
+textarea:focus {
+    border-color: rgba(108, 190, 255, 0.6) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(108, 190, 255, 0.12) !important;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(8, 8, 24, 0.5);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(108, 190, 255, 0.25);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(108, 190, 255, 0.5);
+}
+
+/* ── Modal ── */
+[class*="modal"],
+[class*="Modal"],
+[class*="dialog"],
+[class*="Dialog"] {
+    background: linear-gradient(135deg, #0d1440, #080818) !important;
+    border: 1px solid rgba(108, 190, 255, 0.25) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7) !important;
+}
+
+/* ── Bottom bar ── */
+[class*="footer"],
+[class*="Footer"],
+[class*="bottom"],
+[class*="Bottom"],
+[class*="uploadBar"],
+[class*="UploadBar"] {
+    background: linear-gradient(90deg, #0d1440 0%, #1a2a6c 50%, #0d1440 100%) !important;
+    border-top: 2px solid rgba(108, 190, 255, 0.2) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* ── Dropdown ── */
+[class*="dropdown"],
+[class*="Dropdown"],
+[class*="menu"],
+[class*="Menu"] {
+    background: linear-gradient(135deg, #0d1b4b, #0a0a2e) !important;
+    border: 1px solid rgba(108, 190, 255, 0.2) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* ── MUI overrides ── */
+.MuiPaper-root {
+    background: linear-gradient(135deg, #0d1440, #080818) !important;
+    color: #e8f4ff !important;
+}
+
+.MuiIconButton-root {
+    color: #c8ddf0 !important;
+}
+
+.MuiIconButton-root:hover {
+    background: rgba(108, 190, 255, 0.15) !important;
+}
+
+.MuiSvgIcon-root {
+    color: #c8ddf0 !important;
+}
+
+.MuiTooltip-tooltip {
+    background: #0d1440 !important;
+    border: 1px solid rgba(108, 190, 255, 0.2) !important;
+    border-radius: 8px !important;
+    font-family: 'Gilroy-Medium', sans-serif !important;
+}
+
+/* ── Forcer transparence Blockly ── */
+.blocklysvg {
+    background: transparent !important;
+}
+
+.blocklyMainBackground {
+    fill: rgba(3, 7, 20, 0.72) !important;
+}
+
+svg.blocklysvg {
+    background-color: transparent !important;
+}
+
+/* Page playground transparente */
+.injectionDiv {
+    background: transparent !important;
+}
+
+/* ── Force thème univers sur la Home ── */
+/* Carousel */
+[class*="carousel"],
+[class*="Carousel"],
+[class*="carouselDiv"],
+[class*="sliderDiv"] {
+    background: rgba(6, 12, 35, 0.7) !important;
+    border: 1px solid rgba(108, 190, 255, 0.15) !important;
+    border-radius: 16px !important;
+    backdrop-filter: blur(12px) !important;
+    color: #e8f4ff !important;
+}
+
+/* My Projects section */
+[class*="projectCard"],
+[class*="ProjectCard"],
+[class*="cardDiv"],
+[class*="project"] {
+    background: rgba(6, 12, 35, 0.8) !important;
+    border: 1px solid rgba(108, 190, 255, 0.2) !important;
+    border-radius: 16px !important;
+    color: #e8f4ff !important;
+}
+
+/* Tous les divs de fond blanc/gris sur la home */
+[class*="homeDiv"],
+[class*="HomeDiv"],
+[class*="mainDiv"],
+[class*="MainDiv"],
+[class*="container"],
+[class*="Container"] {
+    background: transparent !important;
+    color: #e8f4ff !important;
+}
+
+/* Textes */
+[class*="title"],
+[class*="Title"],
+[class*="header"],
+h1,
+h2,
+h3,
+h4,
+h5,
+p,
+span,
+div {
+    color: inherit !important;
+}
+
+/* Cards projets */
+.MuiCard-root,
+.MuiPaper-root {
+    background: rgba(6, 12, 35, 0.85) !important;
+    border: 1px solid rgba(108, 190, 255, 0.2) !important;
+    color: #e8f4ff !important;
+}
+
+/* Override inline backgroundColor */
+[style*="background-color: rgb(32, 32, 32)"],
+[style*="background-color:#202020"],
+[style*="backgroundColor: #202020"] {
+    background: radial-gradient(ellipse at 30% 40%, #0d1b4b 0%, #030714 45%, #000008 100%) !important;
+}

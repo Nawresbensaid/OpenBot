@@ -1,88 +1,104 @@
-import React, {useContext, useEffect, useRef, useState} from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import ace from 'ace-builds';
 import 'ace-builds/src-noconflict/mode-javascript';
 import 'ace-builds/src-noconflict/mode-python';
-import {StoreContext} from "../../context/context";
-import {javascriptGenerator} from "blockly/javascript";
-import {pythonGenerator} from "blockly/python";
-import {Constants} from "../../utils/constants";
-import {ThemeContext} from "../../App";
 import 'ace-builds/src-noconflict/theme-one_dark';
-import 'ace-builds/src-noconflict/theme-textmate';
-import {RightSlider} from "../drawer/drawer";
-import useMediaQuery from "@mui/material/useMediaQuery";
-import {useTheme} from "@mui/material";
-import {Themes} from "../../utils/constants";
+import { StoreContext } from "../../context/context";
+import { javascriptGenerator } from "blockly/javascript";
+import { pythonGenerator } from "blockly/python";
+import { Constants } from "../../utils/constants";
 
-/**x
- * Code Editor to display Js code and python code.
- * @param params
- * @returns {JSX.Element}
- * @constructor
- */
-function CodeEditor(params) {
+function CodeEditor() {
     const editorRef = useRef(null);
-    const {workspace, currentProjectXml, category, drawer} = useContext(StoreContext);
-    const themes = useTheme();// Get the current theme breakpoints using useTheme hook
-    const isMobile = useMediaQuery(themes.breakpoints.down('sm'));// Determine if the screen is a mobile device using useMediaQuery hook
-    const {theme} = useContext(ThemeContext);
-    const [isLandscape, setIsLandscape] = useState(window.matchMedia("(max-height: 500px) and (max-width: 1000px) and (orientation: landscape)").matches);
-    const [isTabletQuery, setIsTabletQuery] = useState(window.matchMedia("(min-width: 768px) and (max-width: 1024px)").matches);
+    const aceEditorRef = useRef(null);
+    const { workspace, currentProjectXml, category, drawer } = useContext(StoreContext);
 
+    // Initialiser Ace Editor une seule fois
     useEffect(() => {
-        const handleOrientationChange = () => {
-            setIsLandscape(
-                window.matchMedia("(max-height: 500px) and (max-width: 1000px) and (orientation: landscape)").matches
-            );
-            setIsTabletQuery(window.matchMedia("(min-width: 768px) and (max-width: 1024px)").matches);
-        };
-        window.addEventListener("resize", handleOrientationChange);
-    }, []);
-
-    //handle the toggling between javascript and python editor
-    useEffect(() => {
+        if (!editorRef.current) return;
         const editor = ace.edit(editorRef.current);
-        let code;
-        let mode;
-        if (category === Constants.py) {
-            code = pythonGenerator.workspaceToCode(workspace);
-            mode = "ace/mode/python";
+        aceEditorRef.current = editor;
 
-        } else if (category === Constants.js) {
-            code = javascriptGenerator.workspaceToCode(workspace);
-            mode = "ace/mode/javascript";
-        }
-        editor.session.setMode(mode);
+        // Thème sombre personnalisé
+        editor.setTheme("ace/theme/one_dark");
         editor.setOption("useWorker", false);
         editor.setReadOnly(true);
-        editor.setTheme(theme === Themes.dark ? "ace/theme/one_dark" : "ace/theme/textmate");
-        editor.session.setMode(mode);
-        editor.setValue(code);
-        const gutterEl = editor.renderer.$gutter;
-        editor.renderer.$printMarginEl.style.width = "0px"
-        gutterEl.style.color = theme === "dark" ? "white" : "black";
-        gutterEl.style.width = "70px";
-        const cursor = editor.renderer.$cursorLayer.cursor;
-        cursor.style.color = theme === "dark" ? "white" : "black";
-        editor.renderer.$gutterLayer.element.style.marginLeft = "8px"
-        return () => {
-            editor.destroy();
-        };
-    }, [workspace, currentProjectXml, category, drawer, theme]);
+        editor.setShowPrintMargin(false);
+        editor.setOptions({
+            fontSize: "13px",
+            fontFamily: "'Space Mono', monospace",
+            showLineNumbers: true,
+            highlightActiveLine: false,
+            showGutter: true,
+            scrollPastEnd: false,
+        });
 
-    return (<div>
-        <div style={{zIndex: 2, position: "absolute", top: isLandscape ? "100%" : "30%"}}>
-            <RightSlider/></div>
-        <div ref={editorRef} style={{
-            position: "absolute",
-            zIndex: 1,
+        // Style custom du gutter (numéros de ligne)
+        const gutterEl = editor.renderer.$gutter;
+        if (gutterEl) {
+            gutterEl.style.background = 'rgba(2,5,16,0.6)';
+            gutterEl.style.borderRight = '1px solid rgba(108,190,255,0.1)';
+        }
+
+        return () => { editor.destroy(); };
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    // Mettre à jour le code quand workspace/category change
+    useEffect(() => {
+        const editor = aceEditorRef.current;
+        if (!editor || !workspace) return;
+
+        try {
+            let code = '';
+            let mode = '';
+            if (category === Constants.py) {
+                code = pythonGenerator.workspaceToCode(workspace);
+                mode = "ace/mode/python";
+            } else {
+                code = javascriptGenerator.workspaceToCode(workspace);
+                mode = "ace/mode/javascript";
+            }
+            editor.session.setMode(mode);
+            editor.setValue(code || '', -1);
+        } catch (e) {
+            console.warn('[CodeEditor]', e);
+        }
+    }, [workspace, currentProjectXml, category, drawer]);
+
+
+    return (
+        <div style={{
+            position: 'relative',
             height: '100%',
             width: '100%',
-            backgroundColor: theme === "dark" ? "#202020" : '#FFFFFF',
-            fontSize: isMobile ? "13px" : isLandscape ? "13px" : isTabletQuery ? "19px" : "15px"
-        }}/>
-    </div>)
-}
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'rgba(3,7,20,0.85)',
+        }}>
 
+
+            {/* Éditeur Ace */}
+            <div
+                ref={editorRef}
+                style={{
+                    flex: 1,
+                    width: '100%',
+                    background: 'transparent',
+                    overflow: 'hidden',
+                }}
+            />
+
+            {/* Ligne de scan décorative */}
+            <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'repeating-linear-gradient(0deg,transparent,transparent 19px,rgba(108,190,255,.025) 19px,rgba(108,190,255,.025) 20px)',
+                pointerEvents: 'none',
+                borderRadius: '0',
+                zIndex: 0,
+            }} />
+        </div>
+    );
+}
 
 export default CodeEditor;

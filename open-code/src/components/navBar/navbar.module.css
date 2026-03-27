@@ -1,391 +1,10 @@
-.profileDiv {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-}
-
-.extraStyles {
-    margin: 10px;
-}
-
-.emptyProfile {
-    width: 10px;
-    height: 10px;
-    padding: 10px;
-    border-radius: 50%;
-    background-color: #4c4d4c;
-}
-
-.profileOptionModalStyle {
-    outline: none;
-    width: 240px;
-    position: absolute;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    border-radius: 6px;
-    right: 4%;
-    top: 65px;
-    padding-top: 0.8rem;
-}
-
-.modelHeading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 20px;
-    font-family: Gilroy-Medium, sans-serif;
-}
-
-
-.listStyle {
-    display: flex;
-    margin: 10px;
-    cursor: pointer;
-}
-
-.listStyle:hover {
-    transform: scale(1.4);
-}
-
-.dropdownMargin {
-    width: 20%;
-}
-
-.sync {
-    animation: rotation infinite 2s linear
-}
-
-@keyframes rotation {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-.modalIcon {
-    height: 24px;
-    width: 24px;
-}
-
-.modalText {
-    font-size: 20px;
-}
-
-.Edit {
-    border: none;
-    background-color: #2e8fd6;
-    color: white;
-    font-size: 20px;
-    line-height: 24px;
-    font-family: "Gilroy-SemiBold", serif;
-    max-width: 500px !important;
-}
-
-.Edit:focus, .Edit:focus {
-    outline: none;
-}
-
-.successAlertBox {
-    margin-left: 20px;
-    padding-left: 10px;
-    display: flex;
-    align-items: center;
-    border-radius: 6px;
-    height: 40px;
-    width: 30%;
-    background-color: rgba(91, 188, 115, 0.1);
-    color: #5BBC73;
-}
-
-.errorAlertBox {
-    background-color: rgba(197, 78, 48, 0.1);
-    color: #C54E30;
-}
-
-.option {
-    height: 125px;
-    width: 260px;
-    position: absolute;
-    top: 65px;
-    left: 39vw;
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    box-shadow: 0 4px 22px rgba(0, 0, 0, 0.08);
-    border-radius: 6px;
-    font-family: Gilroy-Regular, sans-serif;
-}
-
-.item {
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    align-content: center;
-    justify-content: space-around;
-    cursor: pointer;
-    padding: 0.5rem 0 0.5rem 1rem;
-    border-style: none none none solid;
-}
-
-
-.renameDivMargin {
-    padding-right: 6.5rem;
-    margin-top: 1.4rem;
-}
-
-.deleteDivMargin {
-    padding-right: 5.2rem;
-}
-
-.editProfileMargin {
-    padding-right: 3.5rem;
-    /*padding-top: 0.5rem;*/
-    margin-bottom: 0.5rem;
-}
-
-.inRowText {
-    width: 70%;
-}
-
-.logOutMargin {
-    padding-right: 7.3rem;
-}
-
-.darkItem {
-    border-color: #303030;
-    border-width: 4.38px;
-}
-
-.lightItem {
-    border-color: #FFFFFF;
-    border-width: 4.38px;
-}
-
-.lightItem:hover {
-    border-width: 4.38px;
-    background: rgb(232, 246, 254);
-    border-color: rgb(0, 113, 197);
-    border-style: none none none solid;
-}
-
-.darkItem:hover {
-    border-width: 4.38px;
-    background: #57626c;
-    border-color: rgb(0, 113, 197);
-    border-style: none none none solid;
-}
-
-.icon {
-    width: 24px;
-    height: 24px;
-    margin-left: 2px;
-}
-
-.editProfileModal {
-    outline: none;
-    display: flex;
-    flex-direction: column;
-    height: 63%;
-    width: 70%;
-    background-color: #FFFFFF;
-    border-radius: 12px;
-    padding-left: 5%;
-}
-
-.darkEditProfileModal {
-    background-color: #303030;
-}
-
-.profileImg {
-    display: flex;
-    height: 100px;
-    width: 100px;
-    border-radius: 90px;
-    margin-left: 20px;
-    align-items: flex-end;
-    justify-content: flex-end;
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
-}
-
-.loader {
-    align-items: center;
-    justify-content: center;
-}
-
-.editProfileIcon {
-    height: 30px;
-    width: 30px;
-    cursor: pointer;
-}
-
-.inputExtraStyle {
-    width: 28%;
-}
-
-.emailInputExtraStyle {
-    width: 60%;
-}
-
-.buttonSection {
-    display: flex;
-}
-
-.crossIconDiv {
-    display: flex;
-    justify-content: flex-end;
-    margin: 20px 20px 0 0;
-}
-
-.crossIcon {
-    height: 13px !important;
-    width: 13px !important;
-    cursor: pointer;
-    padding: 5px;
-}
-
-
-.logoutModal {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.logoutModalBox {
-    outline: none;
-    margin: 0 20px 0 20px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    height: 170px;
-    width: 400px;
-    border-radius: 6px;
-}
-
-.darkLogoutModalBox {
-    background-color: #303030;
-}
-
-.lightLogoutModalBox {
-    background-color: #ffffff;
-}
-
-.cancel {
-    margin-right: 0px !important;
-}
-
-.logoutButtonsExtraStyle {
-    height: 40px !important;
-    width: 100px !important;
-    font-size: 18px;
-    margin: 2px;
-}
-
-.buttonStyle {
-    margin: 2px !important;
-}
-
-.logoutButtonsDiv {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: flex-end;
-    position: relative;
-    top: 50px;
-    right: 5px;
-}
-
-
-.darkLogoutMessageModal {
-    color: rgba(255, 255, 255, 0.5)
-}
-
-.lightLogoutMessageModal {
-    color: rgba(0, 0, 0, 0.5);
-}
-
-.helpCenterModalBox {
-    outline: none;
-    display: flex;
-    height: 69%;
-    width: 70%;
-    border-radius: 12px;
-}
-
-.darkHelpCenterModal {
-    background-color: #303030;
-}
-
-.lightHelpCenterModal {
-    background-color: white;
-}
-
-.dragAndDropDiv {
-    border-right: 1px solid #D9D9D9;
-    width: 35%;
-    height: 100%;
-    padding-left: 5%;
-}
-
-.screenDisplayImage {
-    width: 80%;
-    margin-top: 15%
-}
-
-
-.darkModeRightBorder {
-    border-right: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.integerNumber {
-    position: absolute;
-    opacity: 0.05;
-    font-family: Gilroy-Bold, sans-serif !important;
-    font-size: 90px !important;
-    font-weight: bold !important;
-    line-height: 50px;
-}
-
-.helpCenterPara {
-    font-size: 14px;
-}
-
-.helpCenterCrossIconDiv {
-    display: flex;
-    justify-content: flex-end;
-    padding: 10px;
-}
-
-.saveAndDownloadDiv {
-    width: 95%;
-    height: 50%;
-    padding-left: 5%;
-    border-bottom: 1px solid #D9D9D9;
-}
-
-.darkModeBottomBorder {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.connectAndDriveDiv {
-    width: 95%;
-    height: 50%;
-    padding-left: 5%;
-}
-
-.darkTitleModel {
-    background-color: #303030;
-    color: #F2F2F2;
-}
-
-.lightTitleModel {
-    background-color: #ffffff;
-    color: #0071C5;
-}
+/* ===== NAVBAR — Thème Univers ===== */
 
 .navbarDiv {
     display: flex;
-    background-color: rgb(0, 113, 197);
+    background: linear-gradient(135deg, rgba(5, 12, 26, 0.95) 0%, rgba(8, 18, 40, 0.95) 100%) !important;
+    border-bottom: 1px solid rgba(108, 190, 255, 0.15) !important;
+    backdrop-filter: blur(10px) !important;
     justify-content: space-between;
     height: 5rem;
     align-items: center;
@@ -418,54 +37,64 @@
 .mainTitle {
     font-size: 1.3rem;
     font-family: Gilroy-Medium, sans-serif;
-    color: rgb(255, 255, 255);
+    color: #c8ddf0 !important;
     cursor: pointer;
+    letter-spacing: 0.05em;
 }
 
 .subTitle {
     font-family: Gilroy-Regular, sans-serif;
+    color: rgba(200, 221, 240, 0.6) !important;
 }
 
 .infoIcon {
     height: 1.5rem;
     width: 1.5rem;
     cursor: pointer;
+    filter: brightness(0) invert(1) !important;
+    opacity: 0.7;
 }
 
-.darkThemeIcon {
-    height: 23px;
-    width: 23px;
-    cursor: pointer;
+.infoIcon:hover {
+    opacity: 1;
 }
 
+.darkThemeIcon,
 .lightThemeIcon {
     height: 23px;
     width: 23px;
     cursor: pointer;
+    filter: brightness(0) invert(1) !important;
+    opacity: 0.7;
 }
 
+.darkThemeIcon:hover,
 .lightThemeIcon:hover {
     transform: scale(1.4);
-}
-
-.darkThemeIcon:hover {
-    transform: scale(1.4);
+    opacity: 1;
 }
 
 .lineIcon {
     width: 0.5%;
+    opacity: 0.3;
 }
 
 .buttonIcon {
-    border: 1px solid rgb(255, 254, 254);
+    border: 1px solid rgba(108, 190, 255, 0.3) !important;
     border-radius: 0.5rem;
     font-size: 1rem;
     height: 2rem;
     width: 5rem;
     font-family: Gilroy-Medium, sans-serif;
-    color: rgb(255, 255, 255);
-    background-color: rgb(0, 113, 197);
+    color: #c8ddf0 !important;
+    background-color: rgba(108, 190, 255, 0.1) !important;
     cursor: pointer;
+    transition: all 0.2s;
+}
+
+.buttonIcon:hover {
+    background-color: rgba(108, 190, 255, 0.2) !important;
+    border-color: rgba(108, 190, 255, 0.5) !important;
 }
 
 .iconMargin {
@@ -480,6 +109,400 @@
     display: flex;
     align-items: center;
     cursor: pointer;
+    color: #c8ddf0 !important;
+}
+
+/* ── Modals ── */
+.profileOptionModalStyle {
+    outline: none;
+    width: 240px;
+    position: absolute;
+    border: 1px solid rgba(108, 190, 255, 0.2) !important;
+    border-radius: 6px;
+    right: 4%;
+    top: 65px;
+    padding-top: 0.8rem;
+    background-color: #080e1e !important;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+.modelHeading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    font-family: Gilroy-Medium, sans-serif;
+    color: #c8ddf0 !important;
+}
+
+.listStyle {
+    display: flex;
+    margin: 10px;
+    cursor: pointer;
+    color: #c8ddf0 !important;
+}
+
+.listStyle:hover {
+    transform: scale(1.4);
+}
+
+.dropdownMargin {
+    width: 20%;
+}
+
+.sync {
+    animation: rotation infinite 2s linear;
+}
+
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.modalIcon {
+    height: 24px;
+    width: 24px;
+    filter: brightness(0) invert(1);
+}
+
+.modalText {
+    font-size: 20px;
+    color: #c8ddf0 !important;
+}
+
+.Edit {
+    border: none;
+    background-color: #1a6fc4 !important;
+    color: white;
+    font-size: 20px;
+    line-height: 24px;
+    font-family: "Gilroy-SemiBold", serif;
+    max-width: 500px !important;
+}
+
+.Edit:focus {
+    outline: none;
+}
+
+.successAlertBox {
+    margin-left: 20px;
+    padding-left: 10px;
+    display: flex;
+    align-items: center;
+    border-radius: 6px;
+    height: 40px;
+    width: 30%;
+    background-color: rgba(91, 188, 115, 0.1);
+    color: #5BBC73;
+}
+
+.errorAlertBox {
+    background-color: rgba(197, 78, 48, 0.1);
+    color: #C54E30;
+}
+
+.option {
+    height: 125px;
+    width: 260px;
+    position: absolute;
+    top: 65px;
+    left: 39vw;
+    border: 1px solid rgba(108, 190, 255, 0.2) !important;
+    box-shadow: 0 4px 22px rgba(0, 0, 0, 0.5) !important;
+    border-radius: 6px;
+    font-family: Gilroy-Regular, sans-serif;
+    background-color: #080e1e !important;
+}
+
+.item {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-content: space-around;
+    cursor: pointer;
+    padding: 0.5rem 0 0.5rem 1rem;
+    border-style: none none none solid;
+    color: #c8ddf0 !important;
+}
+
+.renameDivMargin {
+    padding-right: 6.5rem;
+    margin-top: 1.4rem;
+}
+
+.deleteDivMargin {
+    padding-right: 5.2rem;
+}
+
+.editProfileMargin {
+    padding-right: 3.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.inRowText {
+    width: 70%;
+}
+
+.logOutMargin {
+    padding-right: 7.3rem;
+}
+
+.darkItem,
+.lightItem {
+    border-color: rgba(108, 190, 255, 0.2) !important;
+    border-width: 4.38px;
+}
+
+.darkItem:hover,
+.lightItem:hover {
+    border-width: 4.38px;
+    background: rgba(108, 190, 255, 0.1) !important;
+    border-color: #6cbefd !important;
+    border-style: none none none solid;
+}
+
+.icon {
+    width: 24px;
+    height: 24px;
+    margin-left: 2px;
+}
+
+/* ── Edit Profile Modal ── */
+.editProfileModal {
+    outline: none;
+    display: flex;
+    flex-direction: column;
+    height: 63%;
+    width: 70%;
+    background-color: #080e1e !important;
+    border: 1px solid rgba(108, 190, 255, 0.2) !important;
+    border-radius: 12px;
+    padding-left: 5%;
+}
+
+.darkEditProfileModal {
+    background-color: #080e1e !important;
+}
+
+.profileImg {
+    display: flex;
+    height: 100px;
+    width: 100px;
+    border-radius: 90px;
+    margin-left: 20px;
+    align-items: flex-end;
+    justify-content: flex-end;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: 2px solid rgba(108, 190, 255, 0.3);
+}
+
+.editProfileIcon {
+    height: 30px;
+    width: 30px;
+    cursor: pointer;
+}
+
+.inputExtraStyle {
+    width: 28%;
+}
+
+.emailInputExtraStyle {
+    width: 60%;
+}
+
+.buttonSection {
+    display: flex;
+}
+
+.crossIconDiv {
+    display: flex;
+    justify-content: flex-end;
+    margin: 20px 20px 0 0;
+}
+
+.crossIcon {
+    height: 13px !important;
+    width: 13px !important;
+    cursor: pointer;
+    padding: 5px;
+    filter: brightness(0) invert(1);
+}
+
+/* ── Logout Modal ── */
+.logoutModal {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logoutModalBox {
+    outline: none;
+    margin: 0 20px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 170px;
+    width: 400px;
+    border-radius: 6px;
+    background-color: #080e1e !important;
+    border: 1px solid rgba(108, 190, 255, 0.2) !important;
+}
+
+.darkLogoutModalBox {
+    background-color: #080e1e !important;
+}
+
+.lightLogoutModalBox {
+    background-color: #080e1e !important;
+}
+
+.cancel {
+    margin-right: 0 !important;
+}
+
+.logoutButtonsExtraStyle {
+    height: 40px !important;
+    width: 100px !important;
+    font-size: 18px;
+    margin: 2px;
+}
+
+.buttonStyle {
+    margin: 2px !important;
+}
+
+.logoutButtonsDiv {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    position: relative;
+    top: 50px;
+    right: 5px;
+}
+
+.darkLogoutMessageModal {
+    color: rgba(200, 221, 240, 0.6) !important;
+}
+
+.lightLogoutMessageModal {
+    color: rgba(200, 221, 240, 0.6) !important;
+}
+
+/* ── Help Center Modal ── */
+.helpCenterModalBox {
+    outline: none;
+    display: flex;
+    height: 69%;
+    width: 70%;
+    border-radius: 12px;
+    background-color: #080e1e !important;
+    border: 1px solid rgba(108, 190, 255, 0.2) !important;
+}
+
+.darkHelpCenterModal {
+    background-color: #080e1e !important;
+}
+
+.lightHelpCenterModal {
+    background-color: #080e1e !important;
+}
+
+.dragAndDropDiv {
+    border-right: 1px solid rgba(108, 190, 255, 0.15) !important;
+    width: 35%;
+    height: 100%;
+    padding-left: 5%;
+}
+
+.screenDisplayImage {
+    width: 80%;
+    margin-top: 15%;
+}
+
+.darkModeRightBorder {
+    border-right: 1px solid rgba(108, 190, 255, 0.15) !important;
+}
+
+.integerNumber {
+    position: absolute;
+    opacity: 0.05;
+    font-family: Gilroy-Bold, sans-serif !important;
+    font-size: 90px !important;
+    font-weight: bold !important;
+    line-height: 50px;
+    color: #6cbefd !important;
+}
+
+.helpCenterPara {
+    font-size: 14px;
+    color: rgba(200, 221, 240, 0.8) !important;
+}
+
+.helpCenterCrossIconDiv {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px;
+}
+
+.saveAndDownloadDiv {
+    width: 95%;
+    height: 50%;
+    padding-left: 5%;
+    border-bottom: 1px solid rgba(108, 190, 255, 0.15) !important;
+}
+
+.darkModeBottomBorder {
+    border-bottom: 1px solid rgba(108, 190, 255, 0.15) !important;
+}
+
+.connectAndDriveDiv {
+    width: 95%;
+    height: 50%;
+    padding-left: 5%;
+}
+
+.darkTitleModel {
+    background-color: #080e1e !important;
+    color: #c8ddf0 !important;
+}
+
+.lightTitleModel {
+    background-color: #080e1e !important;
+    color: #6cbefd !important;
+}
+
+.profileDiv {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.extraStyles {
+    margin: 10px;
+}
+
+.emptyProfile {
+    width: 10px;
+    height: 10px;
+    padding: 10px;
+    border-radius: 50%;
+    background-color: rgba(108, 190, 255, 0.2) !important;
+    border: 1px solid rgba(108, 190, 255, 0.3);
+}
+
+.loader {
+    align-items: center;
+    justify-content: center;
 }
 
 .cancelExtraStyle {
@@ -489,8 +512,8 @@
 .helpCentreHeader {
     font-family: Gilroy-Bold, sans-serif !important;
     font-weight: 800 !important;
+    color: #c8ddf0 !important;
 }
-
 
 .dragAndDropDivContent {
     width: 80%;
@@ -500,20 +523,23 @@
 .dragAndDropPara {
     margin-left: 10%;
     padding-top: 8%;
+    color: rgba(200, 221, 240, 0.7) !important;
 }
 
 .connectAndDriveDivPara {
     width: 70%;
     padding-left: 5%;
+    color: rgba(200, 221, 240, 0.7) !important;
 }
 
 .saveAndDownloadDivContent {
     width: 70%;
     padding-left: 5%;
+    color: rgba(200, 221, 240, 0.7) !important;
 }
 
+/* ── Responsive ── */
 @media (max-width: 767px) {
-
     .saveAndDownloadDivContent {
         width: 90%;
     }
@@ -534,17 +560,12 @@
         font-size: 1.0rem;
     }
 
-    /* CSS styles for screens smaller than 768px */
     .navbarTitleDiv {
         margin-left: 1rem;
     }
 
     .iconMargin {
-        margin: 0px 10px 0px -2px;
-    }
-
-    .changeThemeIcon {
-        margin-left: 20px;
+        margin: 0 10px 0 -2px;
     }
 
     .navbarIconDiv {
@@ -582,7 +603,7 @@
     }
 
     .item {
-        padding: 0rem 1rem 0.5rem 1rem;
+        padding: 0 1rem 0.5rem 1rem;
         justify-content: space-between;
         width: 80%;
     }
@@ -593,15 +614,7 @@
 
     .logoutModalBox {
         width: 80%;
-        padding: 20px 20px 0px 20px;
-    }
-
-    .logoutButtonsExtraStyle {
-        margin: 2px !important;
-    }
-
-    .cancelExtraStyle {
-        margin-right: 10px !important;
+        padding: 20px 20px 0 20px;
     }
 
     .editProfileModal {
@@ -614,38 +627,15 @@
         height: 60px;
         width: 60px;
         border-radius: 100px;
-        /*aspect-ratio: 1/1;*/
-    }
-
-    .profileImg img {
-        height: 22px;
-        width: 22px;
     }
 
     .inputExtraStyle {
         width: 34.5%;
         height: 50%;
-        /*margin: 20px 10px 20px 10px;*/
     }
 
     .emailInputExtraStyle {
         width: 80% !important;
-    }
-
-    .headStyle {
-        font-size: 12px !important;
-    }
-
-    .extraInputStyle {
-        font-size: 13px !important;
-    }
-
-    .buttonSection {
-        display: flex;
-    }
-
-    .buttonText {
-        font-size: 13px;
     }
 
     .successAlertBox {
@@ -654,13 +644,6 @@
         border-radius: 6px;
         height: 30px;
         width: 70%;
-        background-color: rgba(91, 188, 115, 0.1);
-        color: #5BBC73;
-    }
-
-    .headerStyle {
-        font-weight: bold;
-        font-size: 16px;
     }
 
     .option {
@@ -677,44 +660,6 @@
     .renameDivMargin {
         margin-top: 1.2rem;
         padding-right: 1rem !important;
-    }
-
-    .renameText {
-        margin-left: 1rem;
-    }
-
-    .deleteText {
-        margin-left: 1rem;
-    }
-
-    .option .icon {
-        width: 18px;
-        height: 18px;
-        margin-left: 16px;
-    }
-
-    .darkItem {
-        border-width: 0;
-    }
-
-    .lightItem {
-        border-width: 0;
-    }
-
-    .lightItem:hover {
-        border-width: 0;
-        background: #ffffff;
-    }
-
-    .darkItem:hover {
-        border-width: 0;
-        background: #303030;
-    }
-
-    /*    TODO when click on rename a blue color appears */
-    .Edit {
-        font-size: 1rem !important;
-        line-height: 10px;
     }
 
     .helpCenterModalBox {
@@ -734,60 +679,23 @@
         margin-top: 37%;
     }
 
-    .helpCentreRightSide {
-        width: 50%;
-    }
-
-    .integerNumber {
-        font-size: 35px !important;
-        line-height: 30px;
-    }
-
-    .helpCenterPara {
-        font-size: 0.6rem !important;
-    }
-
-    .helpDetailsModelDiv {
-        display: flex;
-        flex-direction: row;
-    }
-
     .buttonIcon {
         font-size: 15px;
     }
 
-    .dragAndDropDivContent {
-        width: 95%;
+    .darkItem,
+    .lightItem {
+        border-width: 0;
     }
 
-    .dragAndDropPara {
-        margin-left: 6%;
-    }
-
-}
-
-@media (max-width: 400px) and (max-height: 670px) {
-    .helpCenterPara {
-        font-size: 10px !important;
+    .darkItem:hover,
+    .lightItem:hover {
+        border-width: 0;
+        background: rgba(108, 190, 255, 0.1) !important;
     }
 }
 
-/*tablet portrait mode*/
 @media (min-width: 744px) and (max-width: 1024px) and (min-height: 650px) {
-
-    .inputExtraStyle {
-        width: 37.5% !important;
-    }
-
-    .buttonIcon {
-        font-size: 15px;
-    }
-
-    .dragAndDropPara {
-        margin-left: 6%;
-        padding-top: 12%;
-    }
-
     .navbarDiv {
         height: 6rem;
     }
@@ -809,24 +717,14 @@
         font-size: 22px;
     }
 
-    .lineIcon {
-        margin-right: 15px;
-        margin-left: 5px;
-    }
-
     .profileOptionModalStyle {
         width: 13.75rem;
         padding-top: 1.5rem;
     }
 
     .item {
-        padding: 0rem 1.5rem 0.7rem .5rem !important;
+        padding: 0 1.5rem 0.7rem 0.5rem !important;
         font-size: 22px;
-    }
-
-    .modalText {
-        font-size: 16px;
-
     }
 
     .editProfileModal {
@@ -835,249 +733,12 @@
         padding-left: 2%;
     }
 
-    .profileImg {
-        height: 100px;
-        width: 100px;
-        border-radius: 221px;
-        margin-bottom: 20px;
-    }
-
-    .profileImg img {
-        height: 30px;
-        width: 30px;
-    }
-
-    .inputExtraStyle {
-        width: 40%;
-        height: 50%;
-        /*margin: 20px 10px 20px 10px;*/
-    }
-
-    .emailInputExtraStyle {
-        width: 80% !important;
-    }
-
-    .headStyle {
-        font-size: 18px !important;
-    }
-
-    .extraInputStyle {
-        font-size: 20px !important;
-    }
-
-    .helpDetailsModelDiv {
-        display: flex;
-        flex-direction: row;
-    }
-
-    .option {
-        height: 100px !important;
-        width: 160px !important;
-    }
-
-    .option .item {
-        font-size: 0.8rem;
-        padding: 2px 0 10px 10px !important;
-        justify-content: start;
-    }
-
-    .renameText {
-        margin-left: 1rem;
-    }
-
-    .deleteText {
-        margin-left: 1rem;
-    }
-
     .helpCenterModalBox {
         width: 90%;
         height: 65%;
     }
 
-    .helpCentreRightSide {
-        width: 50%;
-    }
-
-    .dragAndDropDiv {
-        width: 48%;
-    }
-
-    .screenDisplayImage {
-        /*width: 90%;*/
-        /*height: 25%;*/
-        margin-top: 20%;
-        width: 300px;
-    }
-
-    .dragAndDropDivContent {
-        width: 90%;
-        margin-top: 25%;
-    }
-
-    .integerNumber {
-        line-height: 100%;
-    }
-
-    .saveAndDownloadDivContent {
-        width: 85%;
-        padding-top: 8%;
-    }
-
-    .connectAndDriveDivPara {
-        padding-top: 2%;
-        width: 87%;
-        padding-left: 5%;
-    }
-
-    .crossIcon {
-        height: 20px !important;
-        width: 20px !important;
-    }
-}
-
-@media only screen and (max-height: 440px) and (min-width: 400px) and (max-width: 1024px) and (orientation: landscape) {
-    /* CSS rules for mobile landscape view */
     .navbarDiv {
-        height: 4rem;
+        height: 6rem;
     }
-
-    .dropdownMargin {
-        width: 30%;
-    }
-
-    .modelHeading {
-        font-size: 17px;
-    }
-
-    .lineIcon {
-        width: 0.7%;
-    }
-
-    .mainTitle {
-        font-size: 16px;
-    }
-
-    .mainIcon {
-        height: 1.8rem;
-        width: 1.8rem;
-    }
-
-    .iconMargin {
-        margin: 0px 10px 0px 0px;
-    }
-
-    .profileOptionModalStyle {
-        width: 13.50rem;
-    }
-
-    .item {
-        padding-left: 0.5rem;
-        font-size: 16px;
-    }
-
-    .helpCenterModalBox {
-        margin-top: 260px;
-        height: 490px;
-        width: 90%;
-    }
-
-    .dragAndDropDiv {
-        width: 60%;
-        padding-left: 2.3%;
-    }
-
-    .integerNumber {
-        font-size: 48px !important;
-        line-height: 44px;
-    }
-
-    .screenDisplayImage {
-        width: 224px;
-        height: 127px;
-        margin-top: 20%;
-    }
-
-    .helpCenterPara {
-        font-size: 16px !important;
-    }
-
-    .helpCentreHeader {
-        font-family: Gilroy-Bold, sans-serif !important;
-        font-weight: bolder !important;
-    }
-
-    .editProfileModal {
-        margin-top: 220px;
-        width: 90%;
-        height: 500px;
-        padding-left: 2%;
-    }
-
-    .successAlertBox {
-        width: 40%;
-    }
-
-    .Edit {
-        font-size: 1rem !important;
-        line-height: 10px;
-    }
-
-    .buttonIcon {
-        font-size: 15px;
-    }
-
-    .option {
-        height: 86px !important;
-        width: 157px !important;
-    }
-
-    .option .icon {
-        width: 18px;
-        height: 18px;
-        padding-left: 0;
-    }
-
-    .option .item {
-        padding-left: 0;
-        font-size: 14px;
-    }
-
-    .renameText {
-        padding-right: 13px;
-    }
-
-    .dragAndDropDivContent {
-        width: 95%;
-    }
-
-    .dragAndDropPara {
-        padding-top: 6%;
-    }
-
-    .connectAndDriveDivPara {
-        width: 90%;
-    }
-
-    .saveAndDownloadDivContent {
-        width: 90%;
-    }
-
-    .darkThemeIcon {
-        height: 20px;
-        width: 20px;
-    }
-
-    .lightThemeIcon {
-        height: 20px;
-        width: 20px;
-    }
-
-    .editProfileMargin {
-        padding-right: 0;
-    }
-
-    .inputExtraStyle {
-        width: 24.4%;
-    }
-
 }

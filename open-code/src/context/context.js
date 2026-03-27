@@ -1,20 +1,20 @@
-import React, {createContext, useState} from 'react'
-import {getCurrentProject} from "../services/workspace";
-import {Constants, localStorageKeys} from "../utils/constants";
+import React, { createContext, useState } from 'react'
+import { getCurrentProject } from "../services/workspace";
+import { Constants, localStorageKeys } from "../utils/constants";
 
 export const StoreContext = createContext(null);
 
 export default ({
-                    children,
-                    isOnline,
-                    user,
-                    setUser,
-                    isSessionExpireModal,
-                    setIsSessionExpireModal,
-                    setIsSessionExpire,
-                    isTimeoutId,
-                    setTimeoutId
-                }) => {
+    children,
+    isOnline,
+    user,
+    setUser,
+    isSessionExpireModal,
+    setIsSessionExpireModal,
+    setIsSessionExpire,
+    isTimeoutId,
+    setTimeoutId
+}) => {
     let savedProjectName = null
     let savedProjectXml = null
     let savedFileId = null
