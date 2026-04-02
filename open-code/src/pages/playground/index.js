@@ -4,6 +4,7 @@ import { Toolbox } from "../../components/blockly/toolbox/Toolbox";
 import { Header } from "../../components/navBar/header";
 import { StoreContext } from "../../context/context";
 import CodeEditor from "../../components/editor/codeEditor";
+import { runBlocklyCode, initParser } from '../../utils/parser';
 
 // ── Canvas étoiles ──
 const COLS = ['#ffffff', '#fffde7', '#6cbefd', '#b39ddb', '#f48fb1', '#a5d6a7', '#fcd34d'];
@@ -174,7 +175,11 @@ function Playground() {
         try {
             const ws = new WebSocket(wsUrl);
             wsRef.current = ws;
-            ws.onopen = () => { setSimStatus('online'); setWsLog('✅ Connecté !'); };
+            ws.onopen = () => {
+                setSimStatus('online');
+                setWsLog('✅ Connecté !');
+                initParser(ws); // ✅ initialiser le parser avec le WebSocket
+            };
             ws.onerror = () => { setSimStatus('offline'); setWsLog('❌ Erreur'); };
             ws.onclose = () => { setSimStatus('offline'); setWsLog('⚠️ Déconnecté'); setCamFrame(null); };
             ws.onmessage = (e) => {
@@ -207,7 +212,6 @@ function Playground() {
         pyPanel: { flex: '0 0 35%', display: 'flex', flexDirection: 'column', borderBottom: '1px solid rgba(108,190,255,.15)', overflow: 'hidden', minHeight: 0 },
         simPanel: { flex: '0 0 65%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 },
         simBody: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: '.35rem', padding: '.4rem .5rem', background: 'rgba(2,5,16,.32)', minHeight: 0, overflow: 'hidden' },
-        pyTitle: { fontFamily: "'Fredoka One',cursive", fontSize: '.9rem', letterSpacing: '.08em', color: '#fcd34d' },
         simTitle: { fontFamily: "'Fredoka One',cursive", fontSize: '.9rem', letterSpacing: '.08em', background: 'linear-gradient(90deg,#fbbf24,#f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
     };
 
@@ -255,21 +259,19 @@ function Playground() {
                                         onClick={() => setCategory(ispy ? 'js' : 'py')}>
                                         {ispy ? '⚡ JS' : '🐍 PY'}
                                     </button>
-                                    {/* ✅ BOUTON RUN CORRIGÉ */}
+                                    {/* ✅ BOUTON RUN */}
                                     <button className="robo-pb"
                                         style={{ background: 'rgba(77,220,100,.15)', border: '1px solid rgba(77,220,100,.3)', color: '#4ddc64' }}
                                         onClick={() => {
                                             try {
-                                                // Lire le code directement depuis Blockly au moment du clic
                                                 const Blockly = require('blockly/core');
                                                 const { javascriptGenerator } = require('blockly/javascript');
-                                                const ws = Blockly.getMainWorkspace();
-                                                const code = javascriptGenerator.workspaceToCode(ws);
-                                                console.log("RUN CODE:", code);
-                                                sendCmd('exec_python:' + code);
+                                                const workspace = Blockly.getMainWorkspace();
+                                                const code = javascriptGenerator.workspaceToCode(workspace);
+                                                console.log("▶ Code généré:", code);
+                                                runBlocklyCode(code);
                                             } catch (e) {
-                                                console.error("Erreur Run:", e);
-                                                sendCmd('exec_python:');
+                                                console.error("❌ Erreur Run:", e);
                                             }
                                         }}>
                                         ▶ Run
