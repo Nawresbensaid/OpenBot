@@ -127,29 +127,15 @@ function Playground() {
     const [simStatus, setSimStatus] = useState('offline');
     const [wsUrl, setWsUrl] = useState('ws://127.0.0.1:8765');
     const [wsLog, setWsLog] = useState('');
-<<<<<<< HEAD
-    const [camFrame, setCamFrame] = useState(null);
-=======
-    const [camFrame, setCamFrame] = useState(null);       // 📷 Caméra robot  (port 8765)
-    const [camOverview, setCamOverview] = useState(null);       // 🌍 Overview       (port 8766)
-    const [simTab, setSimTab] = useState('cam');      // 'cam' | 'overview'
->>>>>>> origin/test
+    const [camFrame, setCamFrame] = useState(null);        // 📷 Caméra robot  (port 8765)
+    const [camOverview, setCamOverview] = useState(null);  // 🌍 Overview       (port 8766)
+    const [simTab, setSimTab] = useState('cam');           // 'cam' | 'overview'
     const [showQr, setShowQr] = useState(false);
     const wsRef = useRef(null);
     const wsOverviewRef = useRef(null);
     const keysRef = useRef({});
 
-<<<<<<< HEAD
-    React.useEffect(() => {
-        const keyMap = {
-            'ArrowUp': 'move_forward', 'ArrowDown': 'move_backward',
-            'ArrowLeft': 'turn_left', 'ArrowRight': 'turn_right',
-            'z': 'move_forward', 'Z': 'move_forward',
-            's': 'move_backward', 'S': 'move_backward',
-            'q': 'turn_left', 'Q': 'turn_left',
-            'd': 'turn_right', 'D': 'turn_right',
-=======
-    // ── Clavier : commandes alignées avec le contrôleur Python ──────────────
+    // ── Clavier : commandes alignées avec le contrôleur Python ──
     React.useEffect(() => {
         const keyMap = {
             'ArrowUp': 'moveForward',
@@ -160,7 +146,6 @@ function Playground() {
             's': 'moveBackward', 'S': 'moveBackward',
             'q': 'turnLeft', 'Q': 'turnLeft',
             'd': 'turnRight', 'D': 'turnRight',
->>>>>>> origin/test
             ' ': 'stop',
         };
         const onKeyDown = (e) => {
@@ -204,17 +189,14 @@ function Playground() {
                 setSimStatus('online');
                 setWsLog('✅ Connecté !');
                 ParserModule.initParser(ws);
-<<<<<<< HEAD
-=======
-                startOverview(); // ← nouveau nom
+                startOverview();
             };
             ws.onerror = () => { setSimStatus('offline'); setWsLog('❌ Erreur connexion'); };
             ws.onclose = () => {
                 setSimStatus('offline');
                 setWsLog('⚠️ Déconnecté');
                 setCamFrame(null);
-                overviewActiveRef.current = false; // ← arrête la reconnexion overview
->>>>>>> origin/test
+                overviewActiveRef.current = false;
             };
             ws.onmessage = (e) => {
                 if (typeof e.data === 'string' && e.data.startsWith('CAM:')) {
@@ -230,8 +212,6 @@ function Playground() {
         } catch (e) { setSimStatus('offline'); setWsLog('❌ ' + e.message); }
     };
 
-<<<<<<< HEAD
-=======
     const overviewActiveRef = React.useRef(false);
 
     const startOverview = () => {
@@ -262,7 +242,7 @@ function Playground() {
             ws2.onclose = () => {
                 setCamOverview(null);
                 if (overviewActiveRef.current) {
-                    setTimeout(connectOverviewLoop, 500); // ← reconnexion auto
+                    setTimeout(connectOverviewLoop, 500);
                 }
             };
 
@@ -276,7 +256,7 @@ function Playground() {
             }
         }
     };
->>>>>>> origin/test
+
     const handleRun = () => {
         try {
             console.log("▶ Run cliqué !");
@@ -347,7 +327,6 @@ function Playground() {
     const statusColor = simStatus === 'online' ? '#4ddc64' : simStatus === 'connecting' ? '#f0a500' : '#ff4444';
     const statusLabel = simStatus === 'online' ? 'CONNECTÉ' : simStatus === 'connecting' ? 'CONNEXION...' : 'OFFLINE';
 
-    // Quel frame afficher selon l'onglet actif
     const activeFrame = simTab === 'cam' ? camFrame : camOverview;
     const activeCamLabel = simTab === 'cam' ? '📷 CAM ROBOT' : '🌍 VUE 3D';
 
@@ -389,10 +368,7 @@ function Playground() {
                     </div>
 
                     <div style={S.right}>
-<<<<<<< HEAD
-=======
                         {/* ── Panneau éditeur de code ── */}
->>>>>>> origin/test
                         <div style={S.pyPanel}>
                             <div className="robo-panel-hdr">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
@@ -407,23 +383,12 @@ function Playground() {
                                         onClick={() => setCategory(ispy ? 'js' : 'py')}>
                                         {ispy ? '⚡ JS' : '🐍 PY'}
                                     </button>
-<<<<<<< HEAD
-                                    <button
-                                        id="run-btn"
-                                        className="robo-pb"
-=======
                                     <button id="run-btn" className="robo-pb"
->>>>>>> origin/test
                                         style={{ background: 'rgba(77,220,100,.15)', border: '1px solid rgba(77,220,100,.3)', color: '#4ddc64' }}
                                         onClick={handleRun}>
                                         ▶ Run
                                     </button>
-<<<<<<< HEAD
-                                    <button
-                                        className="robo-pb"
-=======
                                     <button className="robo-pb"
->>>>>>> origin/test
                                         style={{ background: 'rgba(251,191,36,.15)', border: '1px solid rgba(251,191,36,.3)', color: '#fbbf24' }}
                                         onClick={handleQR}>
                                         📱 QR
@@ -435,29 +400,18 @@ function Playground() {
                             </div>
                         </div>
 
-<<<<<<< HEAD
-=======
                         {/* ── Panneau simulateur ── */}
->>>>>>> origin/test
                         <div style={S.simPanel}>
                             <div className="robo-panel-hdr">
                                 <span style={S.simTitle}>🤖 SIMULATEUR ROBOT</span>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
                                     {showQr && (
-<<<<<<< HEAD
-                                        <button
-                                            className="robo-pb"
-=======
                                         <button className="robo-pb"
->>>>>>> origin/test
                                             style={{ background: 'rgba(251,191,36,.1)', border: '1px solid rgba(251,191,36,.25)', color: '#fbbf24', fontSize: '.6rem' }}
                                             onClick={() => setShowQr(false)}>
                                             ✕ QR
                                         </button>
                                     )}
-<<<<<<< HEAD
-=======
-                                    {/* ── Onglets 📷 / 🌍 ── */}
                                     {!showQr && (
                                         <div style={{ display: 'flex', gap: '.25rem' }}>
                                             {[
@@ -477,30 +431,19 @@ function Playground() {
                                             ))}
                                         </div>
                                     )}
-                                    {/* ── Indicateur statut ── */}
->>>>>>> origin/test
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.25rem .75rem', borderRadius: '20px', background: `rgba(${simStatus === 'online' ? '77,220,100' : simStatus === 'connecting' ? '240,165,0' : '255,68,68'},.1)`, border: `1px solid ${statusColor}44` }}>
                                         <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: statusColor, boxShadow: `0 0 8px ${statusColor}` }} />
                                         <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.72rem', color: statusColor }}>{statusLabel}</span>
                                     </div>
                                 </div>
                             </div>
-<<<<<<< HEAD
-                            <div style={S.simBody}>
-=======
 
                             <div style={S.simBody}>
-                                {/* ── Champ URL + bouton Connecter ── */}
->>>>>>> origin/test
                                 <div style={{ display: 'flex', gap: '.4rem', width: '100%', flexShrink: 0 }}>
                                     <input style={wsInput} value={wsUrl} onChange={e => setWsUrl(e.target.value)} placeholder="ws://127.0.0.1:8765" />
                                     <button style={btnConn} onClick={connectWebots}>Connecter</button>
                                 </div>
 
-<<<<<<< HEAD
-=======
-                                {/* ── QR Code ── */}
->>>>>>> origin/test
                                 {showQr ? (
                                     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', width: '100%' }}>
                                         <div style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.8rem', color: '#fbbf24', letterSpacing: '.05em' }}>
@@ -514,35 +457,14 @@ function Playground() {
                                         </div>
                                     </div>
                                 ) : (
-<<<<<<< HEAD
                                     <div style={{ width: '100%', flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '10px', border: '1px solid rgba(108,190,255,0.18)', background: 'rgba(2,5,16,0.7)', minHeight: 0 }}>
-=======
-                                    /* ── Flux vidéo (cam ou overview) ── */
-                                    <div style={{ width: '100%', flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '10px', border: '1px solid rgba(108,190,255,0.18)', background: 'rgba(2,5,16,0.7)', minHeight: 0 }}>
-                                        {/* Badge REC */}
->>>>>>> origin/test
                                         <div style={{ position: 'absolute', top: '7px', left: '8px', zIndex: 3, display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.5)', padding: '2px 7px', borderRadius: '20px' }}>
                                             <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#ff4444', boxShadow: '0 0 5px #ff4444', animation: 'ublink 1s ease-in-out infinite' }} />
                                             <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.52rem', color: 'rgba(255,255,255,.75)', fontWeight: 'bold' }}>REC</span>
                                         </div>
-<<<<<<< HEAD
-                                        <div style={{ position: 'absolute', top: '7px', right: '8px', zIndex: 3, background: 'rgba(0,0,0,0.5)', padding: '2px 7px', borderRadius: '20px' }}>
-                                            <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.58rem', color: 'rgba(108,190,255,.9)' }}>📷 CAM ROBOT</span>
-                                        </div>
-                                        {camFrame ? (
-                                            <img src={camFrame} alt="cam" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', imageRendering: 'crisp-edges' }} />
-                                        ) : (
-                                            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.5rem' }}>
-                                                <span style={{ fontSize: '2.2rem' }}>📷</span>
-                                                <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.7rem', color: 'rgba(200,221,240,.35)' }}>EN ATTENTE DE CONNEXION</span>
-                                            </div>
-                                        )}
-=======
-                                        {/* Badge label caméra active */}
                                         <div style={{ position: 'absolute', top: '7px', right: '8px', zIndex: 3, background: 'rgba(0,0,0,0.5)', padding: '2px 7px', borderRadius: '20px' }}>
                                             <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.58rem', color: 'rgba(108,190,255,.9)' }}>{activeCamLabel}</span>
                                         </div>
-                                        {/* Image ou placeholder */}
                                         {activeFrame ? (
                                             <img
                                                 src={activeFrame}
@@ -557,16 +479,10 @@ function Playground() {
                                                 </span>
                                             </div>
                                         )}
-                                        {/* Scanlines CRT */}
->>>>>>> origin/test
                                         <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 4px)', pointerEvents: 'none', zIndex: 2 }} />
                                     </div>
                                 )}
 
-<<<<<<< HEAD
-=======
-                                {/* ── Légende clavier ── */}
->>>>>>> origin/test
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', flexShrink: 0, padding: '.2rem 0' }}>
                                     {[
                                         { k: '↑ / Z', label: 'Avancer' },
@@ -582,10 +498,6 @@ function Playground() {
                                     ))}
                                 </div>
 
-<<<<<<< HEAD
-=======
-                                {/* ── Log WebSocket ── */}
->>>>>>> origin/test
                                 {wsLog ? (
                                     <div style={{ fontSize: '.58rem', fontFamily: "'Space Mono',monospace", color: 'rgba(200,221,240,.45)', textAlign: 'center', padding: '.15rem .5rem', background: 'rgba(2,5,16,.4)', borderRadius: '6px', width: '100%', flexShrink: 0 }}>
                                         {wsLog}
