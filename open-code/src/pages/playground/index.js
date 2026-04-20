@@ -1,10 +1,11 @@
-import React, { useState, useRef, useContext } from 'react';
+﻿import React, { useState, useRef, useContext } from 'react';
 import BlocklyComponent from "../../components/blockly";
 import { Toolbox } from "../../components/blockly/toolbox/Toolbox";
 import { Header } from "../../components/navBar/header";
 import { StoreContext } from "../../context/context";
 import CodeEditor from "../../components/editor/codeEditor";
-import { runBlocklyCode, initParser } from '../../utils/parser';
+import * as ParserModule from '../../utils/parser';
+import QrCode from '../../components/qrcode/qrcode';
 
 // ── Canvas étoiles ──
 const COLS = ['#ffffff', '#fffde7', '#6cbefd', '#b39ddb', '#f48fb1', '#a5d6a7', '#fcd34d'];
@@ -122,25 +123,29 @@ const GlobalStyles = () => (
 );
 
 function Playground() {
-    const { category, setCategory } = useContext(StoreContext);
+    const { category, setCategory, setCode, setGenerateCode } = useContext(StoreContext);
     const [simStatus, setSimStatus] = useState('offline');
-    const [wsUrl, setWsUrl] = useState('ws://192.168.1.189:1234');
+    const [wsUrl, setWsUrl] = useState('ws://127.0.0.1:8765');
     const [wsLog, setWsLog] = useState('');
-    const [camFrame, setCamFrame] = useState(null);
+    const [camFrame, setCamFrame] = useState(null);       // 📷 Caméra robot  (port 8765)
+    const [camOverview, setCamOverview] = useState(null);       // 🌍 Overview       (port 8766)
+    const [simTab, setSimTab] = useState('cam');      // 'cam' | 'overview'
+    const [showQr, setShowQr] = useState(false);
     const wsRef = useRef(null);
+    const wsOverviewRef = useRef(null);
     const keysRef = useRef({});
 
-    // Contrôle clavier
+    // ── Clavier : commandes alignées avec le contrôleur Python ──────────────
     React.useEffect(() => {
         const keyMap = {
-            'ArrowUp': 'move_forward',
-            'ArrowDown': 'move_backward',
-            'ArrowLeft': 'turn_left',
-            'ArrowRight': 'turn_right',
-            'z': 'move_forward', 'Z': 'move_forward',
-            's': 'move_backward', 'S': 'move_backward',
-            'q': 'turn_left', 'Q': 'turn_left',
-            'd': 'turn_right', 'D': 'turn_right',
+            'ArrowUp': 'moveForward',
+            'ArrowDown': 'moveBackward',
+            'ArrowLeft': 'turnLeft',
+            'ArrowRight': 'turnRight',
+            'z': 'moveForward', 'Z': 'moveForward',
+            's': 'moveBackward', 'S': 'moveBackward',
+            'q': 'turnLeft', 'Q': 'turnLeft',
+            'd': 'turnRight', 'D': 'turnRight',
             ' ': 'stop',
         };
         const onKeyDown = (e) => {
@@ -151,7 +156,8 @@ function Playground() {
         };
         const onKeyUp = (e) => {
             keysRef.current[e.key] = false;
-            if (keyMap[e.key] && keyMap[e.key] !== 'stop') sendCmd('stop');
+            const cmd = keyMap[e.key];
+            if (cmd && cmd !== 'stop') sendCmd('stop');
         };
         window.addEventListener('keydown', onKeyDown);
         window.addEventListener('keyup', onKeyUp);
@@ -171,17 +177,27 @@ function Playground() {
     };
 
     const connectWebots = () => {
+        if (wsRef.current) wsRef.current.close();
+        if (wsOverviewRef.current) wsOverviewRef.current.close();
         setSimStatus('connecting');
+
         try {
             const ws = new WebSocket(wsUrl);
             wsRef.current = ws;
+
             ws.onopen = () => {
                 setSimStatus('online');
                 setWsLog('✅ Connecté !');
-                initParser(ws); // ✅ initialiser le parser avec le WebSocket
+                ParserModule.initParser(ws);
+                startOverview(); // ← nouveau nom
             };
-            ws.onerror = () => { setSimStatus('offline'); setWsLog('❌ Erreur'); };
-            ws.onclose = () => { setSimStatus('offline'); setWsLog('⚠️ Déconnecté'); setCamFrame(null); };
+            ws.onerror = () => { setSimStatus('offline'); setWsLog('❌ Erreur connexion'); };
+            ws.onclose = () => {
+                setSimStatus('offline');
+                setWsLog('⚠️ Déconnecté');
+                setCamFrame(null);
+                overviewActiveRef.current = false; // ← arrête la reconnexion overview
+            };
             ws.onmessage = (e) => {
                 if (typeof e.data === 'string' && e.data.startsWith('CAM:')) {
                     setCamFrame('data:image/jpeg;base64,' + e.data.substring(4));
@@ -189,19 +205,130 @@ function Playground() {
                 }
                 try {
                     const msg = JSON.parse(e.data);
-                    if (msg.type === 'camera') {
-                        setCamFrame('data:image/png;base64,' + msg.data);
-                        return;
-                    }
+                    if (msg.type === 'camera') { setCamFrame('data:image/png;base64,' + msg.data); return; }
                 } catch (_) { }
                 setWsLog('📩 ' + e.data);
             };
         } catch (e) { setSimStatus('offline'); setWsLog('❌ ' + e.message); }
     };
 
+    const overviewActiveRef = React.useRef(false);
+
+    const startOverview = () => {
+        overviewActiveRef.current = true;
+        connectOverviewLoop();
+    };
+
+    const connectOverviewLoop = () => {
+        if (!overviewActiveRef.current) return;
+        if (wsOverviewRef.current) {
+            wsOverviewRef.current.onclose = null;
+            wsOverviewRef.current.close();
+        }
+
+        try {
+            const overviewUrl = wsUrl.replace('8765', '8766');
+            const ws2 = new WebSocket(overviewUrl);
+            wsOverviewRef.current = ws2;
+
+            ws2.onopen = () => console.log('✅ Overview connecté');
+
+            ws2.onmessage = (e) => {
+                if (typeof e.data === 'string' && e.data.startsWith('CAM:')) {
+                    setCamOverview('data:image/jpeg;base64,' + e.data.substring(4));
+                }
+            };
+
+            ws2.onclose = () => {
+                setCamOverview(null);
+                if (overviewActiveRef.current) {
+                    setTimeout(connectOverviewLoop, 500); // ← reconnexion auto
+                }
+            };
+
+            ws2.onerror = () => {
+                setCamOverview(null);
+            };
+        } catch (_) {
+            setCamOverview(null);
+            if (overviewActiveRef.current) {
+                setTimeout(connectOverviewLoop, 500);
+            }
+        }
+    };
+    const handleRun = () => {
+        try {
+            console.log("▶ Run cliqué !");
+            const Blockly = require('blockly/core');
+            const { javascriptGenerator } = require('blockly/javascript');
+            const workspace = Blockly.getMainWorkspace();
+            const code = javascriptGenerator.workspaceToCode(workspace);
+            console.log("=== CODE JS ===\n", code);
+            ParserModule.runBlocklyCode(code);
+        } catch (e) {
+            console.error("❌ Erreur Run:", e);
+            const code = window.__currentPythonCode || '';
+            console.log("=== FALLBACK ===\n", code);
+            if (code) ParserModule.runBlocklyCode(code);
+        }
+    };
+
+    const handleQR = () => {
+        try {
+            const Blockly = require('blockly/core');
+            const { javascriptGenerator } = require('blockly/javascript');
+            const workspace = Blockly.getMainWorkspace();
+            const jsCode = javascriptGenerator.workspaceToCode(workspace);
+
+            const commands = [];
+            const lines = jsCode.split('\n');
+
+            for (const line of lines) {
+                const l = line.trim();
+                if (l.startsWith('moveForward')) {
+                    const m = l.match(/\((\d+\.?\d*)\)/);
+                    const speed = m ? parseFloat(m[1]) / 255 : 0.75;
+                    commands.push({ left: +speed.toFixed(2), right: +speed.toFixed(2), duration: 1000 });
+                } else if (l.startsWith('moveBackward')) {
+                    const m = l.match(/\((\d+\.?\d*)\)/);
+                    const speed = m ? parseFloat(m[1]) / 255 : 0.75;
+                    commands.push({ left: -+speed.toFixed(2), right: -+speed.toFixed(2), duration: 1000 });
+                } else if (l.startsWith('moveLeft') || l.startsWith('turnLeft')) {
+                    const m = l.match(/\((\d+\.?\d*)\)/);
+                    const speed = m ? parseFloat(m[1]) / 255 : 0.75;
+                    commands.push({ left: 0, right: +speed.toFixed(2), duration: 600 });
+                } else if (l.startsWith('moveRight') || l.startsWith('turnRight')) {
+                    const m = l.match(/\((\d+\.?\d*)\)/);
+                    const speed = m ? parseFloat(m[1]) / 255 : 0.75;
+                    commands.push({ left: +speed.toFixed(2), right: 0, duration: 600 });
+                } else if (l.startsWith('wait') && commands.length > 0) {
+                    const m = l.match(/\((\d+)\)/);
+                    if (m) commands[commands.length - 1].duration = parseInt(m[1]);
+                }
+            }
+
+            if (commands.length === 0) {
+                alert('Aucun bloc de mouvement détecté ! Ajoute des blocs move dans Blockly.');
+                return;
+            }
+
+            setCode({ path: commands });
+            setGenerateCode(prev => !prev);
+            setShowQr(true);
+            setWsLog('📱 QR Code généré — ' + commands.length + ' commande(s)');
+        } catch (e) {
+            console.error('❌ Erreur QR:', e);
+            alert('Erreur : ' + e.message);
+        }
+    };
+
     const ispy = category === 'py';
     const statusColor = simStatus === 'online' ? '#4ddc64' : simStatus === 'connecting' ? '#f0a500' : '#ff4444';
     const statusLabel = simStatus === 'online' ? 'CONNECTÉ' : simStatus === 'connecting' ? 'CONNEXION...' : 'OFFLINE';
+
+    // Quel frame afficher selon l'onglet actif
+    const activeFrame = simTab === 'cam' ? camFrame : camOverview;
+    const activeCamLabel = simTab === 'cam' ? '📷 CAM ROBOT' : '🌍 VUE 3D';
 
     const S = {
         root: { position: 'relative', height: '100vh', overflow: 'hidden', fontFamily: "'Nunito',sans-serif" },
@@ -226,7 +353,6 @@ function Playground() {
             <div style={S.overlay}>
                 <Header />
                 <div style={S.main}>
-                    {/* GAUCHE : Blockly */}
                     <div style={S.left}>
                         <div className="ws-scan" style={{ zIndex: 1 }} />
                         <BlocklyComponent
@@ -241,10 +367,8 @@ function Playground() {
                         </BlocklyComponent>
                     </div>
 
-                    {/* DROITE */}
                     <div style={S.right}>
-
-                        {/* Panel Code */}
+                        {/* ── Panneau éditeur de code ── */}
                         <div style={S.pyPanel}>
                             <div className="robo-panel-hdr">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
@@ -259,22 +383,15 @@ function Playground() {
                                         onClick={() => setCategory(ispy ? 'js' : 'py')}>
                                         {ispy ? '⚡ JS' : '🐍 PY'}
                                     </button>
-                                    {/* ✅ BOUTON RUN */}
-                                    <button className="robo-pb"
+                                    <button id="run-btn" className="robo-pb"
                                         style={{ background: 'rgba(77,220,100,.15)', border: '1px solid rgba(77,220,100,.3)', color: '#4ddc64' }}
-                                        onClick={() => {
-                                            try {
-                                                const Blockly = require('blockly/core');
-                                                const { javascriptGenerator } = require('blockly/javascript');
-                                                const workspace = Blockly.getMainWorkspace();
-                                                const code = javascriptGenerator.workspaceToCode(workspace);
-                                                console.log("▶ Code généré:", code);
-                                                runBlocklyCode(code);
-                                            } catch (e) {
-                                                console.error("❌ Erreur Run:", e);
-                                            }
-                                        }}>
+                                        onClick={handleRun}>
                                         ▶ Run
+                                    </button>
+                                    <button className="robo-pb"
+                                        style={{ background: 'rgba(251,191,36,.15)', border: '1px solid rgba(251,191,36,.3)', color: '#fbbf24' }}
+                                        onClick={handleQR}>
+                                        📱 QR
                                     </button>
                                 </div>
                             </div>
@@ -283,44 +400,99 @@ function Playground() {
                             </div>
                         </div>
 
-                        {/* Panel Simulateur */}
+                        {/* ── Panneau simulateur ── */}
                         <div style={S.simPanel}>
                             <div className="robo-panel-hdr">
                                 <span style={S.simTitle}>🤖 SIMULATEUR ROBOT</span>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.25rem .75rem', borderRadius: '20px', background: `rgba(${simStatus === 'online' ? '77,220,100' : simStatus === 'connecting' ? '240,165,0' : '255,68,68'},.1)`, border: `1px solid ${statusColor}44` }}>
-                                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: statusColor, boxShadow: `0 0 8px ${statusColor}` }} />
-                                    <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.72rem', color: statusColor }}>{statusLabel}</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                                    {showQr && (
+                                        <button className="robo-pb"
+                                            style={{ background: 'rgba(251,191,36,.1)', border: '1px solid rgba(251,191,36,.25)', color: '#fbbf24', fontSize: '.6rem' }}
+                                            onClick={() => setShowQr(false)}>
+                                            ✕ QR
+                                        </button>
+                                    )}
+                                    {/* ── Onglets 📷 / 🌍 ── */}
+                                    {!showQr && (
+                                        <div style={{ display: 'flex', gap: '.25rem' }}>
+                                            {[
+                                                { id: 'cam', label: '📷 Robot' },
+                                                { id: 'overview', label: '🌍 Vue 3D' },
+                                            ].map(tab => (
+                                                <button key={tab.id} className="robo-pb"
+                                                    onClick={() => setSimTab(tab.id)}
+                                                    style={{
+                                                        background: simTab === tab.id ? 'rgba(108,190,255,.25)' : 'rgba(108,190,255,.08)',
+                                                        border: `1px solid rgba(108,190,255,${simTab === tab.id ? '.5' : '.2'})`,
+                                                        color: simTab === tab.id ? '#6cbefd' : 'rgba(200,221,240,.45)',
+                                                        fontSize: '.62rem',
+                                                    }}>
+                                                    {tab.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {/* ── Indicateur statut ── */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.25rem .75rem', borderRadius: '20px', background: `rgba(${simStatus === 'online' ? '77,220,100' : simStatus === 'connecting' ? '240,165,0' : '255,68,68'},.1)`, border: `1px solid ${statusColor}44` }}>
+                                        <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: statusColor, boxShadow: `0 0 8px ${statusColor}` }} />
+                                        <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.72rem', color: statusColor }}>{statusLabel}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div style={S.simBody}>
 
-                                {/* Barre connexion */}
+                            <div style={S.simBody}>
+                                {/* ── Champ URL + bouton Connecter ── */}
                                 <div style={{ display: 'flex', gap: '.4rem', width: '100%', flexShrink: 0 }}>
-                                    <input style={wsInput} value={wsUrl} onChange={e => setWsUrl(e.target.value)} placeholder="ws://localhost:1234" />
+                                    <input style={wsInput} value={wsUrl} onChange={e => setWsUrl(e.target.value)} placeholder="ws://127.0.0.1:8765" />
                                     <button style={btnConn} onClick={connectWebots}>Connecter</button>
                                 </div>
 
-                                {/* CAM ROBOT */}
-                                <div style={{ width: '100%', flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '10px', border: '1px solid rgba(108,190,255,0.18)', background: 'rgba(2,5,16,0.7)', minHeight: 0 }}>
-                                    <div style={{ position: 'absolute', top: '7px', left: '8px', zIndex: 3, display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.5)', padding: '2px 7px', borderRadius: '20px' }}>
-                                        <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#ff4444', boxShadow: '0 0 5px #ff4444', animation: 'ublink 1s ease-in-out infinite' }} />
-                                        <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.52rem', color: 'rgba(255,255,255,.75)', fontWeight: 'bold' }}>REC</span>
-                                    </div>
-                                    <div style={{ position: 'absolute', top: '7px', right: '8px', zIndex: 3, background: 'rgba(0,0,0,0.5)', padding: '2px 7px', borderRadius: '20px' }}>
-                                        <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.58rem', color: 'rgba(108,190,255,.9)' }}>📷 CAM ROBOT</span>
-                                    </div>
-                                    {camFrame ? (
-                                        <img src={camFrame} alt="cam" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', imageRendering: 'crisp-edges' }} />
-                                    ) : (
-                                        <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.5rem' }}>
-                                            <span style={{ fontSize: '2.2rem' }}>📷</span>
-                                            <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.7rem', color: 'rgba(200,221,240,.35)' }}>EN ATTENTE DE CONNEXION</span>
+                                {/* ── QR Code ── */}
+                                {showQr ? (
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', width: '100%' }}>
+                                        <div style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.8rem', color: '#fbbf24', letterSpacing: '.05em' }}>
+                                            📱 Scanner avec l'app OpenBot
                                         </div>
-                                    )}
-                                    <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 4px)', pointerEvents: 'none', zIndex: 2 }} />
-                                </div>
+                                        <div style={{ background: 'white', borderRadius: '12px', padding: '10px', boxShadow: '0 0 30px rgba(251,191,36,0.3)' }}>
+                                            <QrCode />
+                                        </div>
+                                        <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.52rem', color: 'rgba(200,221,240,.4)', textAlign: 'center' }}>
+                                            Appuie sur ⊡ dans l'app puis scanne
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* ── Flux vidéo (cam ou overview) ── */
+                                    <div style={{ width: '100%', flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '10px', border: '1px solid rgba(108,190,255,0.18)', background: 'rgba(2,5,16,0.7)', minHeight: 0 }}>
+                                        {/* Badge REC */}
+                                        <div style={{ position: 'absolute', top: '7px', left: '8px', zIndex: 3, display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.5)', padding: '2px 7px', borderRadius: '20px' }}>
+                                            <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#ff4444', boxShadow: '0 0 5px #ff4444', animation: 'ublink 1s ease-in-out infinite' }} />
+                                            <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.52rem', color: 'rgba(255,255,255,.75)', fontWeight: 'bold' }}>REC</span>
+                                        </div>
+                                        {/* Badge label caméra active */}
+                                        <div style={{ position: 'absolute', top: '7px', right: '8px', zIndex: 3, background: 'rgba(0,0,0,0.5)', padding: '2px 7px', borderRadius: '20px' }}>
+                                            <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.58rem', color: 'rgba(108,190,255,.9)' }}>{activeCamLabel}</span>
+                                        </div>
+                                        {/* Image ou placeholder */}
+                                        {activeFrame ? (
+                                            <img
+                                                src={activeFrame}
+                                                alt="cam"
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', imageRendering: 'crisp-edges' }}
+                                            />
+                                        ) : (
+                                            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.5rem' }}>
+                                                <span style={{ fontSize: '2.2rem' }}>{simTab === 'cam' ? '📷' : '🌍'}</span>
+                                                <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.7rem', color: 'rgba(200,221,240,.35)' }}>
+                                                    {simStatus === 'online' ? 'EN ATTENTE DE FRAME...' : 'EN ATTENTE DE CONNEXION'}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {/* Scanlines CRT */}
+                                        <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 4px)', pointerEvents: 'none', zIndex: 2 }} />
+                                    </div>
+                                )}
 
-                                {/* Guide clavier */}
+                                {/* ── Légende clavier ── */}
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', flexShrink: 0, padding: '.2rem 0' }}>
                                     {[
                                         { k: '↑ / Z', label: 'Avancer' },
@@ -336,7 +508,7 @@ function Playground() {
                                     ))}
                                 </div>
 
-                                {/* Log */}
+                                {/* ── Log WebSocket ── */}
                                 {wsLog ? (
                                     <div style={{ fontSize: '.58rem', fontFamily: "'Space Mono',monospace", color: 'rgba(200,221,240,.45)', textAlign: 'center', padding: '.15rem .5rem', background: 'rgba(2,5,16,.4)', borderRadius: '6px', width: '100%', flexShrink: 0 }}>
                                         {wsLog}
