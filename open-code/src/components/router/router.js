@@ -1,6 +1,9 @@
 import { Outlet, Route, Routes, useNavigate } from 'react-router-dom'
+import Intro from "../../pages/intro";
 import Home from "../../pages/home";
 import Playground from "../../pages/playground";
+import SignIn from "../../pages/signin";
+import SignUp from "../../pages/signup";
 import { PathName } from "../../utils/constants";
 import { useContext } from "react";
 import { ThemeContext } from "../../App";
@@ -15,9 +18,19 @@ export const RouterComponent = () => {
     return (
         <Routes>
             <Route path={PathName.home} element={<Outlet />}>
-                <Route index element={<Home />} />
+
+                {/* 👇 INTRO devient page principale */}
+                <Route index element={<Intro />} />
+                <Route path="signin" element={<SignIn />} />
+                <Route path="signup" element={<SignUp />} />
+
+                {/* Home devient secondaire */}
+                <Route path="home" element={<Home />} />
+
                 <Route path={PathName.playGround} element={<Playground />} />
+
                 <Route path="*" element={<NotFound />} />
+
             </Route>
         </Routes>
     )

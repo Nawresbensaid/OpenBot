@@ -16,8 +16,7 @@
  * limitations under the License.
  */
 
-
-import {javascriptGenerator} from 'blockly/javascript';
+import { javascriptGenerator } from 'blockly/javascript';
 
 /**
  * code generation of blocks in javascript
@@ -43,47 +42,43 @@ javascriptGenerator.forBlock['forever'] = function (block) {
 //Javascript generated function for type of sound block
 javascriptGenerator.forBlock['soundType'] = function (block) {
     let dropdown_type = block.getFieldValue('type');
-    let value_name = javascriptGenerator.valueToCode(block, 'NAME', javascriptGenerator.ORDER_ATOMIC);
     let code = '';
-    code += "playSoundSpeed('" + dropdown_type + "');\n" + value_name;
+    code += "playSoundSpeed('" + dropdown_type + "');\n";
     return code;
 };
 
 //Javascript generated function for type of drive sound block
 javascriptGenerator.forBlock['soundMode'] = function (block) {
     let dropdown_mode_type = block.getFieldValue('mode_type');
-    let value_name = javascriptGenerator.valueToCode(block, 'NAME', javascriptGenerator.ORDER_ATOMIC);
     let code = '';
-    code += "playSoundMode('" + dropdown_mode_type + "');\n" + value_name;
+    code += "playSoundMode('" + dropdown_mode_type + "');\n";
     return code;
 };
 
-//Javascript generated function for forward and backward movement block
+// ✅ PATCH — forward/backward : lit input_value, défaut 192 si vide
 javascriptGenerator.forBlock['forward&BackwardAtSpeed'] = function (block) {
     let dropdown_direction_type = block.getFieldValue('direction_type');
-    let number_specified_amount = block.getFieldValue('slider');
-    let code = '';
-    code += dropdown_direction_type + "(" + number_specified_amount + ");\n";
-    return code;
+    let speed = javascriptGenerator.valueToCode(block, 'speed', javascriptGenerator.ORDER_NONE);
+    // ✅ Si rien n'est connecté, valueToCode retourne '' → on met 192 par défaut
+    if (!speed || speed.trim() === '') speed = '192';
+    return dropdown_direction_type + "(" + speed + ");\n";
 };
 
-//Javascript generated function for left and right movement block
+// ✅ PATCH — left/right : lit input_value, défaut 192 si vide
 javascriptGenerator.forBlock['left&RightAtSpeed'] = function (block) {
     let dropdown_direction_type = block.getFieldValue('direction_type');
-    let number_specified_amount = block.getFieldValue('slider');
-    let code = '';
-    code += dropdown_direction_type + "(" + number_specified_amount + ");\n";
-    return code;
+    let speed = javascriptGenerator.valueToCode(block, 'speed', javascriptGenerator.ORDER_NONE);
+    if (!speed || speed.trim() === '') speed = '192';
+    return dropdown_direction_type + "(" + speed + ");\n";
 };
 
-//Javascript generated function for circle movement block
+// ✅ PATCH — moveLeft&Right : lit deux input_value, défaut 192 si vide
 javascriptGenerator.forBlock['moveLeft&Right'] = function (block) {
-    let number_left_distance = block.getFieldValue('left_distance');
-    let number_right_distance = block.getFieldValue('right_distance');
-
-    let code = '';
-    code += "moveOpenBot(" + number_left_distance + "," + number_right_distance + ");\n";
-    return code;
+    let left = javascriptGenerator.valueToCode(block, 'left_speed', javascriptGenerator.ORDER_NONE);
+    let right = javascriptGenerator.valueToCode(block, 'right_speed', javascriptGenerator.ORDER_NONE);
+    if (!left || left.trim() === '') left = '192';
+    if (!right || right.trim() === '') right = '192';
+    return "moveOpenBot(" + left + "," + right + ");\n";
 };
 
 //Javascript generated function for stop movement block
@@ -93,103 +88,80 @@ javascriptGenerator.forBlock['movementStop'] = function () {
     return code;
 };
 
-//Javascript generated function for sonar reading block
+// ✅ Une seule définition correcte de sonarReading
 javascriptGenerator.forBlock['sonarReading'] = function () {
-    let code = '';
-    code += "sonarReading();\n";
-    return code;
+    return ["sonarReading()", javascriptGenerator.ORDER_NONE];
 };
 
-//Javascript generated function for speed movement block
+//Javascript generated function for speed reading block
 javascriptGenerator.forBlock['speedReading'] = function () {
-    let code = '';
-    code += "speedReading()";
-    return [code, javascriptGenerator.ORDER_NONE];
+    return ["speedReading()", javascriptGenerator.ORDER_NONE];
 };
 
 //Javascript generated function for wheel odometer block
 javascriptGenerator.forBlock['wheelOdometerSensors'] = function (block) {
     let dropdown_wheel_sensors = block.getFieldValue('wheel_sensors');
-    let code = '';
-    code += dropdown_wheel_sensors + "()";
-    return [code, javascriptGenerator.ORDER_NONE];
+    return [dropdown_wheel_sensors + "()", javascriptGenerator.ORDER_NONE];
 };
 
 //Javascript generated function for voltage divider reading block
 javascriptGenerator.forBlock['voltageDividerReading'] = function () {
-    let code = '';
-    code += "voltageDividerReading()";
-    return [code, javascriptGenerator.ORDER_NONE];
+    return ["voltageDividerReading()", javascriptGenerator.ORDER_NONE];
 };
 
 //Javascript generated function for gyroscope reading block
 javascriptGenerator.forBlock['gyroscope_reading'] = function (block) {
-    let code = '';
     let dropdown_type = block.getFieldValue('axis');
 
     function scaleType() {
         switch (dropdown_type) {
-            case "x":
-                return "X";
-            case "y":
-                return "Y";
-            case "z":
-                return "Z";
-            default:
+            case "x": return "X";
+            case "y": return "Y";
+            case "z": return "Z";
+            default: return "X";
         }
     }
 
-    code += "gyroscopeReading" + scaleType() + "()";
-    return [code, javascriptGenerator.ORDER_NONE];
+    return ["gyroscopeReading" + scaleType() + "()", javascriptGenerator.ORDER_NONE];
 };
 
 //Javascript generated function for acceleration reading block
 javascriptGenerator.forBlock['acceleration_reading'] = function (block) {
-    let code = "";
     let dropdown_type = block.getFieldValue('axis');
 
     function scaleType() {
         switch (dropdown_type) {
-            case "x":
-                return "X";
-            case "y":
-                return "Y";
-            case "z":
-                return "Z";
-            default:
+            case "x": return "X";
+            case "y": return "Y";
+            case "z": return "Z";
+            default: return "X";
         }
     }
 
-    code += "accelerationReading" + scaleType() + "()";
-    return [code, javascriptGenerator.ORDER_NONE];
+    return ["accelerationReading" + scaleType() + "()", javascriptGenerator.ORDER_NONE];
 };
 
 //Javascript generated function for magnetic reading block
 javascriptGenerator.forBlock['magnetic_reading'] = function (block) {
-    let code = "";
     let dropdown_type = block.getFieldValue('axis');
 
     function scaleType() {
         switch (dropdown_type) {
-            case "x":
-                return "X";
-            case "y":
-                return "Y";
-            case "z":
-                return "Z";
-            default:
+            case "x": return "X";
+            case "y": return "Y";
+            case "z": return "Z";
+            default: return "X";
         }
     }
 
-    code += "magneticReading" + scaleType() + "()";
-    return [code, javascriptGenerator.ORDER_NONE];
+    return ["magneticReading" + scaleType() + "()", javascriptGenerator.ORDER_NONE];
 };
 
 //Javascript generated function for static speed block
 javascriptGenerator.forBlock['speedControl'] = function (block) {
     let dropdown_type = block.getFieldValue('type');
     let code = '';
-    code += "setSpeed(" + dropdown_type + ");\n";
+    code += "speedControl(" + dropdown_type + ");\n";
     return code;
 };
 
@@ -197,7 +169,7 @@ javascriptGenerator.forBlock['speedControl'] = function (block) {
 javascriptGenerator.forBlock['controllerMode'] = function (block) {
     let dropdown_controller = block.getFieldValue('controller');
     let code = '';
-    code += "switchController(" + dropdown_controller + ");\n";
+    code += "controllerMode(" + dropdown_controller + ");\n";
     return code;
 };
 
@@ -205,7 +177,7 @@ javascriptGenerator.forBlock['controllerMode'] = function (block) {
 javascriptGenerator.forBlock['driveModeControls'] = function (block) {
     let dropdown_driveModeControls = block.getFieldValue('controller');
     let code = '';
-    code += "switchDriveMode(" + dropdown_driveModeControls + ");\n";
+    code += "driveModeControls(" + dropdown_driveModeControls + ");\n";
     return code;
 };
 
@@ -214,7 +186,7 @@ javascriptGenerator.forBlock['brightness'] = function (block) {
     let value = block.getFieldValue('slider');
     let code = "";
     code += "ledBrightness(" + value + ");\n";
-    return code
+    return code;
 };
 
 //Javascript generated function for wait block
@@ -222,14 +194,7 @@ javascriptGenerator.forBlock['wait'] = function (block) {
     let value = block.getFieldValue('time');
     let code = "";
     code += "pause(" + value + ");\n";
-    return code
-};
-
-//Javascript generated function for sonar reading block
-javascriptGenerator.forBlock['sonarReading'] = function () {
-    let code = "";
-    code += "sonarReading() ";
-    return [code, javascriptGenerator.ORDER_NONE];
+    return code;
 };
 
 //Javascript generated function for indicators block
@@ -271,7 +236,7 @@ javascriptGenerator.forBlock['brightnessHighOrLow'] = function (block) {
 javascriptGenerator.forBlock['autopilot'] = function (block) {
     let dropdown_autopilot_models = block.getFieldValue('autopilot models');
     let code = '';
-    code += "enableAutopilot('" + dropdown_autopilot_models + "');\n"
+    code += "autopilot('" + dropdown_autopilot_models + "');\n";
     return code;
 };
 
@@ -281,16 +246,16 @@ javascriptGenerator.forBlock['navigateForwardAndLeft'] = function (block) {
     let left_position = block.getFieldValue('left');
     let dropdown_navigation_models = block.getFieldValue('navigation_models');
     let code = '';
-    code += "reachGoal(" + forward_position + "," + left_position + ",'" + dropdown_navigation_models + "');\n";
+    code += "navigateForwardAndLeft(" + forward_position + "," + left_position + ",'" + dropdown_navigation_models + "');\n";
     return code;
 };
 
 //Javascript generated function for AI object tracking block
-javascriptGenerator.forBlock['objectTracking'] = function (block, generator) {
+javascriptGenerator.forBlock['objectTracking'] = function (block) {
     const dropdown_class = block.getFieldValue('class');
     const dropdown_models = block.getFieldValue('models');
     let code = "";
-    code += "follow('" + dropdown_class + "','" + dropdown_models + "');\n"
+    code += "objectTracking('" + dropdown_class + "','" + dropdown_models + "');\n";
     return code;
 };
 
@@ -308,7 +273,7 @@ javascriptGenerator.forBlock['multipleAIDetection'] = function (block) {
     let objectTracking_models = block.getFieldValue('objectTracking_models');
     let tasks = javascriptGenerator.statementToCode(block, 'tasks');
     let code = "";
-    code += "enableMultipleAI('" + autopilot_models + "','" + tasks + "','" + labels + "','" + objectTracking_models + "');\n"
+    code += "multipleAIDetection('" + autopilot_models + "','" + labels + "','" + objectTracking_models + "', function(){\n" + tasks + "});\n";
     return code;
 };
 
@@ -319,41 +284,38 @@ javascriptGenerator.forBlock['multipleObjectTracking'] = function (block) {
     let labels2 = block.getFieldValue('labels2');
     let tasks = javascriptGenerator.statementToCode(block, 'tasks');
     let code = "";
-    code += "enableMultipleDetection('" + labels1 + "','" + models + "','" + labels2 + "','" + tasks + "');\n";
+    code += "multipleObjectTracking('" + labels1 + "','" + models + "','" + labels2 + "', function(){\n" + tasks + "});\n";
     return code;
 };
 
 //Javascript generated function for AI on frame detection
-javascriptGenerator.forBlock['variableDetection'] = function (block, generator) {
+javascriptGenerator.forBlock['variableDetection'] = function (block) {
     let labels = block.getFieldValue('labels');
     let models = block.getFieldValue('models');
     let detect_tasks = javascriptGenerator.statementToCode(block, 'detect_tasks');
     let frames = block.getFieldValue("frames");
     let framesLost_tasks = javascriptGenerator.statementToCode(block, 'framesLost_tasks');
     let code = "";
-    code += "onDetect" + '("' + labels + '","' + models + '","' + detect_tasks + '");\n' + 'onLostFrames("' + labels + '",' + frames + ',"' + framesLost_tasks + '");\n';
+    code += "variableDetection('" + labels + "','" + models + "', function(){\n" + detect_tasks + "}, function(){\n" + framesLost_tasks + "});\n";
     return code;
 };
 
-javascriptGenerator.forBlock['inputSound'] = function (block, generator) {
+//Javascript generated function for input sound block
+javascriptGenerator.forBlock['inputSound'] = function (block) {
     let text = block.getFieldValue('text');
     let code = "";
-    code += "playSound('" + text + "');\n";
+    code += "inputSound('" + text + "');\n";
     return code;
 };
 
-javascriptGenerator.forBlock['display_sensors'] = function (block, generator) {
-    let text = javascriptGenerator.blockToCode(block.getInputTargetBlock('value'), generator);
-    let code = "";
-    if (text[0] === undefined) {
-        code += "displaySensorData('');\n";
-    } else {
-        code += "displaySensorData('" + text[0] + "');\n";
-    }
-    return code;
+// ✅ FIX : display_sensors appelle la fonction réelle (sans guillemets)
+javascriptGenerator.forBlock['display_sensors'] = function (block) {
+    const value = javascriptGenerator.valueToCode(block, 'value', javascriptGenerator.ORDER_NONE) || '0';
+    return "displaySensorData(" + value + ");\n";
 };
 
-javascriptGenerator.forBlock['display_string'] = function (block, generator) {
+//Javascript generated function for display string block
+javascriptGenerator.forBlock['display_string'] = function (block) {
     let text = block.getFieldValue('text');
     let code = "";
     code += "displayString('" + text + "');\n";

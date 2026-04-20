@@ -4,9 +4,9 @@ import '../fields/DateField';
 import '@blockly/field-date';
 import '@blockly/field-slider';
 import '@blockly/block-plus-minus';
-import {Images} from "../../../utils/images";
+import { Images } from "../../../utils/images";
 import "./field_toggle";
-import {filterLabels, filterModels} from "../../../services/workspace";
+import { filterLabels, filterModels } from "../../../services/workspace";
 
 /**
  * Defining blocks with structure and their behaviour
@@ -100,18 +100,9 @@ Blockly.Blocks["soundType"] = {
                     "type": "field_dropdown",
                     "name": "type",
                     "options": [
-                        [
-                            "slow",
-                            "slow"
-                        ],
-                        [
-                            "medium",
-                            "medium"
-                        ],
-                        [
-                            "fast",
-                            "fast"
-                        ]
+                        ["slow", "slow"],
+                        ["medium", "medium"],
+                        ["fast", "fast"]
                     ]
                 },
             ],
@@ -135,18 +126,9 @@ Blockly.Blocks["soundMode"] = {
                     "type": "field_dropdown",
                     "name": "mode_type",
                     "options": [
-                        [
-                            "dual drive",
-                            "dual drive"
-                        ],
-                        [
-                            "joystick control",
-                            "joystick control"
-                        ],
-                        [
-                            "gamepad",
-                            "gamepad"
-                        ]
+                        ["dual drive", "dual drive"],
+                        ["joystick control", "joystick control"],
+                        ["gamepad", "gamepad"]
                     ]
                 },
             ],
@@ -159,7 +141,7 @@ Blockly.Blocks["soundMode"] = {
     }
 };
 
-//Blockly json structure for forward and backward movement block
+// ✅ PATCH — forward/backward : accepte slider ET variable connectée
 Blockly.Blocks["forward&BackwardAtSpeed"] = {
     init: function () {
         this.jsonInit({
@@ -170,23 +152,14 @@ Blockly.Blocks["forward&BackwardAtSpeed"] = {
                     "type": "field_dropdown",
                     "name": "direction_type",
                     "options": [
-                        [
-                            "forward",
-                            "moveForward"
-                        ],
-                        [
-                            "backward",
-                            "moveBackward"
-                        ],
+                        ["forward", "moveForward"],
+                        ["backward", "moveBackward"]
                     ]
                 },
                 {
-                    "type": "field_slider",
-                    "name": "slider",
-                    "value": 192,
-                    "min": 0, // Minimum value for the slider
-                    "max": 255 // Maximum value for the slider
-
+                    "type": "input_value",
+                    "name": "speed",
+                    "check": "Number"
                 }
             ],
             "previousStatement": null,
@@ -198,7 +171,7 @@ Blockly.Blocks["forward&BackwardAtSpeed"] = {
     }
 };
 
-//Blockly json structure for left and right movement block
+// ✅ PATCH — left/right : accepte slider ET variable connectée
 Blockly.Blocks["left&RightAtSpeed"] = {
     init: function () {
         this.jsonInit({
@@ -209,23 +182,14 @@ Blockly.Blocks["left&RightAtSpeed"] = {
                     "type": "field_dropdown",
                     "name": "direction_type",
                     "options": [
-                        [
-                            "left",
-                            "moveLeft"
-                        ],
-                        [
-                            "right",
-                            "moveRight"
-                        ],
+                        ["left", "moveLeft"],
+                        ["right", "moveRight"]
                     ]
                 },
                 {
-                    "type": "field_slider",
-                    "name": "slider",
-                    "value": 192,
-                    "min": 0, // Minimum value for the slider
-                    "max": 255 // Maximum value for the slider
-
+                    "type": "input_value",
+                    "name": "speed",
+                    "check": "Number"
                 }
             ],
             "previousStatement": null,
@@ -237,39 +201,23 @@ Blockly.Blocks["left&RightAtSpeed"] = {
     }
 };
 
-//Blockly json structure for circle movement block
+// ✅ PATCH — moveLeft&Right : accepte variables connectées
 Blockly.Blocks["moveLeft&Right"] = {
     init: function () {
         this.jsonInit({
             "type": "block_type",
-            "message0": "move %1 %2 %3 %4",
+            "message0": "move left at %1 and right at %2",
             "args0": [
                 {
-                    "type": "field_label_serializable",
-                    "name": "left_name",
-                    "text": "left at"
+                    "type": "input_value",
+                    "name": "left_speed",
+                    "check": "Number"
                 },
                 {
-                    "type": "field_slider",
-                    "name": "left_distance",
-                    "value": 192,
-                    "min": -255, // Minimum value for the slider
-                    "max": 255 // Maximum value for the slider
-
-                },
-                {
-                    "type": "field_label_serializable",
-                    "name": "right_name",
-                    "text": "and right at"
-                },
-                {
-                    "type": "field_slider",
-                    "name": "right_distance",
-                    "value": 192,
-                    "min": -255, // Minimum value for the slider
-                    "max": 255 // Maximum value for the slider
-
-                },
+                    "type": "input_value",
+                    "name": "right_speed",
+                    "check": "Number"
+                }
             ],
             "previousStatement": null,
             "nextStatement": null,
@@ -293,7 +241,6 @@ Blockly.Blocks["movementStop"] = {
                     "text": "stop car immediately"
                 }
             ],
-
             "previousStatement": null,
             "nextStatement": null,
             "colour": "#ca3143",
@@ -356,14 +303,8 @@ Blockly.Blocks["wheelOdometerSensors"] = {
                     "type": "field_dropdown",
                     "name": "wheel_sensors",
                     "options": [
-                        [
-                            "Front",
-                            "frontWheelReading"
-                        ],
-                        [
-                            "Back",
-                            "backWheelReading"
-                        ]
+                        ["Front", "frontWheelReading"],
+                        ["Back", "backWheelReading"]
                     ]
                 }
             ],
@@ -386,18 +327,9 @@ Blockly.Blocks["gyroscope_reading"] = {
                     "type": "field_dropdown",
                     "name": "axis",
                     "options": [
-                        [
-                            "x axis",
-                            "x"
-                        ],
-                        [
-                            "y axis",
-                            "y"
-                        ],
-                        [
-                            "z axis",
-                            "z"
-                        ]
+                        ["x axis", "x"],
+                        ["y axis", "y"],
+                        ["z axis", "z"]
                     ]
                 }
             ],
@@ -420,18 +352,9 @@ Blockly.Blocks["acceleration_reading"] = {
                     "type": "field_dropdown",
                     "name": "axis",
                     "options": [
-                        [
-                            "x axis",
-                            "x"
-                        ],
-                        [
-                            "y axis",
-                            "y"
-                        ],
-                        [
-                            "z axis",
-                            "z"
-                        ]
+                        ["x axis", "x"],
+                        ["y axis", "y"],
+                        ["z axis", "z"]
                     ]
                 }
             ],
@@ -454,18 +377,9 @@ Blockly.Blocks["magnetic_reading"] = {
                     "type": "field_dropdown",
                     "name": "axis",
                     "options": [
-                        [
-                            "x axis",
-                            "x"
-                        ],
-                        [
-                            "y axis",
-                            "y"
-                        ],
-                        [
-                            "z axis",
-                            "z"
-                        ]
+                        ["x axis", "x"],
+                        ["y axis", "y"],
+                        ["z axis", "z"]
                     ]
                 }
             ],
@@ -488,18 +402,9 @@ Blockly.Blocks["speedControl"] = {
                     "type": "field_dropdown",
                     "name": "type",
                     "options": [
-                        [
-                            "slow",
-                            "'slow'"
-                        ],
-                        [
-                            "medium",
-                            "'medium'"
-                        ],
-                        [
-                            "fast",
-                            "'fast'"
-                        ]
+                        ["slow", "'slow'"],
+                        ["medium", "'medium'"],
+                        ["fast", "'fast'"]
                     ]
                 }
             ],
@@ -516,31 +421,30 @@ Blockly.Blocks["speedControl"] = {
 Blockly.Blocks["controllerMode"] = {
     init: function () {
         this.jsonInit({
-                "type": "block_type",
-                "message0": "switch controller to %1",
-                "args0": [
-                    {
-                        "type": "field_dropdown",
-                        "name": "controller",
-                        "options": [
-                            [
-                                {"src": Images.phoneIcon, "width": 25, "height": 25, "alt": "phone"},
-                                "'phone'"
-                            ],
-                            [
-                                {"src": Images.gamepadIcon, "width": 25, "height": 25, "alt": "gamepad"},
-                                "'gamepad'"
-                            ]
+            "type": "block_type",
+            "message0": "switch controller to %1",
+            "args0": [
+                {
+                    "type": "field_dropdown",
+                    "name": "controller",
+                    "options": [
+                        [
+                            { "src": Images.phoneIcon, "width": 25, "height": 25, "alt": "phone" },
+                            "'phone'"
+                        ],
+                        [
+                            { "src": Images.gamepadIcon, "width": 25, "height": 25, "alt": "gamepad" },
+                            "'gamepad'"
                         ]
-                    }
-                ],
-                "previousStatement": null,
-                "nextStatement": null,
-                "colour": "#bf778b",
-                "tooltip": "",
-                "helpUrl": ""
-            }
-        );
+                    ]
+                }
+            ],
+            "previousStatement": null,
+            "nextStatement": null,
+            "colour": "#bf778b",
+            "tooltip": "",
+            "helpUrl": ""
+        });
     }
 };
 
@@ -548,35 +452,34 @@ Blockly.Blocks["controllerMode"] = {
 Blockly.Blocks["driveModeControls"] = {
     init: function () {
         this.jsonInit({
-                "type": "block_type",
-                "message0": "switch drive mode to %1",
-                "args0": [
-                    {
-                        "type": "field_dropdown",
-                        "name": "controller",
-                        "options": [
-                            [
-                                {"src": Images.dualDriveIcon, "width": 25, "height": 25, "alt": "dualDrive"},
-                                "'dualDrive'"
-                            ],
-                            [
-                                {"src": Images.joystickIcon, "width": 25, "height": 25, "alt": "joystick"},
-                                "'joystick'"
-                            ],
-                            [
-                                {"src": Images.gameIcon, "width": 25, "height": 25, "alt": "game"},
-                                "'game'"
-                            ],
-                        ]
-                    }
-                ],
-                "previousStatement": null,
-                "nextStatement": null,
-                "colour": "#bf778b",
-                "tooltip": "",
-                "helpUrl": ""
-            }
-        );
+            "type": "block_type",
+            "message0": "switch drive mode to %1",
+            "args0": [
+                {
+                    "type": "field_dropdown",
+                    "name": "controller",
+                    "options": [
+                        [
+                            { "src": Images.dualDriveIcon, "width": 25, "height": 25, "alt": "dualDrive" },
+                            "'dualDrive'"
+                        ],
+                        [
+                            { "src": Images.joystickIcon, "width": 25, "height": 25, "alt": "joystick" },
+                            "'joystick'"
+                        ],
+                        [
+                            { "src": Images.gameIcon, "width": 25, "height": 25, "alt": "game" },
+                            "'game'"
+                        ],
+                    ]
+                }
+            ],
+            "previousStatement": null,
+            "nextStatement": null,
+            "colour": "#bf778b",
+            "tooltip": "",
+            "helpUrl": ""
+        });
     }
 };
 
@@ -584,7 +487,6 @@ Blockly.Blocks["driveModeControls"] = {
 Blockly.Blocks["brightness"] = {
     init: function () {
         this.jsonInit({
-
             "type": "block_type",
             "message0": "set brightness of tail and head LEDs %1",
             "args0": [
@@ -592,8 +494,8 @@ Blockly.Blocks["brightness"] = {
                     "type": "field_slider",
                     "name": "slider",
                     "value": 50,
-                    "min": 0, // Minimum value for the slider
-                    "max": 100 // Maximum value for the slider
+                    "min": 0,
+                    "max": 100
                 }
             ],
             "previousStatement": null,
@@ -601,7 +503,6 @@ Blockly.Blocks["brightness"] = {
             "colour": "#687c9e",
             "tooltip": "",
             "helpUrl": ""
-
         });
     }
 };
@@ -617,14 +518,8 @@ Blockly.Blocks["indicators"] = {
                     "type": "field_dropdown",
                     "name": "side",
                     "options": [
-                        [
-                            "left",
-                            "left"
-                        ],
-                        [
-                            "right",
-                            "right"
-                        ]
+                        ["left", "left"],
+                        ["right", "right"]
                     ]
                 },
                 {
@@ -640,7 +535,6 @@ Blockly.Blocks["indicators"] = {
             "colour": "#687c9e",
             "tooltip": "",
             "helpUrl": ""
-
         });
     }
 };
@@ -685,10 +579,7 @@ Blockly.Blocks["objectTracking"] = {
                     "type": "field_dropdown",
                     "name": "models",
                     "options": filterModels(["DETECTOR"], "DETECTOR") ?? [
-                        [
-                            "MobileNetV1-300",
-                            "MobileNetV1-300"
-                        ]
+                        ["MobileNetV1-300", "MobileNetV1-300"]
                     ]
                 }
             ],
@@ -711,10 +602,8 @@ Blockly.Blocks["autopilot"] = {
                 {
                     "type": "field_dropdown",
                     "name": "autopilot models",
-                    "options": filterModels(["AUTOPILOT","CMDNAV"], "CMDNAV") ?? [[
-                        "CIL-Mobile-Cmd",
-                        "CIL-Mobile-Cmd"
-                    ],
+                    "options": filterModels(["AUTOPILOT", "CMDNAV"], "CMDNAV") ?? [
+                        ["CIL-Mobile-Cmd", "CIL-Mobile-Cmd"]
                     ]
                 }
             ],
@@ -748,10 +637,7 @@ Blockly.Blocks["navigateForwardAndLeft"] = {
                     "type": "field_dropdown",
                     "name": "navigation_models",
                     "options": filterModels(["NAVIGATION"], "GOALNAV") ?? [
-                        [
-                            "PilotNet-Goal",
-                            "PilotNet-Goal"
-                        ],
+                        ["PilotNet-Goal", "PilotNet-Goal"]
                     ]
                 }
             ],
@@ -789,10 +675,8 @@ Blockly.Blocks["multipleAIDetection"] = {
                 {
                     "type": "field_dropdown",
                     "name": "autopilot_models",
-                    "options": filterModels(["AUTOPILOT","CMDNAV"], "CMDNAV") ?? [[
-                        "CIL-Mobile-Cmd",
-                        "CIL-Mobile-Cmd"
-                    ],
+                    "options": filterModels(["AUTOPILOT", "CMDNAV"], "CMDNAV") ?? [
+                        ["CIL-Mobile-Cmd", "CIL-Mobile-Cmd"]
                     ]
                 },
                 {
@@ -807,10 +691,7 @@ Blockly.Blocks["multipleAIDetection"] = {
                     "type": "field_dropdown",
                     "name": "objectTracking_models",
                     "options": filterModels(["DETECTOR"], "DETECTOR") ?? [
-                        [
-                            "MobileNetV1-300",
-                            "MobileNetV1-300"
-                        ]
+                        ["MobileNetV1-300", "MobileNetV1-300"]
                     ]
                 },
                 {
@@ -846,10 +727,7 @@ Blockly.Blocks["multipleObjectTracking"] = {
                     "type": "field_dropdown",
                     "name": "models",
                     "options": filterModels(["DETECTOR"], "DETECTOR") ?? [
-                        [
-                            "MobileNetV1-300",
-                            "MobileNetV1-300"
-                        ]
+                        ["MobileNetV1-300", "MobileNetV1-300"]
                     ]
                 },
                 {
@@ -893,10 +771,7 @@ Blockly.Blocks["variableDetection"] = {
                     "type": "field_dropdown",
                     "name": "models",
                     "options": filterModels(["DETECTOR"], "DETECTOR") ?? [
-                        [
-                            "MobileNetV1-300",
-                            "MobileNetV1-300"
-                        ]
+                        ["MobileNetV1-300", "MobileNetV1-300"]
                     ]
                 },
                 {
@@ -910,8 +785,8 @@ Blockly.Blocks["variableDetection"] = {
                     "type": "field_slider",
                     "name": "frames",
                     "value": 192,
-                    "min": 1, // Minimum value for the slider
-                    "max": 90 // Maximum value for the slider
+                    "min": 1,
+                    "max": 90
                 },
                 {
                     "type": "input_dummy"
@@ -992,4 +867,3 @@ Blockly.Blocks["display_string"] = {
         });
     }
 };
-

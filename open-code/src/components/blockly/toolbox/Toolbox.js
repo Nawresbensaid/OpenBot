@@ -6,13 +6,12 @@ import '../generator/javascriptGenerator';
 import '../blocks/customblocks';
 import "../generator/pythonGenerator"
 
-// Lire le niveau depuis localStorage
 const getUserLevel = () => {
     try {
         const lvl = localStorage.getItem('currentLevel');
         if (lvl) return parseInt(JSON.parse(lvl).num) || 1;
     } catch (_) { }
-    return 6; // Si pas de level sélectionné → tout débloqué
+    return 6; // ← déjà 6 = tout débloqué !
 };
 
 // Catégorie verrouillée

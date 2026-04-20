@@ -1,82 +1,9 @@
-import {pythonGenerator} from "blockly/python";
+import { pythonGenerator } from "blockly/python";
 
 /**
  * code generation of blocks in python
  * @returns {string}
  */
-pythonGenerator.forBlock['soundType'] = function (block) {
-    let dropdown_type = block.getFieldValue('type');
-    let value_name = pythonGenerator.valueToCode(block, 'NAME', pythonGenerator.ORDER_ATOMIC);
-    let code = '';
-    code += "playSoundSpeed('" + dropdown_type + "')\n" + value_name;
-    return code;
-};
-
-pythonGenerator.forBlock['soundMode'] = function (block) {
-    let dropdown_mode_type = block.getFieldValue('mode_type');
-    let value_name = pythonGenerator.valueToCode(block, 'NAME', pythonGenerator.ORDER_ATOMIC);
-    let code = '';
-    code += "playSoundMode('" + dropdown_mode_type + "')\n" + value_name;
-    return code;
-};
-
-
-pythonGenerator.forBlock['forward&BackwardAtSpeed'] = function (block) {
-    let dropdown_direction_type = block.getFieldValue('direction_type');
-    let number_specified_amount = block.getFieldValue('slider');
-    let code = '';
-    code += dropdown_direction_type + "(" + number_specified_amount + ")\n";
-    return code;
-};
-
-
-pythonGenerator.forBlock['left&RightAtSpeed'] = function (block) {
-    let dropdown_direction_type = block.getFieldValue('direction_type');
-    let number_specified_amount = block.getFieldValue('slider');
-    let code = '';
-    code += dropdown_direction_type + "(" + number_specified_amount + ")\n";
-    return code;
-};
-
-pythonGenerator.forBlock['moveLeft&Right'] = function (block) {
-    let number_left_distance = block.getFieldValue('left_distance');
-    let number_right_distance = block.getFieldValue('right_distance');
-    let code = '';
-    code += "moveOpenBot(" + number_left_distance + "," + number_right_distance + ")\n";
-    return code;
-};
-
-pythonGenerator.forBlock['movementStop'] = function () {
-    let code = '';
-    code += "stopRobot()\n"
-    return code;
-};
-
-pythonGenerator.forBlock['sonarReading'] = function () {
-    let code = '';
-    code += "sonarReading()\n";
-    return code;
-};
-
-pythonGenerator.forBlock['speedReading'] = function () {
-    let code = '';
-    code += "speedReading()";
-    return [code, pythonGenerator.ORDER_NONE];
-};
-
-pythonGenerator.forBlock['wheelOdometerSensors'] = function (block) {
-    let dropdown_wheel_sensors = block.getFieldValue('wheel_sensors');
-    let code = '';
-    code += dropdown_wheel_sensors + "()";
-    return [code, pythonGenerator.ORDER_NONE];
-};
-
-
-pythonGenerator.forBlock['voltageDividerReading'] = function () {
-    let code = '';
-    code += "voltageDividerReading()";
-    return [code, pythonGenerator.ORDER_NONE];
-};
 
 pythonGenerator.forBlock['start'] = function (block) {
     const statements_start_blocks = pythonGenerator.statementToCode(block, 'start_blocks');
@@ -92,86 +19,132 @@ pythonGenerator.forBlock['forever'] = function (block) {
     return code;
 };
 
-pythonGenerator.forBlock['gyroscope_reading'] = function (block) {
+pythonGenerator.forBlock['soundType'] = function (block) {
+    let dropdown_type = block.getFieldValue('type');
     let code = '';
+    code += "playSoundSpeed('" + dropdown_type + "')\n";
+    return code;
+};
+
+pythonGenerator.forBlock['soundMode'] = function (block) {
+    let dropdown_mode_type = block.getFieldValue('mode_type');
+    let code = '';
+    code += "playSoundMode('" + dropdown_mode_type + "')\n";
+    return code;
+};
+
+// ✅ PATCH — forward/backward : lit input_value, défaut 192 si vide
+pythonGenerator.forBlock['forward&BackwardAtSpeed'] = function (block) {
+    let dropdown_direction_type = block.getFieldValue('direction_type');
+    let speed = pythonGenerator.valueToCode(block, 'speed', pythonGenerator.ORDER_NONE);
+    if (!speed || speed.trim() === '') speed = '192';
+    return dropdown_direction_type + "(" + speed + ")\n";
+};
+
+// ✅ PATCH — left/right : lit input_value, défaut 192 si vide
+pythonGenerator.forBlock['left&RightAtSpeed'] = function (block) {
+    let dropdown_direction_type = block.getFieldValue('direction_type');
+    let speed = pythonGenerator.valueToCode(block, 'speed', pythonGenerator.ORDER_NONE);
+    if (!speed || speed.trim() === '') speed = '192';
+    return dropdown_direction_type + "(" + speed + ")\n";
+};
+
+// ✅ PATCH — moveLeft&Right : lit deux input_value, défaut 192 si vide
+pythonGenerator.forBlock['moveLeft&Right'] = function (block) {
+    let left = pythonGenerator.valueToCode(block, 'left_speed', pythonGenerator.ORDER_NONE);
+    let right = pythonGenerator.valueToCode(block, 'right_speed', pythonGenerator.ORDER_NONE);
+    if (!left || left.trim() === '') left = '192';
+    if (!right || right.trim() === '') right = '192';
+    return "moveOpenBot(" + left + "," + right + ")\n";
+};
+
+pythonGenerator.forBlock['movementStop'] = function () {
+    let code = '';
+    code += "stopRobot()\n";
+    return code;
+};
+
+// ✅ Une seule définition correcte de sonarReading
+pythonGenerator.forBlock['sonarReading'] = function () {
+    return ["sonarReading()", pythonGenerator.ORDER_NONE];
+};
+
+pythonGenerator.forBlock['speedReading'] = function () {
+    return ["speedReading()", pythonGenerator.ORDER_NONE];
+};
+
+pythonGenerator.forBlock['wheelOdometerSensors'] = function (block) {
+    let dropdown_wheel_sensors = block.getFieldValue('wheel_sensors');
+    return [dropdown_wheel_sensors + "()", pythonGenerator.ORDER_NONE];
+};
+
+pythonGenerator.forBlock['voltageDividerReading'] = function () {
+    return ["voltageDividerReading()", pythonGenerator.ORDER_NONE];
+};
+
+pythonGenerator.forBlock['gyroscope_reading'] = function (block) {
     let dropdown_type = block.getFieldValue('axis');
 
     function scaleType() {
         switch (dropdown_type) {
-            case "x":
-                return "X";
-            case "y":
-                return "Y";
-            case "z":
-                return "Z";
-            default:
+            case "x": return "X";
+            case "y": return "Y";
+            case "z": return "Z";
+            default: return "X";
         }
     }
 
-    code += "gyroscopeReading" + scaleType() + "()";
-    return [code, pythonGenerator.ORDER_NONE];
+    return ["gyroscopeReading" + scaleType() + "()", pythonGenerator.ORDER_NONE];
 };
 
 pythonGenerator.forBlock['acceleration_reading'] = function (block) {
-    let code = "";
     let dropdown_type = block.getFieldValue('axis');
 
     function scaleType() {
         switch (dropdown_type) {
-            case "x":
-                return "X";
-            case "y":
-                return "Y";
-            case "z":
-                return "Z";
-            default:
+            case "x": return "X";
+            case "y": return "Y";
+            case "z": return "Z";
+            default: return "X";
         }
     }
 
-    code += "accelerationReading" + scaleType() + "()";
-    return [code, pythonGenerator.ORDER_NONE];
+    return ["accelerationReading" + scaleType() + "()", pythonGenerator.ORDER_NONE];
 };
 
 pythonGenerator.forBlock['magnetic_reading'] = function (block) {
-    let code = "";
     let dropdown_type = block.getFieldValue('axis');
 
     function scaleType() {
         switch (dropdown_type) {
-            case "x":
-                return "X";
-            case "y":
-                return "Y";
-            case "z":
-                return "Z";
-            default:
+            case "x": return "X";
+            case "y": return "Y";
+            case "z": return "Z";
+            default: return "X";
         }
     }
 
-    code += "magneticReading" + scaleType() + "()";
-    return [code, pythonGenerator.ORDER_NONE];
+    return ["magneticReading" + scaleType() + "()", pythonGenerator.ORDER_NONE];
 };
 
 pythonGenerator.forBlock['speedControl'] = function (block) {
     let dropdown_type = block.getFieldValue('type');
     let code = '';
-    code += "setSpeed(" + dropdown_type + ")\n";
+    code += "speedControl(" + dropdown_type + ")\n";
     return code;
 };
-
 
 pythonGenerator.forBlock['controllerMode'] = function (block) {
     let dropdown_controller = block.getFieldValue('controller');
     let code = '';
-    code += "switchController(" + dropdown_controller + ")\n";
+    code += "controllerMode(" + dropdown_controller + ")\n";
     return code;
 };
-
 
 pythonGenerator.forBlock['driveModeControls'] = function (block) {
     let dropdown_driveModeControls = block.getFieldValue('controller');
     let code = '';
-    code += "switchDriveMode(" + dropdown_driveModeControls + ")\n";
+    code += "driveModeControls(" + dropdown_driveModeControls + ")\n";
     return code;
 };
 
@@ -179,20 +152,14 @@ pythonGenerator.forBlock['brightness'] = function (block) {
     let value = block.getFieldValue('slider');
     let code = "";
     code += "ledBrightness(" + value + ")\n";
-    return code
+    return code;
 };
 
 pythonGenerator.forBlock['wait'] = function (block) {
     let value = block.getFieldValue('time');
     let code = "";
     code += "pause(" + value + ")\n";
-    return code
-};
-
-pythonGenerator.forBlock['sonarReading'] = function () {
-    let code = "";
-    code += "sonarReading() ";
-    return [code, pythonGenerator.ORDER_NONE];
+    return code;
 };
 
 pythonGenerator.forBlock['indicators'] = function (block) {
@@ -231,7 +198,7 @@ pythonGenerator.forBlock['brightnessHighOrLow'] = function (block) {
 pythonGenerator.forBlock['autopilot'] = function (block) {
     let dropdown_autopilot_models = block.getFieldValue('autopilot models');
     let code = '';
-    code += "enableAutopilot('" + dropdown_autopilot_models + "')\n"
+    code += "autopilot('" + dropdown_autopilot_models + "')\n";
     return code;
 };
 
@@ -240,7 +207,7 @@ pythonGenerator.forBlock['navigateForwardAndLeft'] = function (block) {
     let left_position = block.getFieldValue('left');
     let dropdown_navigation_models = block.getFieldValue('navigation_models');
     let code = '';
-    code += "reachGoal(" + forward_position + "," + left_position + ",'" + dropdown_navigation_models + "')\n";
+    code += "navigateForwardAndLeft(" + forward_position + "," + left_position + ",'" + dropdown_navigation_models + "')\n";
     return code;
 };
 
@@ -248,13 +215,13 @@ pythonGenerator.forBlock['objectTracking'] = function (block) {
     const dropdown_class = block.getFieldValue('class');
     const dropdown_models = block.getFieldValue('models');
     let code = "";
-    code += "follow('" + dropdown_class + "','" + dropdown_models + "')\n";
+    code += "objectTracking('" + dropdown_class + "','" + dropdown_models + "')\n";
     return code;
 };
 
 pythonGenerator.forBlock['disableAI'] = function () {
     let code = '';
-    code += "disableAI();\n";
+    code += "disableAI()\n";
     return code;
 };
 
@@ -264,7 +231,7 @@ pythonGenerator.forBlock['multipleAIDetection'] = function (block) {
     let objectTracking_models = block.getFieldValue('objectTracking_models');
     let tasks = pythonGenerator.statementToCode(block, 'tasks');
     let code = "";
-    code += "enableMultipleAI('" + autopilot_models + "','" + tasks + "','" + labels + "','" + objectTracking_models + "')\n"
+    code += "multipleAIDetection('" + autopilot_models + "','" + labels + "','" + objectTracking_models + "', function(){\n" + tasks + "})\n";
     return code;
 };
 
@@ -274,40 +241,35 @@ pythonGenerator.forBlock['multipleObjectTracking'] = function (block) {
     let labels2 = block.getFieldValue('labels2');
     let tasks = pythonGenerator.statementToCode(block, 'tasks');
     let code = "";
-    code += "enableMultipleDetection('" + labels1 + "','" + models + "','" + labels2 + "','" + tasks + "');\n";
+    code += "multipleObjectTracking('" + labels1 + "','" + models + "','" + labels2 + "', function(){\n" + tasks + "})\n";
     return code;
 };
 
-pythonGenerator.forBlock['variableDetection'] = function (block, generator) {
+pythonGenerator.forBlock['variableDetection'] = function (block) {
     let labels = block.getFieldValue('labels');
     let models = block.getFieldValue('models');
     let detect_tasks = pythonGenerator.statementToCode(block, 'detect_tasks');
     let frames = block.getFieldValue("frames");
     let framesLost_tasks = pythonGenerator.statementToCode(block, 'framesLost_tasks');
     let code = "";
-    code += "onDetect" + '("' + labels + '","' + models + '","' + detect_tasks + '")\n' + 'onLostFrames("' + labels + '",' + frames + ',"' + framesLost_tasks + '")\n';
+    code += "variableDetection('" + labels + "','" + models + "', function(){\n" + detect_tasks + "}, function(){\n" + framesLost_tasks + "})\n";
     return code;
 };
 
-pythonGenerator.forBlock['inputSound'] = function (block, generator) {
+pythonGenerator.forBlock['inputSound'] = function (block) {
     let text = block.getFieldValue('text');
     let code = "";
-    code += "playSound('" + text + "')\n";
+    code += "inputSound('" + text + "')\n";
     return code;
 };
 
-pythonGenerator.forBlock['display_sensors'] = function (block, generator) {
-    let text = pythonGenerator.blockToCode(block.getInputTargetBlock('value'), generator);
-    let code = "";
-    if (text[0] === undefined) {
-        code += "displaySensorData('')\n";
-    } else {
-        code += "displaySensorData('" + text[0] + "')\n";
-    }
-    return code;
+// ✅ FIX : display_sensors appelle la fonction réelle (sans guillemets)
+pythonGenerator.forBlock['display_sensors'] = function (block) {
+    const value = pythonGenerator.valueToCode(block, 'value', pythonGenerator.ORDER_NONE) || '0';
+    return "displaySensorData(" + value + ")\n";
 };
 
-pythonGenerator.forBlock['display_string'] = function (block, generator) {
+pythonGenerator.forBlock['display_string'] = function (block) {
     let text = block.getFieldValue('text');
     let code = "";
     code += "displayString('" + text + "')\n";

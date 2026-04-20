@@ -1,41 +1,49 @@
-/**
- * firebase.js — version locale sans Firebase
- * Toutes les fonctions sont désactivées pour fonctionner sans connexion
- */
+import { initializeApp } from "firebase/app";
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signInWithPopup,
+    GoogleAuthProvider,
+    signOut
+} from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
-// Objets fictifs pour éviter les erreurs
-export const auth = {
-    currentUser: null,
-    onAuthStateChanged: (cb) => { cb(null); return () => { }; },
-    signInWithPopup: async () => { },
-    signInWithRedirect: async () => { },
+const firebaseConfig = {
+    apiKey: "AIzaSyDSae64hEK-g7x6icJWdFxSyw8Fr_HOPVk",
+    authDomain: "nomadverse-1f766.firebaseapp.com",
+    projectId: "nomadverse-1f766",
+    messagingSenderId: "632057387503",
+    appId: "1:632057387503:web:cef5e13c9c9845aeb5be1a",
+    measurementId: "G-LVN7FSPJJJ"
 };
 
-export const provider = {};
+const app = initializeApp(firebaseConfig);
 
+export const auth = getAuth(app);
+export const db = getFirestore(app);
 export const FirebaseStorage = {};
+export const provider = new GoogleAuthProvider();
+export const googleProvider = new GoogleAuthProvider();
 
-export const db = {};
+export const googleSignIn = () => signInWithPopup(auth, googleProvider);
+export const emailSignIn = (email, pass) => signInWithEmailAndPassword(auth, email, pass);
+export const emailSignUp = (email, pass) => createUserWithEmailAndPassword(auth, email, pass);
 
-// Fonction désactivée
-export async function uploadProfilePic(file, fileName) {
-    return null;
-}
-
-// Connexion désactivée — mode local uniquement
 export async function googleSigIn() {
-    console.log('[Local Mode] Google Sign-In désactivé');
-    localStorage.setItem("isSigIn", "false");
-    return null;
+    return signInWithPopup(auth, provider);
 }
 
-// Déconnexion désactivée
 export async function googleSignOut() {
+    await signOut(auth);
     localStorage.setItem("isSigIn", "false");
     window.location.reload();
 }
 
-// Date de naissance désactivée
+export async function uploadProfilePic(file, fileName) {
+    return null;
+}
+
 export async function getDateOfBirth() {
     return undefined;
 }
