@@ -1,27 +1,71 @@
+// src/App.js
 import './App.css';
-import { RouterComponent } from "./components/router/router";
 import StoreProvider from './context/context';
 import { createContext, useEffect, useState } from "react";
 import { googleSignOut } from "./services/firebase";
 import { ToastContainer } from "react-toastify";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import HomeScreen from "./components/levels/HomeScreen";
+import LevelsScreen from "./components/levels/LevelsScreen";
+import MissionCinematic from "./components/levels/MissionCinematic";
+import Playground from "./pages/playground";
+import Home from "./pages/home";
+import { LEVELS } from "./data/levels";
 
 export const ThemeContext = createContext(null);
 
-// ── Générer les étoiles ──
-const generateStars = (count) => {
-    return Array.from({ length: count }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        size: Math.random() * 2.5 + 0.5,
-        opacity: Math.random() * 0.7 + 0.3,
-        duration: Math.random() * 3 + 2,
-        delay: Math.random() * 4,
-    }));
-};
+const generateStars = (count) => Array.from({ length: count }, (_, i) => ({
+    id: i,
+    x: Math.random() * 100, y: Math.random() * 100,
+    size: Math.random() * 2.5 + 0.5,
+    opacity: Math.random() * 0.7 + 0.3,
+    duration: Math.random() * 3 + 2,
+    delay: Math.random() * 4,
+}));
 
 const STARS = generateStars(150);
 const STARS_BIG = generateStars(30);
+
+function AppContent() {
+    const navigate = useNavigate();
+
+    return (
+        <Routes>
+            <Route path="/" element={
+                <HomeScreen onStart={() => navigate('/levels')} />
+            } />
+            <Route path="/levels" element={
+                <LevelsScreen
+                    onSelectLevel={(level) => navigate(`/cinematic?level=${level.id}`)}
+                    onBack={() => navigate('/')}
+                    completedLevels={[]}
+                    activeMission={null}
+                />
+            } />
+            <Route path="/cinematic" element={<CinematicPage />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/playground" element={<Playground />} />
+            <Route path="*" element={
+                <div style={{ color: '#fff', textAlign: 'center', padding: '2rem' }}>
+                    404 — Page non trouvée
+                </div>
+            } />
+        </Routes>
+    );
+}
+
+function CinematicPage() {
+    const navigate = useNavigate();
+    const params = new URLSearchParams(window.location.search);
+    const levelId = parseInt(params.get('level')) || 1;
+    const level = LEVELS.find(l => l.id === levelId) || LEVELS[0];
+    return (
+        <MissionCinematic
+            level={level}
+            onComplete={() => navigate(`/playground?level=${levelId}`)}
+        />
+    );
+}
 
 function App() {
     const [internetOn, setInternetOn] = useState(window.navigator.onLine);
@@ -30,14 +74,12 @@ function App() {
     const [isSessionExpire, setIsSessionExpire] = useState(false);
     const [isTimeoutId, setTimeoutId] = useState(false);
 
-    // Thème univers forcé — toujours sombre
     const theme = 'dark';
     const toggleTheme = () => { };
 
     useEffect(() => {
         window.addEventListener('online', () => setInternetOn(true));
         window.addEventListener('offline', () => setInternetOn(false));
-        // Forcer le body en mode sombre
         document.body.style.backgroundColor = '#030714';
         document.body.style.margin = '0';
         document.body.style.overflow = 'hidden';
@@ -63,85 +105,33 @@ function App() {
                 isTimeoutId={isTimeoutId}
                 setTimeoutId={setTimeoutId}
             >
-                {/* ── Background univers ── */}
                 <div style={{
-                    position: 'fixed',
-                    inset: 0,
+                    position: 'fixed', inset: 0,
                     background: 'radial-gradient(ellipse at 20% 50%, #0a1628 0%, #030714 40%, #000008 100%)',
                     zIndex: -2,
-                    overflow: 'hidden',
                 }}>
-                    {/* Nébuleuse */}
-                    <div style={{
-                        position: 'absolute',
-                        top: '10%', left: '60%',
-                        width: '500px', height: '500px',
-                        background: 'radial-gradient(circle, rgba(30,60,120,0.15) 0%, transparent 70%)',
-                        borderRadius: '50%',
-                        filter: 'blur(40px)',
-                    }} />
-                    <div style={{
-                        position: 'absolute',
-                        top: '50%', left: '10%',
-                        width: '400px', height: '400px',
-                        background: 'radial-gradient(circle, rgba(20,40,100,0.12) 0%, transparent 70%)',
-                        borderRadius: '50%',
-                        filter: 'blur(50px)',
-                    }} />
-
-                    {/* Étoiles petites */}
                     <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
                         <defs>
-                            <style>{`
-                                @keyframes twinkle {
-                                    0%, 100% { opacity: var(--op); }
-                                    50% { opacity: calc(var(--op) * 0.3); }
-                                }
-                            `}</style>
+                            <style>{`@keyframes twinkle{0%,100%{opacity:var(--op)}50%{opacity:calc(var(--op)*0.3)}}`}</style>
                         </defs>
                         {STARS.map(s => (
-                            <circle
-                                key={s.id}
-                                cx={`${s.x}%`}
-                                cy={`${s.y}%`}
-                                r={s.size}
-                                fill="white"
-                                style={{
-                                    '--op': s.opacity,
-                                    opacity: s.opacity,
-                                    animation: `twinkle ${s.duration}s ${s.delay}s ease-in-out infinite`,
-                                }}
-                            />
+                            <circle key={s.id} cx={`${s.x}%`} cy={`${s.y}%`} r={s.size} fill="white"
+                                style={{ '--op': s.opacity, opacity: s.opacity, animation: `twinkle ${s.duration}s ${s.delay}s ease-in-out infinite` }} />
                         ))}
-                        {/* Étoiles brillantes */}
                         {STARS_BIG.map(s => (
-                            <circle
-                                key={`big-${s.id}`}
-                                cx={`${s.x}%`}
-                                cy={`${s.y}%`}
-                                r={s.size + 1}
-                                fill="#6cbefd"
-                                style={{
-                                    '--op': s.opacity * 0.6,
-                                    opacity: s.opacity * 0.6,
-                                    animation: `twinkle ${s.duration + 1}s ${s.delay}s ease-in-out infinite`,
-                                    filter: 'blur(0.5px)',
-                                }}
-                            />
+                            <circle key={`big-${s.id}`} cx={`${s.x}%`} cy={`${s.y}%`} r={s.size + 1} fill="#6cbefd"
+                                style={{ '--op': s.opacity * 0.6, opacity: s.opacity * 0.6, animation: `twinkle ${s.duration + 1}s ${s.delay}s ease-in-out infinite` }} />
                         ))}
                     </svg>
                 </div>
 
-                {/* ── Interface ── */}
                 <div id="dark" style={{ position: 'relative', zIndex: 1, height: '100vh' }}>
-                    <RouterComponent />
+                    <BrowserRouter>
+                        <AppContent />
+                    </BrowserRouter>
                 </div>
 
-                <ToastContainer
-                    autoClose={5000}
-                    theme="dark"
-                    style={{ zIndex: 9999 }}
-                />
+                <ToastContainer autoClose={5000} theme="dark" style={{ zIndex: 9999 }} />
             </StoreProvider>
         </ThemeContext.Provider>
     );

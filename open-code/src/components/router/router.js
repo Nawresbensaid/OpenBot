@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { Outlet, Route, Routes, useNavigate } from 'react-router-dom'
 import Intro from "../../pages/intro";
 import Home from "../../pages/home";
@@ -34,44 +35,60 @@ export const RouterComponent = () => {
             </Route>
         </Routes>
     )
+=======
+﻿// src/components/router/router.js
+import { Routes, Route, useNavigate } from "react-router-dom";
+import Home from "../../pages/home";
+import Playground from "../../pages/playground";
+import HomeScreen from "../levels/HomeScreen";
+import LevelsScreen from "../levels/LevelsScreen";
+import MissionCinematic from "../levels/MissionCinematic";
+import { LEVELS } from "../../data/levels";
+
+function HomeScreenWrapper() {
+    const navigate = useNavigate();
+    return <HomeScreen onStart={() => navigate('/levels')} />;
+>>>>>>> origin/test
 }
 
-function NotFound() {
-    const { theme } = useContext(ThemeContext)
-    let navigate = useNavigate();
-    const openHomePage = () => {
-        navigate(`/`);
-    }
+function LevelsScreenWrapper() {
+    const navigate = useNavigate();
     return (
-        <Box
-            sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: '100vh'
-            }}
-        >
-            <Container maxWidth="md">
-                <Grid container spacing={2}>
-                    <Grid xs={6}>
-                        <Typography style={{ color: theme === "dark" ? "white" : "black" }} variant="h1">
-                            404
-                        </Typography>
-                        <Typography style={{ color: theme === "dark" ? "white" : "black" }} variant="h6">
-                            The page you’re looking for doesn’t exist.
-                        </Typography>
-                        <button onClick={openHomePage}>Go to home page</button>
-                    </Grid>
-                    <Grid xs={6}>
-                        <img
-                            src="https://cdn.pixabay.com/photo/2017/03/09/12/31/error-2129569__340.jpg"
-                            alt=""
-                            width={500} height={250}
-                        />
-                    </Grid>
-                </Grid>
-            </Container>
-        </Box>
+        <LevelsScreen
+            onSelectLevel={(level) => navigate(`/cinematic?level=${level.id}`)}
+            onBack={() => navigate('/')}
+            completedLevels={[]}
+            activeMission={null}
+        />
     );
 }
 
+function CinematicWrapper() {
+    const navigate = useNavigate();
+    const params = new URLSearchParams(window.location.search);
+    const levelId = parseInt(params.get('level')) || 1;
+    const level = LEVELS.find(l => l.id === levelId) || LEVELS[0];
+    return (
+        <MissionCinematic
+            level={level}
+            onComplete={() => navigate(`/playground?level=${levelId}`)}
+        />
+    );
+}
+
+export const RouterComponent = () => {
+    return (
+        <Routes>
+            <Route path="/" element={<HomeScreenWrapper />} />
+            <Route path="/levels" element={<LevelsScreenWrapper />} />
+            <Route path="/cinematic" element={<CinematicWrapper />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/playground" element={<Playground />} />
+            <Route path="*" element={
+                <div style={{ color: '#fff', textAlign: 'center', padding: '2rem', fontFamily: "'Cinzel', serif" }}>
+                    404 — Page non trouvée
+                </div>
+            } />
+        </Routes>
+    );
+};
