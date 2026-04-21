@@ -4,13 +4,8 @@ import StoreProvider from './context/context';
 import { createContext, useEffect, useState } from "react";
 import { googleSignOut } from "./services/firebase";
 import { ToastContainer } from "react-toastify";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
-import HomeScreen from "./components/levels/HomeScreen";
-import LevelsScreen from "./components/levels/LevelsScreen";
-import MissionCinematic from "./components/levels/MissionCinematic";
-import Playground from "./pages/playground";
-import Home from "./pages/home";
-import { LEVELS } from "./data/levels";
+import { BrowserRouter } from "react-router-dom";
+import { RouterComponent } from "./components/router/router";
 
 export const ThemeContext = createContext(null);
 
@@ -25,47 +20,6 @@ const generateStars = (count) => Array.from({ length: count }, (_, i) => ({
 
 const STARS = generateStars(150);
 const STARS_BIG = generateStars(30);
-
-function AppContent() {
-    const navigate = useNavigate();
-
-    return (
-        <Routes>
-            <Route path="/" element={
-                <HomeScreen onStart={() => navigate('/levels')} />
-            } />
-            <Route path="/levels" element={
-                <LevelsScreen
-                    onSelectLevel={(level) => navigate(`/cinematic?level=${level.id}`)}
-                    onBack={() => navigate('/')}
-                    completedLevels={[]}
-                    activeMission={null}
-                />
-            } />
-            <Route path="/cinematic" element={<CinematicPage />} />
-            <Route path="/home" element={<Home />} />
-            <Route path="/playground" element={<Playground />} />
-            <Route path="*" element={
-                <div style={{ color: '#fff', textAlign: 'center', padding: '2rem' }}>
-                    404 — Page non trouvée
-                </div>
-            } />
-        </Routes>
-    );
-}
-
-function CinematicPage() {
-    const navigate = useNavigate();
-    const params = new URLSearchParams(window.location.search);
-    const levelId = parseInt(params.get('level')) || 1;
-    const level = LEVELS.find(l => l.id === levelId) || LEVELS[0];
-    return (
-        <MissionCinematic
-            level={level}
-            onComplete={() => navigate(`/playground?level=${levelId}`)}
-        />
-    );
-}
 
 function App() {
     const [internetOn, setInternetOn] = useState(window.navigator.onLine);
@@ -127,7 +81,7 @@ function App() {
 
                 <div id="dark" style={{ position: 'relative', zIndex: 1, height: '100vh' }}>
                     <BrowserRouter>
-                        <AppContent />
+                        <RouterComponent />
                     </BrowserRouter>
                 </div>
 

@@ -26,7 +26,7 @@ export default function SignUp() {
             await updateProfile(userCredential.user, {
                 displayName: `${firstName.trim()} ${lastName.trim()}`
             });
-            navigate("/playground");
+            navigate("/launch");
         } catch (err) {
             setError("Account creation failed. Email may already be in use.");
         } finally {

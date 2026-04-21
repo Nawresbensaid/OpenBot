@@ -8,7 +8,6 @@ import SignUp from "../../pages/signup";
 import HomeScreen from "../levels/HomeScreen";
 import LevelsScreen from "../levels/LevelsScreen";
 import MissionCinematic from "../levels/MissionCinematic";
-import { PathName } from "../../utils/constants";
 import { LEVELS } from "../../data/levels";
 
 function NotFound() {
@@ -19,12 +18,17 @@ function NotFound() {
     );
 }
 
+function HomeScreenWrapper() {
+    const navigate = useNavigate();
+    return <HomeScreen onStart={() => navigate('/levels')} />;
+}
+
 function LevelsScreenWrapper() {
     const navigate = useNavigate();
     return (
         <LevelsScreen
             onSelectLevel={(level) => navigate(`/cinematic?level=${level.id}`)}
-            onBack={() => navigate('/')}
+            onBack={() => navigate('/launch')}
             completedLevels={[]}
             activeMission={null}
         />
@@ -44,23 +48,18 @@ function CinematicWrapper() {
     );
 }
 
-/**
- * Router to maintain different paths of the application
- * @returns {JSX.Element}
- * @constructor
- */
 export const RouterComponent = () => {
     return (
         <Routes>
-            <Route path={PathName.home} element={<Outlet />}>
-                {/* Intro — page principale */}
+            <Route path="/" element={<Outlet />}>
                 <Route index element={<Intro />} />
                 <Route path="signin" element={<SignIn />} />
                 <Route path="signup" element={<SignUp />} />
+                <Route path="launch" element={<HomeScreenWrapper />} />
                 <Route path="home" element={<Home />} />
                 <Route path="levels" element={<LevelsScreenWrapper />} />
                 <Route path="cinematic" element={<CinematicWrapper />} />
-                <Route path={PathName.playGround} element={<Playground />} />
+                <Route path="playground" element={<Playground />} />
                 <Route path="*" element={<NotFound />} />
             </Route>
         </Routes>

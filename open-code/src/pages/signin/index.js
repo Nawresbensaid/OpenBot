@@ -15,7 +15,7 @@ export default function SignIn() {
         setLoading(true);
         try {
             await emailSignIn(email, password);
-            navigate("/playground");
+            navigate("/launch");
         } catch (err) {
             setError("Invalid email or password. Try again.");
         } finally {
