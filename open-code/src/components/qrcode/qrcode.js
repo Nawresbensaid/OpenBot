@@ -1,10 +1,10 @@
-import {useContext, useEffect, useState} from "react";
-import {QRCodeCanvas} from "qrcode.react";
-import {colors} from "../../utils/color";
+import { useContext, useEffect, useState } from "react";
+import { QRCodeCanvas } from "qrcode.react";
+import { colors } from "../../utils/color";
 import icon from "../../assets/images/icon/OBplaygroundLogo.png"
-import {qrStyles} from "./styles";
-import {StoreContext} from "../../context/context";
-import {useTheme} from "@mui/material";
+import { qrStyles } from "./styles";
+import { StoreContext } from "../../context/context";
+import { useTheme } from "@mui/material";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
 /**
@@ -14,7 +14,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
  */
 const QrCode = () => {
     const [blockCode, setBlockCode] = useState(undefined);
-    const {code, generate} = useContext(StoreContext);
+    const { code, generateCode: generate } = useContext(StoreContext);
     const themes = useTheme();
     const isMobile = useMediaQuery(themes.breakpoints.down('md'));
 
@@ -33,7 +33,7 @@ const QrCode = () => {
             size={isMobile ? 130 : 200}
             bgColor={colors.whiteFont}
             includeMargin={true}
-            imageSettings={{src: icon}}
+            imageSettings={{ src: icon }}
         />
 
     );

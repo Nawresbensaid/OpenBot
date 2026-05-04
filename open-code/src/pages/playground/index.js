@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useContext } from 'react';
+﻿import React, { useState, useRef, useContext, useEffect, useCallback } from 'react';
 import BlocklyComponent from "../../components/blockly";
 import { Toolbox } from "../../components/blockly/toolbox/Toolbox";
 import { Header } from "../../components/navBar/header";
@@ -7,20 +7,27 @@ import CodeEditor from "../../components/editor/codeEditor";
 import * as ParserModule from '../../utils/parser';
 import QrCode from '../../components/qrcode/qrcode';
 
-// ── Canvas étoiles ──
-const COLS = ['#ffffff', '#fffde7', '#6cbefd', '#b39ddb', '#f48fb1', '#a5d6a7', '#fcd34d'];
-const STAR_DATA = Array.from({ length: 320 }, () => ({
+// ═══════════════════════════════════════════
+// CONFIG BACKEND
+// ═══════════════════════════════════════════
+const BACKEND = 'http://197.5.193.210:5000';
+
+// ═══════════════════════════════════════════
+// STARS CANVAS
+// ═══════════════════════════════════════════
+const COLS = ['#fff8e1', '#fde68a', '#f0d080', '#c9a84c', '#ffffff', '#fffde7', '#fcd34d'];
+const STAR_DATA = Array.from({ length: 240 }, () => ({
     x: Math.random() * 100, y: Math.random() * 100,
-    r: Math.random() * 2.8 + .3,
+    r: Math.random() * 2.2 + .3,
     col: COLS[Math.floor(Math.random() * COLS.length)],
-    op: Math.random() * .75 + .2,
+    op: Math.random() * .7 + .2,
     tw: Math.random() * Math.PI * 2,
-    sp: Math.random() * .022 + .005,
+    sp: Math.random() * .02 + .004,
 }));
 
 const StarCanvas = () => {
     const ref = useRef(null);
-    React.useEffect(() => {
+    useEffect(() => {
         const canvas = ref.current; if (!canvas) return;
         const ctx = canvas.getContext('2d');
         const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
@@ -33,11 +40,11 @@ const StarCanvas = () => {
                 s.tw += s.sp;
                 const a = s.op * (0.25 + 0.75 * (Math.sin(s.tw) * .5 + .5));
                 const x = s.x / 100 * canvas.width, y = s.y / 100 * canvas.height;
-                if (s.r > 1.9) {
-                    const g = ctx.createRadialGradient(x, y, 0, x, y, s.r * 4.5);
+                if (s.r > 1.7) {
+                    const g = ctx.createRadialGradient(x, y, 0, x, y, s.r * 5);
                     g.addColorStop(0, s.col); g.addColorStop(1, 'transparent');
                     ctx.globalAlpha = a * .18; ctx.fillStyle = g;
-                    ctx.beginPath(); ctx.arc(x, y, s.r * 4.5, 0, Math.PI * 2); ctx.fill();
+                    ctx.beginPath(); ctx.arc(x, y, s.r * 5, 0, Math.PI * 2); ctx.fill();
                 }
                 ctx.globalAlpha = a; ctx.fillStyle = s.col;
                 ctx.beginPath(); ctx.arc(x, y, s.r, 0, Math.PI * 2); ctx.fill();
@@ -51,458 +58,375 @@ const StarCanvas = () => {
     return <canvas ref={ref} style={{ position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none' }} />;
 };
 
-const SPACE_OBJECTS = [
-    { id: 0, emoji: '🛸', top: '30%', left: '6%', anim: 'ufloat2', dur: '8s', delay: '0s', size: '2.5rem' },
-    { id: 1, emoji: '☄️', top: '15%', left: '45%', anim: 'ufloat', dur: '6s', delay: '1s', size: '2rem' },
-    { id: 2, emoji: '🛸', top: '70%', left: '55%', anim: 'ufloat2', dur: '9s', delay: '2s', size: '2.2rem' },
-    { id: 3, emoji: '🌙', top: '10%', left: '70%', anim: 'ufloat', dur: '7s', delay: '0.5s', size: '2rem' },
-    { id: 4, emoji: '🛰️', top: '55%', left: '25%', anim: 'udrift', dur: '10s', delay: '1.5s', size: '1.8rem' },
-    { id: 5, emoji: '💎', top: '80%', left: '40%', anim: 'ufloat2', dur: '5s', delay: '3s', size: '1.5rem' },
-    { id: 6, emoji: '🌠', top: '40%', left: '60%', anim: 'ufloat', dur: '7s', delay: '2.5s', size: '1.6rem' },
-];
-
-const UniversBG = () => (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 1, pointerEvents: 'none', overflow: 'hidden' }}>
-        <style>{`
-            @keyframes ufloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-20px) rotate(5deg)}}
-            @keyframes ufloat2{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-14px) rotate(-4deg)}}
-            @keyframes urocket{0%,100%{transform:translateY(0) rotate(-12deg) scale(1)}50%{transform:translateY(-28px) rotate(8deg) scale(1.05)}}
-            @keyframes uorbit{from{transform:rotate(0deg) translateX(55px) rotate(0deg)}to{transform:rotate(360deg) translateX(55px) rotate(-360deg)}}
-            @keyframes udrift{0%,100%{transform:translate(0,0)}25%{transform:translate(10px,-8px)}50%{transform:translate(0,-15px)}75%{transform:translate(-10px,-8px)}}
-            @keyframes upulse{0%,100%{opacity:.6;transform:scale(1)}50%{opacity:1;transform:scale(1.15)}}
-            @keyframes ublink{0%,100%{opacity:1}50%{opacity:.15}}
-        `}</style>
-        <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 30% 40%, #0d1b4b 0%, #030714 45%, #000008 100%)', zIndex: 0 }} />
-        {[
-            { t: '-8%', r: '8%', w: '520px', h: '520px', bg: 'rgba(167,139,250,.14)' },
-            { t: 'auto', b: '8%', l: '3%', w: '640px', h: '440px', bg: 'rgba(20,80,200,.18)' },
-            { t: '38%', r: '33%', w: '320px', h: '320px', bg: 'rgba(244,114,182,.09)' },
-            { t: '15%', l: '30%', w: '280px', h: '280px', bg: 'rgba(52,211,153,.06)' },
-        ].map((n, i) => (
-            <div key={i} style={{ position: 'absolute', top: n.t, bottom: n.b, right: n.r, left: n.l, width: n.w, height: n.h, background: `radial-gradient(circle,${n.bg} 0%,transparent 70%)`, borderRadius: '50%', filter: 'blur(65px)' }} />
-        ))}
-        <div style={{ position: 'absolute', top: '5%', right: '2%', animation: 'ufloat 10s ease-in-out infinite' }}>
-            <div style={{ width: '75px', height: '75px', borderRadius: '50%', background: 'radial-gradient(circle at 35% 28%, #fef3c7, #d97706, #92400e)', boxShadow: '0 0 35px rgba(251,191,36,.4)', position: 'relative' }}>
-                <div style={{ position: 'absolute', top: '50%', left: '50%', width: '145px', height: '32px', border: '6px solid rgba(251,191,36,.38)', borderRadius: '50%', transform: 'translate(-50%,-50%) rotateX(65deg)' }} />
-                <div style={{ position: 'absolute', top: '50%', left: '50%', width: '12px', height: '12px', borderRadius: '50%', background: '#94a3b8', marginTop: '-6px', marginLeft: '-6px', animation: 'uorbit 6s linear infinite' }} />
-            </div>
-        </div>
-        <div style={{ position: 'absolute', bottom: '11%', left: '.5%', animation: 'ufloat2 12s 2s ease-in-out infinite' }}>
-            <div style={{ width: '62px', height: '62px', borderRadius: '50%', background: 'radial-gradient(circle at 35% 30%, #67e8f9, #0284c7, #1e3a5f)', boxShadow: '0 0 25px rgba(103,232,249,.4)', overflow: 'hidden', position: 'relative' }}>
-                <div style={{ position: 'absolute', width: '22px', height: '16px', top: '15px', left: '10px', borderRadius: '50%', background: 'rgba(74,222,128,.5)', transform: 'rotate(-20deg)' }} />
-            </div>
-        </div>
-        <div style={{ position: 'absolute', top: '48%', right: '.5%', animation: 'ufloat 8s 1s ease-in-out infinite' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'radial-gradient(circle at 35% 30%, #fca5a5, #dc2626, #7f1d1d)', boxShadow: '0 0 18px rgba(252,165,165,.35)' }} />
-        </div>
-        <div style={{ position: 'absolute', top: '20%', left: '3%', animation: 'ufloat2 7s .5s ease-in-out infinite' }}>
-            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: 'radial-gradient(circle at 35% 30%, #ddd6fe, #7c3aed, #3b0764)', boxShadow: '0 0 14px rgba(167,139,250,.4)' }} />
-        </div>
-        <div style={{ position: 'absolute', top: '65%', left: '2%', fontSize: '3.2rem', animation: 'urocket 7s ease-in-out infinite', filter: 'drop-shadow(0 0 14px rgba(108,190,255,.65))' }}>🚀</div>
-        {[{ t: '17%', l: '27%', d: '0s', e: '✨' }, { t: '72%', l: '60%', d: '1.2s', e: '⭐' }, { t: '35%', l: '88%', d: '2.4s', e: '💫' }, { t: '82%', l: '22%', d: '3s', e: '🌟' }].map((p, i) => (
-            <div key={i} style={{ position: 'absolute', top: p.t, left: p.l, fontSize: '1.3rem', animation: `upulse 3s ${p.d} ease-in-out infinite` }}>{p.e}</div>
-        ))}
-        {SPACE_OBJECTS.map(o => (
-            <div key={o.id} style={{ position: 'absolute', top: o.top, left: o.left, fontSize: o.size, animation: `${o.anim} ${o.dur} ${o.delay} ease-in-out infinite`, filter: 'drop-shadow(0 0 8px rgba(108,190,255,0.4))' }}>{o.emoji}</div>
-        ))}
-    </div>
-);
-
-const GlobalStyles = () => (
+// ═══════════════════════════════════════════
+// CSS GLOBAL INJECTÉ
+// ═══════════════════════════════════════════
+const Styles = () => (
     <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700;800;900&family=Space+Mono:wght@400;700&display=swap');
-        .robo-panel-hdr{display:flex;align-items:center;justify-content:space-between;padding:.55rem 1rem;background:rgba(2,5,16,.75);border-bottom:1px solid rgba(108,190,255,.1);flex-shrink:0;position:relative}
-        .robo-panel-hdr::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(108,190,255,.3),transparent)}
-        .robo-cb{width:40px;height:40px;border-radius:10px;border:1px solid rgba(108,190,255,.22);cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .15s;background:rgba(108,190,255,.1);color:#c8ddf0}
-        .robo-cb:hover{background:rgba(108,190,255,.25)!important;transform:scale(1.1)}
-        .robo-cb:active{transform:scale(.93)!important}
-        .robo-pb{font-family:'Nunito',sans-serif;font-weight:800;font-size:.7rem;padding:.28rem .8rem;border-radius:20px;border:none;cursor:pointer;transition:all .2s}
-        .robo-pb:hover{transform:translateY(-1px)}
-        .ws-scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 25px,rgba(108,190,255,.015) 25px,rgba(108,190,255,.015) 26px);pointer-events:none}
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@400;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+        @keyframes goldShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+        @keyframes upulse      { 0%,100%{opacity:.5;transform:scale(1)} 50%{opacity:1;transform:scale(1.12)} }
+        @keyframes ufloat      { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-14px) rotate(3deg)} }
+        @keyframes udrift      { 0%,100%{transform:translate(0,0)} 50%{transform:translate(6px,-10px)} }
+        @keyframes sandDrift   { 0%,100%{transform:translateX(0)} 50%{transform:translateX(12px)} }
+        @keyframes orbPulse    { 0%,100%{box-shadow:0 0 30px rgba(201,168,76,.35),0 0 60px rgba(201,168,76,.12)} 50%{box-shadow:0 0 55px rgba(201,168,76,.7),0 0 110px rgba(201,168,76,.25)} }
+        @keyframes hudPulse    { 0%,100%{opacity:.35} 50%{opacity:.9} }
+        @keyframes blink       { 0%,100%{opacity:1} 50%{opacity:.1} }
+        .gold-shimmer { background:linear-gradient(90deg,#c9a84c,#f0d080,#fff8e1,#f0d080,#c9a84c); background-size:200% auto; -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; animation:goldShimmer 5s linear infinite; }
+        .blocklyMainBackground { fill:transparent !important; }
+        .injectionDiv { background:transparent !important; background-color:transparent !important; }
+        svg.blocklySvg { background:transparent !important; }
+        .blocklyGrid path { stroke:rgba(201,168,76,.06) !important; }
+        .blocklyScrollbarHandle { fill:rgba(201,168,76,.35) !important; }
+        .blocklyScrollbarBackground { fill:rgba(201,168,76,.04) !important; }
+        .blocklyFlyoutBackground { fill:rgba(10,6,1,.9) !important; }
+        .blocklyToolboxDiv { background:linear-gradient(180deg,rgba(8,4,1,.88) 0%,rgba(5,2,0,.84) 100%) !important; border-right:1px solid rgba(201,168,76,.18) !important; }
+        .blocklyTreeLabel { color:rgba(201,168,76,.7) !important; font-family:'Nunito',sans-serif !important; font-weight:800 !important; }
+        .blocklyTreeRow:hover .blocklyTreeLabel { color:#f0d080 !important; }
+        .blocklyTreeSelected .blocklyTreeLabel { color:#f0d080 !important; }
+        .blocklyTreeRow { border-left:2px solid transparent !important; transition:all .2s !important; }
+        .blocklyTreeSelected { border-left-color:rgba(201,168,76,.6) !important; background:rgba(201,168,76,.08) !important; }
+        .panel-hdr { display:flex; align-items:center; justify-content:space-between; padding:.55rem 1rem; flex-shrink:0; position:relative; overflow:hidden; background:linear-gradient(135deg,rgba(201,168,76,.07) 0%,rgba(6,3,0,.6) 50%,rgba(201,168,76,.03) 100%); backdrop-filter:blur(12px); border-bottom:1px solid rgba(201,168,76,.18); }
+        .panel-hdr::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(201,168,76,.6) 30%,rgba(240,208,80,.8) 50%,rgba(201,168,76,.6) 70%,transparent); }
+        .pb { font-family:'Nunito',sans-serif; font-weight:800; font-size:.65rem; padding:.25rem .75rem; border-radius:5px; border:none; cursor:pointer; transition:all .2s; letter-spacing:.03em; }
+        .pb:hover { transform:translateY(-1px); filter:brightness(1.2); }
+        .pb:active { transform:scale(.95); }
+        .pb-gold  { background:rgba(201,168,76,.1); border:1px solid rgba(201,168,76,.3) !important; color:#c9a84c; }
+        .pb-green { background:rgba(77,220,100,.14); border:1px solid rgba(77,220,100,.35) !important; color:#4ddc64; }
+        .cam-tab { font-family:'Nunito',sans-serif; font-weight:800; font-size:.58rem; padding:.2rem .6rem; border-radius:4px; border:none; cursor:pointer; transition:all .2s; }
+        .cam-tab-on  { background:rgba(201,168,76,.18); border:1px solid rgba(201,168,76,.45) !important; color:#f0d080; }
+        .cam-tab-off { background:rgba(201,168,76,.05); border:1px solid rgba(201,168,76,.14) !important; color:rgba(201,168,76,.38); }
+        .ws-input { flex:1; background:rgba(4,2,0,.6); border:1px solid rgba(201,168,76,.22) !important; border-radius:6px; color:#e8d88a; padding:.36rem .75rem; font-family:'Space Mono',monospace; font-size:.68rem; outline:none; backdrop-filter:blur(8px); transition:border-color .2s; }
+        .ws-input:focus { border-color:rgba(201,168,76,.5) !important; }
+        .btn-connect { font-family:'Cinzel',serif; font-size:.72rem; font-weight:600; letter-spacing:.06em; padding:.34rem .95rem; border-radius:5px; cursor:pointer; background:linear-gradient(135deg,#8a5500,#c9a84c,#f0d080,#c9a84c,#8a5500); background-size:200% auto; animation:goldShimmer 4s linear infinite; color:#0a0400; white-space:nowrap; border:none; box-shadow:0 2px 14px rgba(201,168,76,.3),inset 0 1px 0 rgba(255,255,255,.15); transition:all .2s; }
+        .btn-connect:hover { transform:translateY(-1px); filter:brightness(1.1); }
+        .gold-divider { width:100%; height:1px; background:linear-gradient(90deg,transparent,rgba(201,168,76,.25),rgba(201,168,76,.4),rgba(201,168,76,.25),transparent); flex-shrink:0; position:relative; }
+        .gold-divider::after { content:'◆'; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-size:.45rem; color:rgba(201,168,76,.6); background:rgba(6,3,0,.85); padding:0 6px; }
+        .status-badge { display:flex; align-items:center; gap:.35rem; padding:.22rem .65rem; border-radius:20px; font-family:'Cinzel',serif; font-size:.6rem; letter-spacing:.06em; font-weight:600; white-space:nowrap; }
+        .status-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+        .kbd-key { background:rgba(201,168,76,.1); border:1px solid rgba(201,168,76,.28) !important; border-bottom:2px solid rgba(201,168,76,.45) !important; border-radius:5px; padding:2px 6px; font-family:'Space Mono',monospace; font-size:.48rem; color:#c9a84c; white-space:nowrap; box-shadow:0 2px 5px rgba(0,0,0,.4); }
+        .kbd-lbl { font-size:.4rem; color:rgba(201,168,76,.38); }
+        .ws-log { font-size:.53rem; font-family:'Space Mono',monospace; color:rgba(201,168,76,.55); text-align:center; padding:.16rem .55rem; background:rgba(2,1,0,.5); border:1px solid rgba(201,168,76,.12) !important; border-radius:6px; width:100%; flex-shrink:0; }
+        .ws-scan { position:absolute; inset:0; pointer-events:none; z-index:0; background:repeating-linear-gradient(0deg,transparent,transparent 30px,rgba(201,168,76,.006) 30px,rgba(201,168,76,.006) 31px); }
+        .cam-frame { width:100%; flex:1; position:relative; overflow:hidden; border-radius:8px; border:1px solid rgba(201,168,76,.2) !important; background:rgba(2,1,0,.7); min-height:0; box-shadow:inset 0 0 40px rgba(0,0,0,.5),0 0 14px rgba(201,168,76,.04); }
+        .rec-badge { position:absolute; top:8px; left:9px; z-index:3; display:flex; align-items:center; gap:4px; background:rgba(0,0,0,.6); padding:2px 8px; border-radius:20px; backdrop-filter:blur(6px); }
+        .rec-dot { width:5px; height:5px; border-radius:50%; background:#ff3333; box-shadow:0 0 6px #ff3333; animation:blink 1s ease-in-out infinite; }
+        .rec-text { font-family:'Space Mono',monospace; font-size:.48rem; color:rgba(255,255,255,.85); font-weight:700; letter-spacing:.06em; }
+        .cam-label { position:absolute; top:8px; right:9px; z-index:3; background:rgba(0,0,0,.6); padding:2px 9px; border-radius:20px; backdrop-filter:blur(6px); border:1px solid rgba(201,168,76,.18) !important; }
+        .cam-label span { font-family:'Cinzel',serif; font-size:.5rem; color:#c9a84c; letter-spacing:.06em; }
+        .cam-crt { position:absolute; inset:0; border-radius:8px; background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px); pointer-events:none; z-index:2; }
+        .hud-corner { position:fixed; width:30px; height:30px; border-color:rgba(201,168,76,.65); border-style:solid; z-index:3; animation:hudPulse 3s ease-in-out infinite; pointer-events:none; }
+        .deco-star { position:fixed; z-index:2; pointer-events:none; animation:upulse 3s ease-in-out infinite; color:#c9a84c; }
+        .sub-tab { font-family:'Space Mono',monospace; font-size:.52rem; padding:.18rem .5rem; border-radius:4px; border:none; cursor:pointer; transition:all .2s; }
+        .sub-tab-on  { background:rgba(201,168,76,.22); border:1px solid rgba(201,168,76,.5) !important; color:#f0d080; }
+        .sub-tab-off { background:rgba(201,168,76,.04); border:1px solid rgba(201,168,76,.12) !important; color:rgba(201,168,76,.32); }
     `}</style>
 );
 
+// ═══════════════════════════════════════════
+// PLAYGROUND
+// ═══════════════════════════════════════════
 function Playground() {
     const { category, setCategory, setCode, setGenerateCode } = useContext(StoreContext);
     const [simStatus, setSimStatus] = useState('offline');
-    const [wsUrl, setWsUrl] = useState('ws://127.0.0.1:8765');
-    const [wsLog, setWsLog] = useState('');
-    const [camFrame, setCamFrame] = useState(null);        // 📷 Caméra robot  (port 8765)
-    const [camOverview, setCamOverview] = useState(null);  // 🌍 Overview       (port 8766)
-    const [simTab, setSimTab] = useState('cam');           // 'cam' | 'overview'
+    const [wsUrl, setWsUrl] = useState('ws://197.5.193.210:8765');
+    const [wsLog, setWsLog] = useState('⏳ Démarrage de Webots…');
+    const [camFrame, setCamFrame] = useState(null);
+    const [simTab, setSimTab] = useState('cam');
+    const [viewMode, setViewMode] = useState('top');
     const [showQr, setShowQr] = useState(false);
-    const wsRef = useRef(null);
-    const wsOverviewRef = useRef(null);
-    const keysRef = useRef({});
 
-    // ── Clavier : commandes alignées avec le contrôleur Python ──
-    React.useEffect(() => {
-        const keyMap = {
-            'ArrowUp': 'moveForward',
-            'ArrowDown': 'moveBackward',
-            'ArrowLeft': 'turnLeft',
-            'ArrowRight': 'turnRight',
+    const STREAM_TOP = 'http://197.5.193.210:8766/top';
+    const STREAM_SCENE = 'http://197.5.193.210:8766/scene';
+
+    const wsRef = useRef(null);
+    const keysRef = useRef({});
+    const reconnTimerRef = useRef(null);
+    const userIdRef = useRef('user_' + Math.random().toString(36).slice(2, 8));
+
+    const G = (a) => `rgba(201,168,76,${a})`;
+    const SC = simStatus === 'online' ? '#4ddc64' : simStatus === 'connecting' ? '#f0a500' : '#c9a84c';
+    const SL = simStatus === 'online' ? 'CONNECTÉ' : simStatus === 'connecting' ? 'CONNEXION...' : 'OFFLINE';
+    const viewLabel = viewMode === 'top' ? '🔭 Vue Dessus' : '🎬 Vue Scène';
+    const streamUrl = viewMode === 'top' ? STREAM_TOP : STREAM_SCENE;
+
+    // ═══════════════════════════════════════════
+    // Lancement automatique de Webots via backend
+    // ═══════════════════════════════════════════
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const level = params.get('level') || '1';
+        const userId = userIdRef.current;
+
+        setWsLog('🚀 Lancement de Webots — niveau ' + level + '…');
+
+        fetch(`${BACKEND}/start`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId, level }),
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.ok || data.message) {
+                    setWsLog('✅ Webots lancé — niveau ' + level + ' — connexion WS…');
+                } else {
+                    setWsLog('⚠️ ' + (data.error || 'Erreur backend'));
+                }
+            })
+            .catch(() => {
+                setWsLog('⚠️ Backend non disponible — lance : cd backend && node server.js');
+            });
+
+        return () => {
+            fetch(`${BACKEND}/stop`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId }),
+            }).catch(() => { });
+        };
+    }, []); // eslint-disable-line
+
+    // ═══════════════════════════════════════════
+    // WebSocket principal (caméra robot)
+    // ═══════════════════════════════════════════
+    const connectWebots = useCallback(() => {
+        if (reconnTimerRef.current) { clearTimeout(reconnTimerRef.current); reconnTimerRef.current = null; }
+        if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); }
+        setSimStatus('connecting'); setWsLog('🔄 Connexion en cours…');
+        try {
+            const ws = new WebSocket(wsUrl); wsRef.current = ws;
+            ws.onopen = () => { setSimStatus('online'); setWsLog('✅ Connecté !'); ParserModule.initParser(ws); };
+            ws.onerror = () => { setSimStatus('offline'); setWsLog('❌ Erreur connexion'); };
+            ws.onclose = () => {
+                setSimStatus('offline'); setWsLog('⚠️ Déconnecté — reconnexion dans 3s…');
+                setCamFrame(null);
+                reconnTimerRef.current = setTimeout(() => connectWebots(), 3000);
+            };
+            ws.onmessage = (e) => {
+                if (typeof e.data === 'string' && e.data.startsWith('CAM:')) {
+                    setCamFrame('data:image/jpeg;base64,' + e.data.substring(4)); return;
+                }
+                try { const m = JSON.parse(e.data); if (m.type === 'camera') { setCamFrame('data:image/png;base64,' + m.data); return; } } catch (_) { }
+                setWsLog('📩 ' + e.data);
+            };
+        } catch (e) {
+            setSimStatus('offline'); setWsLog('❌ ' + e.message);
+            reconnTimerRef.current = setTimeout(() => connectWebots(), 3000);
+        }
+    }, [wsUrl]); // eslint-disable-line
+
+    useEffect(() => {
+        // Attendre 2s que Webots démarre avant de connecter le WebSocket
+        const t = setTimeout(() => connectWebots(), 2000);
+        return () => {
+            clearTimeout(t);
+            if (reconnTimerRef.current) clearTimeout(reconnTimerRef.current);
+            if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); }
+        };
+    }, []); // eslint-disable-line
+
+    // ═══════════════════════════════════════════
+    // Clavier
+    // ═══════════════════════════════════════════
+    useEffect(() => {
+        const km = {
+            'ArrowUp': 'moveForward', 'ArrowDown': 'moveBackward',
+            'ArrowLeft': 'turnLeft', 'ArrowRight': 'turnRight',
             'z': 'moveForward', 'Z': 'moveForward',
             's': 'moveBackward', 'S': 'moveBackward',
             'q': 'turnLeft', 'Q': 'turnLeft',
             'd': 'turnRight', 'D': 'turnRight',
-            ' ': 'stop',
+            ' ': 'stop'
         };
-        const onKeyDown = (e) => {
-            if (keysRef.current[e.key]) return;
-            keysRef.current[e.key] = true;
-            const cmd = keyMap[e.key];
-            if (cmd) { e.preventDefault(); sendCmd(cmd); }
-        };
-        const onKeyUp = (e) => {
-            keysRef.current[e.key] = false;
-            const cmd = keyMap[e.key];
-            if (cmd && cmd !== 'stop') sendCmd('stop');
-        };
-        window.addEventListener('keydown', onKeyDown);
-        window.addEventListener('keyup', onKeyUp);
-        return () => {
-            window.removeEventListener('keydown', onKeyDown);
-            window.removeEventListener('keyup', onKeyUp);
-        };
-    }); // eslint-disable-line react-hooks/exhaustive-deps
+        const dn = (e) => { if (keysRef.current[e.key]) return; keysRef.current[e.key] = true; const c = km[e.key]; if (c) { e.preventDefault(); sendCmd(c); } };
+        const up = (e) => { keysRef.current[e.key] = false; const c = km[e.key]; if (c && c !== 'stop') sendCmd('stop'); };
+        window.addEventListener('keydown', dn); window.addEventListener('keyup', up);
+        return () => { window.removeEventListener('keydown', dn); window.removeEventListener('keyup', up); };
+    }); // eslint-disable-line
 
     const sendCmd = (cmd) => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-            wsRef.current.send(cmd);
-            setWsLog('✅ ' + cmd);
-        } else {
-            setWsLog('❌ Non connecté !');
-        }
-    };
-
-    const connectWebots = () => {
-        if (wsRef.current) wsRef.current.close();
-        if (wsOverviewRef.current) wsOverviewRef.current.close();
-        setSimStatus('connecting');
-
-        try {
-            const ws = new WebSocket(wsUrl);
-            wsRef.current = ws;
-
-            ws.onopen = () => {
-                setSimStatus('online');
-                setWsLog('✅ Connecté !');
-                ParserModule.initParser(ws);
-                startOverview();
-            };
-            ws.onerror = () => { setSimStatus('offline'); setWsLog('❌ Erreur connexion'); };
-            ws.onclose = () => {
-                setSimStatus('offline');
-                setWsLog('⚠️ Déconnecté');
-                setCamFrame(null);
-                overviewActiveRef.current = false;
-            };
-            ws.onmessage = (e) => {
-                if (typeof e.data === 'string' && e.data.startsWith('CAM:')) {
-                    setCamFrame('data:image/jpeg;base64,' + e.data.substring(4));
-                    return;
-                }
-                try {
-                    const msg = JSON.parse(e.data);
-                    if (msg.type === 'camera') { setCamFrame('data:image/png;base64,' + msg.data); return; }
-                } catch (_) { }
-                setWsLog('📩 ' + e.data);
-            };
-        } catch (e) { setSimStatus('offline'); setWsLog('❌ ' + e.message); }
-    };
-
-    const overviewActiveRef = React.useRef(false);
-
-    const startOverview = () => {
-        overviewActiveRef.current = true;
-        connectOverviewLoop();
-    };
-
-    const connectOverviewLoop = () => {
-        if (!overviewActiveRef.current) return;
-        if (wsOverviewRef.current) {
-            wsOverviewRef.current.onclose = null;
-            wsOverviewRef.current.close();
-        }
-
-        try {
-            const overviewUrl = wsUrl.replace('8765', '8766');
-            const ws2 = new WebSocket(overviewUrl);
-            wsOverviewRef.current = ws2;
-
-            ws2.onopen = () => console.log('✅ Overview connecté');
-
-            ws2.onmessage = (e) => {
-                if (typeof e.data === 'string' && e.data.startsWith('CAM:')) {
-                    setCamOverview('data:image/jpeg;base64,' + e.data.substring(4));
-                }
-            };
-
-            ws2.onclose = () => {
-                setCamOverview(null);
-                if (overviewActiveRef.current) {
-                    setTimeout(connectOverviewLoop, 500);
-                }
-            };
-
-            ws2.onerror = () => {
-                setCamOverview(null);
-            };
-        } catch (_) {
-            setCamOverview(null);
-            if (overviewActiveRef.current) {
-                setTimeout(connectOverviewLoop, 500);
-            }
-        }
+        if (wsRef.current?.readyState === WebSocket.OPEN) { wsRef.current.send(cmd); setWsLog('✅ ' + cmd); }
+        else setWsLog('❌ Non connecté !');
     };
 
     const handleRun = () => {
         try {
-            console.log("▶ Run cliqué !");
-            const Blockly = require('blockly/core');
-            const { javascriptGenerator } = require('blockly/javascript');
-            const workspace = Blockly.getMainWorkspace();
-            const code = javascriptGenerator.workspaceToCode(workspace);
-            console.log("=== CODE JS ===\n", code);
-            ParserModule.runBlocklyCode(code);
-        } catch (e) {
-            console.error("❌ Erreur Run:", e);
-            const code = window.__currentPythonCode || '';
-            console.log("=== FALLBACK ===\n", code);
-            if (code) ParserModule.runBlocklyCode(code);
-        }
+            const B = require('blockly/core'); const { javascriptGenerator: J } = require('blockly/javascript');
+            ParserModule.runBlocklyCode(J.workspaceToCode(B.getMainWorkspace())); setWsLog('▶ Programme lancé !');
+        } catch (e) { const c = window.__currentPythonCode || ''; if (c) ParserModule.runBlocklyCode(c); }
     };
 
     const handleQR = () => {
         try {
-            const Blockly = require('blockly/core');
-            const { javascriptGenerator } = require('blockly/javascript');
-            const workspace = Blockly.getMainWorkspace();
-            const jsCode = javascriptGenerator.workspaceToCode(workspace);
-
-            const commands = [];
-            const lines = jsCode.split('\n');
-
-            for (const line of lines) {
-                const l = line.trim();
-                if (l.startsWith('moveForward')) {
-                    const m = l.match(/\((\d+\.?\d*)\)/);
-                    const speed = m ? parseFloat(m[1]) / 255 : 0.75;
-                    commands.push({ left: +speed.toFixed(2), right: +speed.toFixed(2), duration: 1000 });
-                } else if (l.startsWith('moveBackward')) {
-                    const m = l.match(/\((\d+\.?\d*)\)/);
-                    const speed = m ? parseFloat(m[1]) / 255 : 0.75;
-                    commands.push({ left: -+speed.toFixed(2), right: -+speed.toFixed(2), duration: 1000 });
-                } else if (l.startsWith('moveLeft') || l.startsWith('turnLeft')) {
-                    const m = l.match(/\((\d+\.?\d*)\)/);
-                    const speed = m ? parseFloat(m[1]) / 255 : 0.75;
-                    commands.push({ left: 0, right: +speed.toFixed(2), duration: 600 });
-                } else if (l.startsWith('moveRight') || l.startsWith('turnRight')) {
-                    const m = l.match(/\((\d+\.?\d*)\)/);
-                    const speed = m ? parseFloat(m[1]) / 255 : 0.75;
-                    commands.push({ left: +speed.toFixed(2), right: 0, duration: 600 });
-                } else if (l.startsWith('wait') && commands.length > 0) {
-                    const m = l.match(/\((\d+)\)/);
-                    if (m) commands[commands.length - 1].duration = parseInt(m[1]);
-                }
+            const B = require('blockly/core'); const { javascriptGenerator: J } = require('blockly/javascript');
+            const jsCode = J.workspaceToCode(B.getMainWorkspace()); const commands = [];
+            for (const line of jsCode.split('\n')) {
+                const l = line.trim(); const m = l.match(/\((\d+\.?\d*)\)/); const s = m ? parseFloat(m[1]) / 255 : 0.75;
+                if (l.startsWith('moveForward')) commands.push({ l: +s.toFixed(2), r: +s.toFixed(2), d: 1000 });
+                else if (l.startsWith('moveBackward')) commands.push({ l: -+s.toFixed(2), r: -+s.toFixed(2), d: 1000 });
+                else if (l.startsWith('moveLeft') || l.startsWith('turnLeft')) commands.push({ l: 0, r: +s.toFixed(2), d: 600 });
+                else if (l.startsWith('moveRight') || l.startsWith('turnRight')) commands.push({ l: +s.toFixed(2), r: 0, d: 600 });
+                else if (l.startsWith('wait') && commands.length > 0) { const w = l.match(/\((\d+)\)/); if (w) commands[commands.length - 1].d = parseInt(w[1]); }
             }
-
-            if (commands.length === 0) {
-                alert('Aucun bloc de mouvement détecté ! Ajoute des blocs move dans Blockly.');
-                return;
-            }
-
-            setCode({ path: commands });
-            setGenerateCode(prev => !prev);
-            setShowQr(true);
-            setWsLog('📱 QR Code généré — ' + commands.length + ' commande(s)');
-        } catch (e) {
-            console.error('❌ Erreur QR:', e);
-            alert('Erreur : ' + e.message);
-        }
+            if (!commands.length) { alert('Aucun bloc de mouvement !'); return; }
+            setCode({ cm: commands }); setGenerateCode(p => !p); setShowQr(true); setWsLog('📱 QR généré — ' + commands.length + ' cmd');
+        } catch (e) { alert('Erreur : ' + e.message); }
     };
 
     const ispy = category === 'py';
-    const statusColor = simStatus === 'online' ? '#4ddc64' : simStatus === 'connecting' ? '#f0a500' : '#ff4444';
-    const statusLabel = simStatus === 'online' ? 'CONNECTÉ' : simStatus === 'connecting' ? 'CONNEXION...' : 'OFFLINE';
-
-    const activeFrame = simTab === 'cam' ? camFrame : camOverview;
-    const activeCamLabel = simTab === 'cam' ? '📷 CAM ROBOT' : '🌍 VUE 3D';
-
-    const S = {
-        root: { position: 'relative', height: '100vh', overflow: 'hidden', fontFamily: "'Nunito',sans-serif" },
-        overlay: { position: 'relative', zIndex: 10, height: '100vh', display: 'flex', flexDirection: 'column' },
-        main: { display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 },
-        left: { flex: 1, position: 'relative', overflow: 'hidden' },
-        right: { width: '42%', flexShrink: 0, display: 'flex', flexDirection: 'column', borderLeft: '1px solid rgba(108,190,255,.18)', background: 'rgba(4,9,28,.82)', backdropFilter: 'blur(20px)', minHeight: 0 },
-        pyPanel: { flex: '0 0 35%', display: 'flex', flexDirection: 'column', borderBottom: '1px solid rgba(108,190,255,.15)', overflow: 'hidden', minHeight: 0 },
-        simPanel: { flex: '0 0 65%', display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 },
-        simBody: { flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: '.35rem', padding: '.4rem .5rem', background: 'rgba(2,5,16,.32)', minHeight: 0, overflow: 'hidden' },
-        simTitle: { fontFamily: "'Fredoka One',cursive", fontSize: '.9rem', letterSpacing: '.08em', background: 'linear-gradient(90deg,#fbbf24,#f472b6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
-    };
-
-    const btnConn = { fontFamily: "'Fredoka One',cursive", fontSize: '.82rem', padding: '.35rem 1rem', border: 'none', borderRadius: '8px', cursor: 'pointer', background: 'linear-gradient(135deg,#6cbefd,#a78bfa)', color: 'white', whiteSpace: 'nowrap', boxShadow: '0 2px 10px rgba(108,190,255,.28)', transition: 'all .2s' };
-    const wsInput = { flex: 1, background: 'rgba(2,5,16,.7)', border: '1px solid rgba(108,190,255,.2)', borderRadius: '8px', color: '#c8ddf0', padding: '.35rem .7rem', fontFamily: "'Space Mono',monospace", fontSize: '.73rem', outline: 'none' };
 
     return (
-        <div style={S.root}>
-            <GlobalStyles />
+        <div style={{ position: 'relative', height: '100vh', overflow: 'hidden', fontFamily: "'Nunito',sans-serif" }}>
+            <Styles />
             <StarCanvas />
-            <UniversBG />
-            <div style={S.overlay}>
+
+            {/* ── BACKGROUND ── */}
+            <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: `radial-gradient(ellipse at 50% 105%,rgba(180,90,0,.6) 0%,transparent 48%),radial-gradient(ellipse at 12% 58%,rgba(201,168,76,.1) 0%,transparent 44%),radial-gradient(ellipse at 88% 18%,rgba(40,20,80,.28) 0%,transparent 44%),#030108` }} />
+            <div style={{ position: 'fixed', top: '-8%', left: '-4%', width: '680px', height: '680px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(201,168,76,.1) 0%,transparent 70%)', filter: 'blur(90px)', zIndex: 0, pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', top: '-4%', right: '-4%', width: '580px', height: '580px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(80,40,160,.18) 0%,transparent 70%)', filter: 'blur(100px)', zIndex: 0, pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', bottom: '-4%', left: '18%', width: '960px', height: '420px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(200,100,0,.35) 0%,transparent 70%)', filter: 'blur(110px)', zIndex: 0, pointerEvents: 'none' }} />
+            <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', backgroundImage: `url("https://www.transparenttextures.com/patterns/arabesque.png")`, backgroundSize: '260px 260px', opacity: .08 }} />
+            <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', backgroundImage: `url("https://www.transparenttextures.com/patterns/arabesque.png")`, backgroundSize: '130px 130px', backgroundPosition: '65px 65px', opacity: .03, filter: 'invert(1)' }} />
+
+            {/* Moon */}
+            <div style={{ position: 'fixed', top: '4%', right: '3%', zIndex: 2, pointerEvents: 'none', animation: 'ufloat 11s ease-in-out infinite' }}>
+                <div style={{ width: '68px', height: '68px', borderRadius: '50%', background: 'radial-gradient(circle at 32% 28%,#fff8e1,#f0d080,#a86c00)', animation: 'orbPulse 4s ease-in-out infinite', position: 'relative' }}>
+                    <div style={{ position: 'absolute', top: '-16px', left: '-16px', width: '100px', height: '100px', borderRadius: '50%', border: '1px solid rgba(201,168,76,.2)' }} />
+                    <div style={{ position: 'absolute', top: '-26px', left: '-26px', width: '120px', height: '120px', borderRadius: '50%', border: '1px solid rgba(201,168,76,.1)' }} />
+                </div>
+            </div>
+            <div style={{ position: 'fixed', top: '60%', left: '1.5%', fontSize: '2.6rem', zIndex: 2, pointerEvents: 'none', animation: 'udrift 9s ease-in-out infinite', filter: 'drop-shadow(0 0 14px rgba(201,168,76,.6))' }}>🐪</div>
+            <svg style={{ position: 'fixed', bottom: 0, left: 0, width: '100%', height: '200px', zIndex: 1, pointerEvents: 'none', animation: 'sandDrift 18s ease-in-out infinite' }} viewBox="0 0 1440 200" preserveAspectRatio="none">
+                <path d="M0,145 C200,82 380,158 570,108 C750,62 930,150 1110,98 C1230,64 1370,120 1440,88 L1440,200 L0,200 Z" fill="rgba(201,168,76,.1)" />
+                <path d="M0,145 C200,82 380,158 570,108 C750,62 930,150 1110,98 C1230,64 1370,120 1440,88" stroke="rgba(201,168,76,.22)" strokeWidth="1.2" fill="none" />
+                <path d="M0,168 C320,135 540,172 790,152 C990,136 1180,168 1440,148 L1440,200 L0,200 Z" fill="rgba(180,80,0,.13)" />
+            </svg>
+
+            {[{ top: '16px', left: '16px', borderWidth: '1.5px 0 0 1.5px', animationDelay: '0s' }, { top: '16px', right: '16px', borderWidth: '1.5px 1.5px 0 0', animationDelay: '.6s' }, { bottom: '16px', left: '16px', borderWidth: '0 0 1.5px 1.5px', animationDelay: '1.2s' }, { bottom: '16px', right: '16px', borderWidth: '0 1.5px 1.5px 0', animationDelay: '1.8s' }].map((s, i) => <div key={i} className="hud-corner" style={s} />)}
+            {[{ top: '14%', left: '28%', fontSize: '1.3rem', animationDelay: '0s' }, { top: '70%', left: '62%', fontSize: '1.2rem', animationDelay: '1.2s' }, { top: '32%', left: '83%', fontSize: '1.4rem', animationDelay: '2.4s' }, { top: '80%', left: '22%', fontSize: '1.2rem', animationDelay: '3s' }].map((s, i) => <div key={i} className="deco-star" style={s}>{['✨', '⭐', '💫', '🌟'][i]}</div>)}
+
+            {/* ══ APP LAYOUT ══ */}
+            <div style={{ position: 'relative', zIndex: 10, height: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Header />
-                <div style={S.main}>
-                    <div style={S.left}>
-                        <div className="ws-scan" style={{ zIndex: 1 }} />
-                        <BlocklyComponent
-                            readOnly={false}
-                            move={{ scrollbars: true, drag: true, wheel: true }}
-                            initialXml={`<xml xmlns="http://www.w3.org/1999/xhtml">
-                                <Block type="start" x="0" y="100"/>
-                                <Block type="forever" x="250" y="100"/>
-                            </xml>`}
-                        >
+                <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+
+                    {/* ── BLOCKLY ── */}
+                    <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+                        <div className="ws-scan" />
+                        <BlocklyComponent readOnly={false} move={{ scrollbars: true, drag: true, wheel: true }}
+                            initialXml={`<xml xmlns="http://www.w3.org/1999/xhtml"><Block type="start" x="0" y="100"/><Block type="forever" x="250" y="100"/></xml>`}>
                             <Toolbox />
                         </BlocklyComponent>
                     </div>
 
-                    <div style={S.right}>
-                        {/* ── Panneau éditeur de code ── */}
-                        <div style={S.pyPanel}>
-                            <div className="robo-panel-hdr">
+                    {/* ── RIGHT PANEL ── */}
+                    <div style={{ width: '44%', flexShrink: 0, display: 'flex', flexDirection: 'column', background: 'linear-gradient(180deg,rgba(8,4,1,.78) 0%,rgba(6,3,0,.74) 50%,rgba(10,5,1,.78) 100%)', backdropFilter: 'blur(18px) saturate(140%)', borderLeft: `1px solid ${G(.28)}`, minHeight: 0, boxShadow: `-2px 0 40px rgba(0,0,0,.5),inset 1px 0 0 ${G(.05)}` }}>
+
+                        {/* ─ CODE PANEL ─ */}
+                        <div style={{ flex: '0 0 36%', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${G(.18)}`, overflow: 'hidden', minHeight: 0 }}>
+                            <div className="panel-hdr">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-                                    <span style={{ fontSize: '1rem' }}>{ispy ? '🐍' : '⚡'}</span>
-                                    <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.88rem', letterSpacing: '.08em', color: ispy ? '#a5f3d0' : '#fcd34d' }}>
-                                        {ispy ? 'CODE PYTHON' : 'CODE JAVASCRIPT'}
-                                    </span>
+                                    <span style={{ fontSize: '1rem', filter: `drop-shadow(0 0 6px ${ispy ? 'rgba(52,211,153,.6)' : G(.9)})` }}>{ispy ? '🐍' : '⚡'}</span>
+                                    <span className="gold-shimmer" style={{ fontFamily: "'Cinzel',serif", fontSize: '.8rem', fontWeight: '600', letterSpacing: '.1em' }}>{ispy ? 'CODE PYTHON' : 'CODE JAVASCRIPT'}</span>
                                 </div>
-                                <div style={{ display: 'flex', gap: '.35rem' }}>
-                                    <button className="robo-pb"
-                                        style={{ background: ispy ? 'rgba(251,191,36,.15)' : 'rgba(52,211,153,.15)', border: ispy ? '1px solid rgba(251,191,36,.3)' : '1px solid rgba(52,211,153,.3)', color: ispy ? '#fbbf24' : '#34d399' }}
-                                        onClick={() => setCategory(ispy ? 'js' : 'py')}>
-                                        {ispy ? '⚡ JS' : '🐍 PY'}
-                                    </button>
-                                    <button id="run-btn" className="robo-pb"
-                                        style={{ background: 'rgba(77,220,100,.15)', border: '1px solid rgba(77,220,100,.3)', color: '#4ddc64' }}
-                                        onClick={handleRun}>
-                                        ▶ Run
-                                    </button>
-                                    <button className="robo-pb"
-                                        style={{ background: 'rgba(251,191,36,.15)', border: '1px solid rgba(251,191,36,.3)', color: '#fbbf24' }}
-                                        onClick={handleQR}>
-                                        📱 QR
-                                    </button>
+                                <div style={{ display: 'flex', gap: '.3rem' }}>
+                                    <button className="pb pb-gold" onClick={() => setCategory(ispy ? 'js' : 'py')}>{ispy ? '⚡ JS' : '🐍 PY'}</button>
+                                    <button className="pb pb-green" onClick={handleRun}>▶ Run</button>
+                                    <button className="pb pb-gold" onClick={handleQR}>📱 QR</button>
                                 </div>
                             </div>
-                            <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
-                                <CodeEditor />
-                            </div>
+                            <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: 'rgba(2,1,0,.32)' }}><CodeEditor /></div>
                         </div>
 
-                        {/* ── Panneau simulateur ── */}
-                        <div style={S.simPanel}>
-                            <div className="robo-panel-hdr">
-                                <span style={S.simTitle}>🤖 SIMULATEUR ROBOT</span>
+                        {/* ─ SIMULATEUR PANEL ─ */}
+                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+                            <div className="panel-hdr">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-                                    {showQr && (
-                                        <button className="robo-pb"
-                                            style={{ background: 'rgba(251,191,36,.1)', border: '1px solid rgba(251,191,36,.25)', color: '#fbbf24', fontSize: '.6rem' }}
-                                            onClick={() => setShowQr(false)}>
-                                            ✕ QR
-                                        </button>
-                                    )}
-                                    {!showQr && (
-                                        <div style={{ display: 'flex', gap: '.25rem' }}>
-                                            {[
-                                                { id: 'cam', label: '📷 Robot' },
-                                                { id: 'overview', label: '🌍 Vue 3D' },
-                                            ].map(tab => (
-                                                <button key={tab.id} className="robo-pb"
-                                                    onClick={() => setSimTab(tab.id)}
-                                                    style={{
-                                                        background: simTab === tab.id ? 'rgba(108,190,255,.25)' : 'rgba(108,190,255,.08)',
-                                                        border: `1px solid rgba(108,190,255,${simTab === tab.id ? '.5' : '.2'})`,
-                                                        color: simTab === tab.id ? '#6cbefd' : 'rgba(200,221,240,.45)',
-                                                        fontSize: '.62rem',
-                                                    }}>
-                                                    {tab.label}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    )}
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem', padding: '.25rem .75rem', borderRadius: '20px', background: `rgba(${simStatus === 'online' ? '77,220,100' : simStatus === 'connecting' ? '240,165,0' : '255,68,68'},.1)`, border: `1px solid ${statusColor}44` }}>
-                                        <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: statusColor, boxShadow: `0 0 8px ${statusColor}` }} />
-                                        <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.72rem', color: statusColor }}>{statusLabel}</span>
+                                    <span style={{ fontSize: '1rem', filter: `drop-shadow(0 0 8px ${G(.9)})` }}>🤖</span>
+                                    <span className="gold-shimmer" style={{ fontFamily: "'Cinzel',serif", fontSize: '.8rem', fontWeight: '600', letterSpacing: '.1em' }}>SIMULATEUR ROBOT</span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '.38rem' }}>
+                                    {showQr && <button className="pb pb-gold" style={{ fontSize: '.58rem' }} onClick={() => setShowQr(false)}>✕ QR</button>}
+                                    {!showQr && (<>
+                                        <button className={`cam-tab ${simTab === 'cam' ? 'cam-tab-on' : 'cam-tab-off'}`} onClick={() => setSimTab('cam')}>📷 Robot</button>
+                                        <button className={`cam-tab ${simTab === 'overview' ? 'cam-tab-on' : 'cam-tab-off'}`} onClick={() => setSimTab('overview')}>🌍 Vue 3D</button>
+                                    </>)}
+                                    <div className="status-badge"
+                                        style={{ background: `${SC}14`, border: `1px solid ${SC}44`, color: SC, cursor: simStatus !== 'online' ? 'pointer' : 'default' }}
+                                        onClick={simStatus !== 'online' ? connectWebots : undefined}
+                                        title={simStatus !== 'online' ? 'Cliquer pour reconnecter' : ''}>
+                                        <div className="status-dot" style={{ background: SC, boxShadow: `0 0 6px ${SC}` }} />{SL}
                                     </div>
                                 </div>
                             </div>
 
-                            <div style={S.simBody}>
+                            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.35rem', padding: '.45rem .55rem', background: 'rgba(3,1,0,.22)', minHeight: 0, overflow: 'hidden' }}>
+
+                                {/* WS input */}
                                 <div style={{ display: 'flex', gap: '.4rem', width: '100%', flexShrink: 0 }}>
-                                    <input style={wsInput} value={wsUrl} onChange={e => setWsUrl(e.target.value)} placeholder="ws://127.0.0.1:8765" />
-                                    <button style={btnConn} onClick={connectWebots}>Connecter</button>
+                                    <input className="ws-input" value={wsUrl} onChange={e => setWsUrl(e.target.value)} placeholder="ws://197.5.193.210:8765" />
+                                    <button className="btn-connect" onClick={connectWebots}>Connecter</button>
                                 </div>
 
-                                {showQr ? (
-                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', width: '100%' }}>
-                                        <div style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.8rem', color: '#fbbf24', letterSpacing: '.05em' }}>
-                                            📱 Scanner avec l'app OpenBot
-                                        </div>
-                                        <div style={{ background: 'white', borderRadius: '12px', padding: '10px', boxShadow: '0 0 30px rgba(251,191,36,0.3)' }}>
-                                            <QrCode />
-                                        </div>
-                                        <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.52rem', color: 'rgba(200,221,240,.4)', textAlign: 'center' }}>
-                                            Appuie sur ⊡ dans l'app puis scanne
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div style={{ width: '100%', flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '10px', border: '1px solid rgba(108,190,255,0.18)', background: 'rgba(2,5,16,0.7)', minHeight: 0 }}>
-                                        <div style={{ position: 'absolute', top: '7px', left: '8px', zIndex: 3, display: 'flex', alignItems: 'center', gap: '4px', background: 'rgba(0,0,0,0.5)', padding: '2px 7px', borderRadius: '20px' }}>
-                                            <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#ff4444', boxShadow: '0 0 5px #ff4444', animation: 'ublink 1s ease-in-out infinite' }} />
-                                            <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.52rem', color: 'rgba(255,255,255,.75)', fontWeight: 'bold' }}>REC</span>
-                                        </div>
-                                        <div style={{ position: 'absolute', top: '7px', right: '8px', zIndex: 3, background: 'rgba(0,0,0,0.5)', padding: '2px 7px', borderRadius: '20px' }}>
-                                            <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.58rem', color: 'rgba(108,190,255,.9)' }}>{activeCamLabel}</span>
-                                        </div>
-                                        {activeFrame ? (
-                                            <img
-                                                src={activeFrame}
-                                                alt="cam"
-                                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', imageRendering: 'crisp-edges' }}
-                                            />
-                                        ) : (
-                                            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.5rem' }}>
-                                                <span style={{ fontSize: '2.2rem' }}>{simTab === 'cam' ? '📷' : '🌍'}</span>
-                                                <span style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.7rem', color: 'rgba(200,221,240,.35)' }}>
-                                                    {simStatus === 'online' ? 'EN ATTENTE DE FRAME...' : 'EN ATTENTE DE CONNEXION'}
-                                                </span>
-                                            </div>
-                                        )}
-                                        <div style={{ position: 'absolute', inset: 0, background: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.06) 3px,rgba(0,0,0,0.06) 4px)', pointerEvents: 'none', zIndex: 2 }} />
+                                {/* Sous-tabs Vue 3D */}
+                                {simTab === 'overview' && (
+                                    <div style={{ display: 'flex', gap: '.3rem', width: '100%', flexShrink: 0, alignItems: 'center' }}>
+                                        <span style={{ fontFamily: "'Cinzel',serif", fontSize: '.52rem', color: G(.4), marginRight: '.2rem' }}>VUE :</span>
+                                        <button className={`sub-tab ${viewMode === 'top' ? 'sub-tab-on' : 'sub-tab-off'}`} onClick={() => setViewMode('top')}>🔭 Dessus</button>
+                                        <button className={`sub-tab ${viewMode === 'scene' ? 'sub-tab-on' : 'sub-tab-off'}`} onClick={() => setViewMode('scene')}>🎬 Scène</button>
+                                        <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.45rem', color: G(.28), marginLeft: 'auto' }}>
+                                            {viewMode === 'top' ? '8766/top' : '8766/scene'}
+                                        </span>
                                     </div>
                                 )}
 
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem', flexShrink: 0, padding: '.2rem 0' }}>
-                                    {[
-                                        { k: '↑ / Z', label: 'Avancer' },
-                                        { k: '↓ / S', label: 'Reculer' },
-                                        { k: '← / Q', label: 'Gauche' },
-                                        { k: '→ / D', label: 'Droite' },
-                                        { k: 'Espace', label: 'Stop' },
-                                    ].map(({ k, label }) => (
+                                <div className="gold-divider" />
+
+                                {showQr ? (
+                                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.8rem', width: '100%' }}>
+                                        <div style={{ fontFamily: "'Cinzel',serif", fontSize: '.76rem', color: '#c9a84c', letterSpacing: '.1em' }}>📱 Scanner avec OpenBot</div>
+                                        <div style={{ background: 'white', borderRadius: '12px', padding: '10px', boxShadow: `0 0 35px ${G(.4)}` }}><QrCode /></div>
+                                        <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.5rem', color: G(.35) }}>Appuie sur ⊡ dans l'app puis scanne</div>
+                                    </div>
+                                ) : (
+                                    <div className="cam-frame">
+                                        <div className="rec-badge"><div className="rec-dot" /><span className="rec-text">REC</span></div>
+                                        <div className="cam-label"><span>{simTab === 'cam' ? '📷 CAM ROBOT' : viewLabel}</span></div>
+                                        <div className="cam-crt" />
+
+                                        {simTab === 'overview' ? (
+                                            <img
+                                                key={streamUrl}
+                                                src={streamUrl}
+                                                alt={viewLabel}
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '8px' }}
+                                                onError={() => setWsLog(`⚠️ ${viewMode === 'top' ? 'Caméra top' : 'Caméra scene'} non disponible`)}
+                                            />
+                                        ) : camFrame ? (
+                                            <img src={camFrame} alt="FPV" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '8px' }} />
+                                        ) : (
+                                            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.6rem' }}>
+                                                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: `radial-gradient(circle,${G(.16)},transparent)`, border: `1px solid ${G(.2)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', animation: 'upulse 3s ease-in-out infinite', boxShadow: `0 0 18px ${G(.08)}` }}>📷</div>
+                                                <span style={{ fontFamily: "'Cinzel',serif", fontSize: '.6rem', color: G(.48), letterSpacing: '.1em' }}>
+                                                    {simStatus === 'connecting' ? 'CONNEXION EN COURS...' : simStatus === 'online' ? 'EN ATTENTE DE FRAME...' : 'EN ATTENTE DE CONNEXION'}
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Keyboard hints */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.45rem', flexShrink: 0, padding: '.1rem 0' }}>
+                                    {[{ k: '↑/Z', l: 'Avancer' }, { k: '↓/S', l: 'Reculer' }, { k: '←/Q', l: 'Gauche' }, { k: '→/D', l: 'Droite' }, { k: 'Espace', l: 'Stop' }].map(({ k, l }) => (
                                         <div key={k} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                                            <div style={{ background: 'rgba(108,190,255,.12)', border: '1px solid rgba(108,190,255,.25)', borderRadius: '5px', padding: '2px 6px', fontFamily: "'Space Mono',monospace", fontSize: '.55rem', color: '#6cbefd', whiteSpace: 'nowrap' }}>{k}</div>
-                                            <span style={{ fontSize: '.48rem', color: 'rgba(200,221,240,.35)', fontFamily: "'Nunito',sans-serif" }}>{label}</span>
+                                            <div className="kbd-key">{k}</div>
+                                            <span className="kbd-lbl">{l}</span>
                                         </div>
                                     ))}
                                 </div>
 
-                                {wsLog ? (
-                                    <div style={{ fontSize: '.58rem', fontFamily: "'Space Mono',monospace", color: 'rgba(200,221,240,.45)', textAlign: 'center', padding: '.15rem .5rem', background: 'rgba(2,5,16,.4)', borderRadius: '6px', width: '100%', flexShrink: 0 }}>
-                                        {wsLog}
-                                    </div>
-                                ) : null}
+                                {/* Log */}
+                                <div className="ws-log">{wsLog}</div>
                             </div>
                         </div>
                     </div>

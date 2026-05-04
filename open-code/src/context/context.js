@@ -16,8 +16,9 @@ function StoreProvider({ children }) {
     const [isLoading, setIsLoading] = useState(false);
     const [isRunning, setIsRunning] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
+    const [generateCode, setGenerateCode] = useState(false);
 
-    // ── État Blockly (manquant) ────────────────────────────
+    // ── État Blockly ────────────────────────────
     const [workspace, setWorkspace] = useState(null);
 
     // ── États NomadVerse ──────────────────────────────────
@@ -48,6 +49,7 @@ function StoreProvider({ children }) {
             isLoading, setIsLoading,
             isRunning, setIsRunning,
             errorMsg, setErrorMsg,
+            generateCode, setGenerateCode,
             workspace, setWorkspace,
             currentLevel, setCurrentLevel,
             completedLevels, setCompletedLevels,
