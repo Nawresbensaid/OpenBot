@@ -415,16 +415,6 @@ function Playground() {
                                     </div>
                                 )}
 
-                                {/* Keyboard hints */}
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.45rem', flexShrink: 0, padding: '.1rem 0' }}>
-                                    {[{ k: '↑/Z', l: 'Avancer' }, { k: '↓/S', l: 'Reculer' }, { k: '←/Q', l: 'Gauche' }, { k: '→/D', l: 'Droite' }, { k: 'Espace', l: 'Stop' }].map(({ k, l }) => (
-                                        <div key={k} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px' }}>
-                                            <div className="kbd-key">{k}</div>
-                                            <span className="kbd-lbl">{l}</span>
-                                        </div>
-                                    ))}
-                                </div>
-
                                 {/* Log */}
                                 <div className="ws-log">{wsLog}</div>
                             </div>
@@ -436,4 +426,4 @@ function Playground() {
     );
 }
 
-export default Playground;
+export default Playground
