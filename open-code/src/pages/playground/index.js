@@ -93,9 +93,6 @@ const Styles = () => (
         .pb:active { transform:scale(.95); }
         .pb-gold  { background:rgba(201,168,76,.1); border:1px solid rgba(201,168,76,.3) !important; color:#c9a84c; }
         .pb-green { background:rgba(77,220,100,.14); border:1px solid rgba(77,220,100,.35) !important; color:#4ddc64; }
-        .cam-tab { font-family:'Nunito',sans-serif; font-weight:800; font-size:.58rem; padding:.2rem .6rem; border-radius:4px; border:none; cursor:pointer; transition:all .2s; }
-        .cam-tab-on  { background:rgba(201,168,76,.18); border:1px solid rgba(201,168,76,.45) !important; color:#f0d080; }
-        .cam-tab-off { background:rgba(201,168,76,.05); border:1px solid rgba(201,168,76,.14) !important; color:rgba(201,168,76,.38); }
         .ws-input { flex:1; background:rgba(4,2,0,.6); border:1px solid rgba(201,168,76,.22) !important; border-radius:6px; color:#e8d88a; padding:.36rem .75rem; font-family:'Space Mono',monospace; font-size:.68rem; outline:none; backdrop-filter:blur(8px); transition:border-color .2s; }
         .ws-input:focus { border-color:rgba(201,168,76,.5) !important; }
         .btn-connect { font-family:'Cinzel',serif; font-size:.72rem; font-weight:600; letter-spacing:.06em; padding:.34rem .95rem; border-radius:5px; cursor:pointer; background:linear-gradient(135deg,#8a5500,#c9a84c,#f0d080,#c9a84c,#8a5500); background-size:200% auto; animation:goldShimmer 4s linear infinite; color:#0a0400; white-space:nowrap; border:none; box-shadow:0 2px 14px rgba(201,168,76,.3),inset 0 1px 0 rgba(255,255,255,.15); transition:all .2s; }
@@ -104,8 +101,6 @@ const Styles = () => (
         .gold-divider::after { content:'◆'; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-size:.45rem; color:rgba(201,168,76,.6); background:rgba(6,3,0,.85); padding:0 6px; }
         .status-badge { display:flex; align-items:center; gap:.35rem; padding:.22rem .65rem; border-radius:20px; font-family:'Cinzel',serif; font-size:.6rem; letter-spacing:.06em; font-weight:600; white-space:nowrap; }
         .status-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
-        .kbd-key { background:rgba(201,168,76,.1); border:1px solid rgba(201,168,76,.28) !important; border-bottom:2px solid rgba(201,168,76,.45) !important; border-radius:5px; padding:2px 6px; font-family:'Space Mono',monospace; font-size:.48rem; color:#c9a84c; white-space:nowrap; box-shadow:0 2px 5px rgba(0,0,0,.4); }
-        .kbd-lbl { font-size:.4rem; color:rgba(201,168,76,.38); }
         .ws-log { font-size:.53rem; font-family:'Space Mono',monospace; color:rgba(201,168,76,.55); text-align:center; padding:.16rem .55rem; background:rgba(2,1,0,.5); border:1px solid rgba(201,168,76,.12) !important; border-radius:6px; width:100%; flex-shrink:0; }
         .ws-scan { position:absolute; inset:0; pointer-events:none; z-index:0; background:repeating-linear-gradient(0deg,transparent,transparent 30px,rgba(201,168,76,.006) 30px,rgba(201,168,76,.006) 31px); }
         .cam-frame { width:100%; flex:1; position:relative; overflow:hidden; border-radius:8px; border:1px solid rgba(201,168,76,.2) !important; background:rgba(2,1,0,.7); min-height:0; box-shadow:inset 0 0 40px rgba(0,0,0,.5),0 0 14px rgba(201,168,76,.04); }
@@ -117,9 +112,6 @@ const Styles = () => (
         .cam-crt { position:absolute; inset:0; border-radius:8px; background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.04) 3px,rgba(0,0,0,.04) 4px); pointer-events:none; z-index:2; }
         .hud-corner { position:fixed; width:30px; height:30px; border-color:rgba(201,168,76,.65); border-style:solid; z-index:3; animation:hudPulse 3s ease-in-out infinite; pointer-events:none; }
         .deco-star { position:fixed; z-index:2; pointer-events:none; animation:upulse 3s ease-in-out infinite; color:#c9a84c; }
-        .sub-tab { font-family:'Space Mono',monospace; font-size:.52rem; padding:.18rem .5rem; border-radius:4px; border:none; cursor:pointer; transition:all .2s; }
-        .sub-tab-on  { background:rgba(201,168,76,.22); border:1px solid rgba(201,168,76,.5) !important; color:#f0d080; }
-        .sub-tab-off { background:rgba(201,168,76,.04); border:1px solid rgba(201,168,76,.12) !important; color:rgba(201,168,76,.32); }
     `}</style>
 );
 
@@ -131,12 +123,8 @@ function Playground() {
     const [simStatus, setSimStatus] = useState('offline');
     const [wsUrl, setWsUrl] = useState('ws://197.5.193.210:8765');
     const [wsLog, setWsLog] = useState('⏳ Démarrage de Webots…');
-    const [camFrame, setCamFrame] = useState(null);
-    const [simTab, setSimTab] = useState('cam');
-    const [viewMode, setViewMode] = useState('top');
     const [showQr, setShowQr] = useState(false);
 
-    const STREAM_TOP = 'http://197.5.193.210:8766/top';
     const STREAM_SCENE = 'http://197.5.193.210:8766/scene';
 
     const wsRef = useRef(null);
@@ -147,8 +135,6 @@ function Playground() {
     const G = (a) => `rgba(201,168,76,${a})`;
     const SC = simStatus === 'online' ? '#4ddc64' : simStatus === 'connecting' ? '#f0a500' : '#c9a84c';
     const SL = simStatus === 'online' ? 'CONNECTÉ' : simStatus === 'connecting' ? 'CONNEXION...' : 'OFFLINE';
-    const viewLabel = viewMode === 'top' ? '🔭 Vue Dessus' : '🎬 Vue Scène';
-    const streamUrl = viewMode === 'top' ? STREAM_TOP : STREAM_SCENE;
 
     // ═══════════════════════════════════════════
     // Lancement automatique de Webots via backend
@@ -187,7 +173,7 @@ function Playground() {
     }, []); // eslint-disable-line
 
     // ═══════════════════════════════════════════
-    // WebSocket principal (caméra robot)
+    // WebSocket principal
     // ═══════════════════════════════════════════
     const connectWebots = useCallback(() => {
         if (reconnTimerRef.current) { clearTimeout(reconnTimerRef.current); reconnTimerRef.current = null; }
@@ -199,14 +185,10 @@ function Playground() {
             ws.onerror = () => { setSimStatus('offline'); setWsLog('❌ Erreur connexion'); };
             ws.onclose = () => {
                 setSimStatus('offline'); setWsLog('⚠️ Déconnecté — reconnexion dans 3s…');
-                setCamFrame(null);
                 reconnTimerRef.current = setTimeout(() => connectWebots(), 3000);
             };
             ws.onmessage = (e) => {
-                if (typeof e.data === 'string' && e.data.startsWith('CAM:')) {
-                    setCamFrame('data:image/jpeg;base64,' + e.data.substring(4)); return;
-                }
-                try { const m = JSON.parse(e.data); if (m.type === 'camera') { setCamFrame('data:image/png;base64,' + m.data); return; } } catch (_) { }
+                try { const m = JSON.parse(e.data); if (m.type === 'camera') return; } catch (_) { }
                 setWsLog('📩 ' + e.data);
             };
         } catch (e) {
@@ -216,7 +198,6 @@ function Playground() {
     }, [wsUrl]); // eslint-disable-line
 
     useEffect(() => {
-        // Attendre 2s que Webots démarre avant de connecter le WebSocket
         const t = setTimeout(() => connectWebots(), 2000);
         return () => {
             clearTimeout(t);
@@ -347,10 +328,6 @@ function Playground() {
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '.38rem' }}>
                                     {showQr && <button className="pb pb-gold" style={{ fontSize: '.58rem' }} onClick={() => setShowQr(false)}>✕ QR</button>}
-                                    {!showQr && (<>
-                                        <button className={`cam-tab ${simTab === 'cam' ? 'cam-tab-on' : 'cam-tab-off'}`} onClick={() => setSimTab('cam')}>📷 Robot</button>
-                                        <button className={`cam-tab ${simTab === 'overview' ? 'cam-tab-on' : 'cam-tab-off'}`} onClick={() => setSimTab('overview')}>🌍 Vue 3D</button>
-                                    </>)}
                                     <div className="status-badge"
                                         style={{ background: `${SC}14`, border: `1px solid ${SC}44`, color: SC, cursor: simStatus !== 'online' ? 'pointer' : 'default' }}
                                         onClick={simStatus !== 'online' ? connectWebots : undefined}
@@ -368,18 +345,6 @@ function Playground() {
                                     <button className="btn-connect" onClick={connectWebots}>Connecter</button>
                                 </div>
 
-                                {/* Sous-tabs Vue 3D */}
-                                {simTab === 'overview' && (
-                                    <div style={{ display: 'flex', gap: '.3rem', width: '100%', flexShrink: 0, alignItems: 'center' }}>
-                                        <span style={{ fontFamily: "'Cinzel',serif", fontSize: '.52rem', color: G(.4), marginRight: '.2rem' }}>VUE :</span>
-                                        <button className={`sub-tab ${viewMode === 'top' ? 'sub-tab-on' : 'sub-tab-off'}`} onClick={() => setViewMode('top')}>🔭 Dessus</button>
-                                        <button className={`sub-tab ${viewMode === 'scene' ? 'sub-tab-on' : 'sub-tab-off'}`} onClick={() => setViewMode('scene')}>🎬 Scène</button>
-                                        <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.45rem', color: G(.28), marginLeft: 'auto' }}>
-                                            {viewMode === 'top' ? '8766/top' : '8766/scene'}
-                                        </span>
-                                    </div>
-                                )}
-
                                 <div className="gold-divider" />
 
                                 {showQr ? (
@@ -391,27 +356,14 @@ function Playground() {
                                 ) : (
                                     <div className="cam-frame">
                                         <div className="rec-badge"><div className="rec-dot" /><span className="rec-text">REC</span></div>
-                                        <div className="cam-label"><span>{simTab === 'cam' ? '📷 CAM ROBOT' : viewLabel}</span></div>
+                                        <div className="cam-label"><span>🎬 VUE SCÈNE</span></div>
                                         <div className="cam-crt" />
-
-                                        {simTab === 'overview' ? (
-                                            <img
-                                                key={streamUrl}
-                                                src={streamUrl}
-                                                alt={viewLabel}
-                                                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '8px' }}
-                                                onError={() => setWsLog(`⚠️ ${viewMode === 'top' ? 'Caméra top' : 'Caméra scene'} non disponible`)}
-                                            />
-                                        ) : camFrame ? (
-                                            <img src={camFrame} alt="FPV" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '8px' }} />
-                                        ) : (
-                                            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '.6rem' }}>
-                                                <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: `radial-gradient(circle,${G(.16)},transparent)`, border: `1px solid ${G(.2)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.6rem', animation: 'upulse 3s ease-in-out infinite', boxShadow: `0 0 18px ${G(.08)}` }}>📷</div>
-                                                <span style={{ fontFamily: "'Cinzel',serif", fontSize: '.6rem', color: G(.48), letterSpacing: '.1em' }}>
-                                                    {simStatus === 'connecting' ? 'CONNEXION EN COURS...' : simStatus === 'online' ? 'EN ATTENTE DE FRAME...' : 'EN ATTENTE DE CONNEXION'}
-                                                </span>
-                                            </div>
-                                        )}
+                                        <img
+                                            src={STREAM_SCENE}
+                                            alt="Vue Scène"
+                                            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '8px' }}
+                                            onError={() => setWsLog('⚠️ Caméra scène non disponible')}
+                                        />
                                     </div>
                                 )}
 
@@ -426,4 +378,4 @@ function Playground() {
     );
 }
 
-export default Playground
+export default Playground;

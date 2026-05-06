@@ -11,7 +11,7 @@ const MAX_USERS = 10;
 
 // ─── Chemin Webots et monde ───
 const WEBOTS_EXE = 'C:\\Program Files\\Webots\\msys64\\mingw64\\bin\\webots.exe';
-const WORLD_FILE = 'C:\\Users\\Nawres\\Documents\\my_project\\worlds\\openbot.wbt';
+const WORLD_FILE = 'C:\\Users\\IRIS\\Desktop\\my_project\\worlds\\openbot.wbt';
 
 // ─── Démarrer une instance Webots pour un utilisateur ───
 app.post("/start", (req, res) => {
