@@ -1,60 +1,58 @@
+// ═══════════════════════════════════════════
+// src/services/firebase.js — VERSION FINALE
+// ═══════════════════════════════════════════
 import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 import {
     getAuth,
-    signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    signInWithPopup,
+    signInWithEmailAndPassword,
     GoogleAuthProvider,
-    signOut
+    FacebookAuthProvider,
+    signInWithRedirect,
+    getRedirectResult,
+    signOut,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
 
+// ── Config Firebase ──
 const firebaseConfig = {
     apiKey: "AIzaSyDSae64hEK-g7x6icJWdFxSyw8Fr_HOPVk",
     authDomain: "nomadverse-1f766.firebaseapp.com",
     projectId: "nomadverse-1f766",
+    storageBucket: "nomadverse-1f766.firebasestorage.app",
     messagingSenderId: "632057387503",
     appId: "1:632057387503:web:cef5e13c9c9845aeb5be1a",
-    measurementId: "G-LVN7FSPJJJ"
 };
 
+// ── Initialisation UNIQUE ──
 const app = initializeApp(firebaseConfig);
 
+// ── Services ──
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const FirebaseStorage = {};
-export const provider = new GoogleAuthProvider();
-export const googleProvider = new GoogleAuthProvider();
 
-export const googleSignIn = () => signInWithPopup(auth, googleProvider);
-export const emailSignIn = (email, pass) => signInWithEmailAndPassword(auth, email, pass);
-export const emailSignUp = (email, pass) => createUserWithEmailAndPassword(auth, email, pass);
+// ── Providers ──
+const googleProvider = new GoogleAuthProvider();
+const facebookProvider = new FacebookAuthProvider();
+googleProvider.setCustomParameters({ prompt: "select_account" });
+facebookProvider.setCustomParameters({ display: "popup" });
 
-export async function googleSigIn() {
-    return signInWithPopup(auth, provider);
-}
+// ── Récupération résultat redirect (à appeler au chargement de l'app) ──
+export const getAuthRedirectResult = () => getRedirectResult(auth);
 
-export async function googleSignOut() {
-    await signOut(auth);
-    localStorage.setItem("isSigIn", "false");
-    window.location.reload();
-}
+// ── Email / Password ──
+export const emailSignUp = (email, password) =>
+    createUserWithEmailAndPassword(auth, email, password);
+export const emailSignIn = (email, password) =>
+    signInWithEmailAndPassword(auth, email, password);
 
-export async function uploadProfilePic(file, fileName) {
-    return null;
-}
+// ── Google ──
+export const googleSignIn = () => signInWithRedirect(auth, googleProvider);
+export const googleSigIn = () => signInWithRedirect(auth, googleProvider); // alias compatibilité
 
-export async function getDateOfBirth() {
-    return undefined;
-}
+// ── Facebook ──
+export const facebookSignIn = () => signInWithRedirect(auth, facebookProvider);
 
-export async function setDateOfBirth(DOB) {
-    return;
-}
-
-const firebase = {
-    auth: () => auth,
-    initializeApp: () => { },
-};
-
-export default firebase;
+// ── Déconnexion ──
+export const logOut = () => signOut(auth);
+export const googleSignOut = () => signOut(auth); // alias compatibilité

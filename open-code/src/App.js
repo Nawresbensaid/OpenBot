@@ -2,7 +2,7 @@
 import './App.css';
 import StoreProvider from './context/context';
 import { createContext, useEffect, useState } from "react";
-import { googleSignOut } from "./services/firebase";
+import { googleSignOut, getAuthRedirectResult } from "./services/firebase";
 import { ToastContainer } from "react-toastify";
 import { BrowserRouter } from "react-router-dom";
 import { RouterComponent } from "./components/router/router";
@@ -27,9 +27,22 @@ function App() {
     const [isSessionExpireModal, setIsSessionExpireModal] = useState(false);
     const [isSessionExpire, setIsSessionExpire] = useState(false);
     const [isTimeoutId, setTimeoutId] = useState(false);
-
     const theme = 'dark';
     const toggleTheme = () => { };
+
+    // ── Récupération résultat après redirect Google/Facebook ──
+    useEffect(() => {
+        getAuthRedirectResult()
+            .then((result) => {
+                if (result?.user) {
+                    console.log("Connecté via redirect :", result.user);
+                    setUser(result.user);
+                }
+            })
+            .catch((error) => {
+                console.error("Erreur redirect auth :", error.message);
+            });
+    }, []);
 
     useEffect(() => {
         window.addEventListener('online', () => setInternetOn(true));
@@ -78,13 +91,11 @@ function App() {
                         ))}
                     </svg>
                 </div>
-
                 <div id="dark" style={{ position: 'relative', zIndex: 1, height: '100vh' }}>
                     <BrowserRouter>
                         <RouterComponent />
                     </BrowserRouter>
                 </div>
-
                 <ToastContainer autoClose={5000} theme="dark" style={{ zIndex: 9999 }} />
             </StoreProvider>
         </ThemeContext.Provider>

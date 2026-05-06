@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { emailSignUp, googleSignIn, auth } from "../../services/firebase";
+import { emailSignUp, googleSignIn, facebookSignIn, auth } from "../../services/firebase";
 import { updateProfile } from "firebase/auth";
 
 export default function SignUp() {
@@ -13,6 +13,7 @@ export default function SignUp() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
+    // ── Email Sign Up ──
     const handleEmailSignUp = async (e) => {
         e.preventDefault();
         setError("");
@@ -22,7 +23,6 @@ export default function SignUp() {
         setLoading(true);
         try {
             const userCredential = await emailSignUp(email, password);
-            // Sauvegarde nom + prénom dans Firebase Auth
             await updateProfile(userCredential.user, {
                 displayName: `${firstName.trim()} ${lastName.trim()}`
             });
@@ -34,6 +34,7 @@ export default function SignUp() {
         }
     };
 
+    // ── Google Sign In ──
     const handleGoogleSignIn = async () => {
         setError("");
         setLoading(true);
@@ -42,6 +43,25 @@ export default function SignUp() {
             navigate("/playground");
         } catch (err) {
             setError("Google sign-in failed. Try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // ── Facebook Sign In ──
+    const handleFacebookSignIn = async () => {
+        setError("");
+        setLoading(true);
+        try {
+            await facebookSignIn();
+            navigate("/playground");
+        } catch (err) {
+            // Gère le cas où l'email est déjà utilisé avec un autre provider
+            if (err.code === "auth/account-exists-with-different-credential") {
+                setError("An account already exists with this email. Try Google or email sign-in.");
+            } else {
+                setError("Facebook sign-in failed. Try again.");
+            }
         } finally {
             setLoading(false);
         }
@@ -73,6 +93,7 @@ export default function SignUp() {
                 <path d="M0,260 C300,200 500,280 750,240 C950,210 1150,265 1440,230 L1440,300 L0,300 Z" fill="rgba(180,130,40,0.08)" />
             </svg>
 
+            {/* ── Navbar ── */}
             <nav style={styles.navbar}>
                 <div style={styles.navTopLine} />
                 <div style={styles.navLogo} onClick={() => navigate("/")}>
@@ -86,6 +107,7 @@ export default function SignUp() {
                 <span style={styles.navBack} onClick={() => navigate("/")}>← Back to Home</span>
             </nav>
 
+            {/* ── Card ── */}
             <div style={styles.center}>
                 <div style={styles.card}>
                     <div style={styles.cornerTL} />
@@ -93,6 +115,7 @@ export default function SignUp() {
                     <div style={styles.cornerBL} />
                     <div style={styles.cornerBR} />
 
+                    {/* Header */}
                     <div style={styles.cardHeader}>
                         <span style={styles.badge}>
                             <span style={styles.badgeDot} />
@@ -102,40 +125,81 @@ export default function SignUp() {
                         <p style={styles.cardSub}>Create your explorer account</p>
                     </div>
 
-                    <button
-                        style={styles.googleBtn}
-                        onClick={handleGoogleSignIn}
-                        disabled={loading}
-                        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
-                        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
-                    >
-                        <svg width="18" height="18" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
-                        </svg>
-                        Continue with Google
-                    </button>
+                    {/* ── Social buttons ── */}
+                    <div style={styles.socialRow}>
 
+                        {/* Google */}
+                        <button
+                            style={styles.socialBtn}
+                            onClick={handleGoogleSignIn}
+                            disabled={loading}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                                e.currentTarget.style.borderColor = "rgba(255,255,255,0.35)";
+                                e.currentTarget.style.transform = "translateY(-2px)";
+                                e.currentTarget.style.boxShadow = "0 6px 24px rgba(66,133,244,0.2)";
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                                e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)";
+                                e.currentTarget.style.transform = "translateY(0)";
+                                e.currentTarget.style.boxShadow = "none";
+                            }}
+                        >
+                            {/* Google multicolor SVG */}
+                            <svg width="18" height="18" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                            </svg>
+                            <span style={styles.socialBtnText}>Continue with Google</span>
+                        </button>
+
+                        {/* Facebook */}
+                        <button
+                            style={{ ...styles.socialBtn, borderColor: "rgba(24,119,242,0.3)", background: "rgba(24,119,242,0.06)" }}
+                            onClick={handleFacebookSignIn}
+                            disabled={loading}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.background = "rgba(24,119,242,0.16)";
+                                e.currentTarget.style.borderColor = "rgba(24,119,242,0.6)";
+                                e.currentTarget.style.transform = "translateY(-2px)";
+                                e.currentTarget.style.boxShadow = "0 6px 24px rgba(24,119,242,0.25)";
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.background = "rgba(24,119,242,0.06)";
+                                e.currentTarget.style.borderColor = "rgba(24,119,242,0.3)";
+                                e.currentTarget.style.transform = "translateY(0)";
+                                e.currentTarget.style.boxShadow = "none";
+                            }}
+                        >
+                            {/* Facebook SVG */}
+                            <svg width="18" height="18" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
+                                <path fill="#1877F2" d="M48 24C48 10.745 37.255 0 24 0S0 10.745 0 24c0 11.979 8.776 21.908 20.25 23.708V30.937h-6.094V24H20.25v-5.288c0-6.014 3.583-9.337 9.066-9.337 2.625 0 5.372.469 5.372.469v5.906h-3.026c-2.981 0-3.912 1.85-3.912 3.75V24h6.656l-1.063 6.937H27.75v16.771C39.224 45.908 48 35.979 48 24z" />
+                                <path fill="#fff" d="M33.343 30.937 34.406 24H27.75v-4.5c0-1.9.931-3.75 3.912-3.75h3.026V9.844s-2.747-.469-5.372-.469c-5.483 0-9.066 3.323-9.066 9.337V24h-6.094v6.937H20.25v16.771a24.18 24.18 0 0 0 7.5 0V30.937h5.593z" />
+                            </svg>
+                            <span style={styles.socialBtnText}>Continue with Facebook</span>
+                        </button>
+                    </div>
+
+                    {/* Divider */}
                     <div style={styles.divider}>
                         <div style={styles.dividerLine} />
                         <span style={styles.dividerText}>or</span>
                         <div style={styles.dividerLine} />
                     </div>
 
+                    {/* ── Form ── */}
                     <form onSubmit={handleEmailSignUp} style={styles.form}>
 
-                        {/* Nom + Prénom sur la même ligne */}
                         <div style={styles.nameRow}>
                             <div style={styles.inputGroup}>
                                 <label style={styles.label}>First Name</label>
                                 <input
-                                    type="text"
-                                    value={firstName}
+                                    type="text" value={firstName}
                                     onChange={e => setFirstName(e.target.value)}
-                                    placeholder="Nomad"
-                                    style={styles.input}
+                                    placeholder="Nomad" style={styles.input}
                                     onFocus={e => e.target.style.borderColor = "#c9a84c"}
                                     onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"}
                                     required
@@ -144,11 +208,9 @@ export default function SignUp() {
                             <div style={styles.inputGroup}>
                                 <label style={styles.label}>Last Name</label>
                                 <input
-                                    type="text"
-                                    value={lastName}
+                                    type="text" value={lastName}
                                     onChange={e => setLastName(e.target.value)}
-                                    placeholder="Nomad"
-                                    style={styles.input}
+                                    placeholder="Nomad" style={styles.input}
                                     onFocus={e => e.target.style.borderColor = "#c9a84c"}
                                     onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"}
                                 />
@@ -158,11 +220,9 @@ export default function SignUp() {
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Email</label>
                             <input
-                                type="email"
-                                value={email}
+                                type="email" value={email}
                                 onChange={e => setEmail(e.target.value)}
-                                placeholder="nomad@example.com"
-                                style={styles.input}
+                                placeholder="nomad@example.com" style={styles.input}
                                 onFocus={e => e.target.style.borderColor = "#c9a84c"}
                                 onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"}
                                 required
@@ -172,11 +232,9 @@ export default function SignUp() {
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Password</label>
                             <input
-                                type="password"
-                                value={password}
+                                type="password" value={password}
                                 onChange={e => setPassword(e.target.value)}
-                                placeholder="Min. 6 characters"
-                                style={styles.input}
+                                placeholder="Min. 6 characters" style={styles.input}
                                 onFocus={e => e.target.style.borderColor = "#c9a84c"}
                                 onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"}
                                 required
@@ -200,8 +258,7 @@ export default function SignUp() {
                         <div style={styles.inputGroup}>
                             <label style={styles.label}>Confirm Password</label>
                             <input
-                                type="password"
-                                value={confirm}
+                                type="password" value={confirm}
                                 onChange={e => setConfirm(e.target.value)}
                                 placeholder="••••••••"
                                 style={{
@@ -253,17 +310,20 @@ export default function SignUp() {
             <style>{`
                 @keyframes pulse {
                     0%, 100% { opacity: 1; box-shadow: 0 0 6px #c9a84c; }
-                    50% { opacity: 0.3; box-shadow: 0 0 2px #c9a84c; }
+                    50%       { opacity: 0.3; box-shadow: 0 0 2px #c9a84c; }
                 }
                 @keyframes fadeUp {
                     from { opacity: 0; transform: translateY(30px); }
-                    to { opacity: 1; transform: translateY(0); }
+                    to   { opacity: 1; transform: translateY(0); }
                 }
             `}</style>
         </div>
     );
 }
 
+// ═══════════════════════════════════════════
+// STYLES
+// ═══════════════════════════════════════════
 const styles = {
     page: {
         minHeight: "100vh",
@@ -337,10 +397,7 @@ const styles = {
         display: "flex", alignItems: "center", gap: "10px", cursor: "pointer",
     },
     navLogoN: { color: "#c9a84c", fontWeight: "900" },
-    navBack: {
-        fontSize: "12px", color: "rgba(255,255,255,0.45)",
-        cursor: "pointer", letterSpacing: "1px",
-    },
+    navBack: { fontSize: "12px", color: "rgba(255,255,255,0.45)", cursor: "pointer", letterSpacing: "1px" },
     center: {
         flex: 1, display: "flex",
         alignItems: "center", justifyContent: "center",
@@ -361,7 +418,7 @@ const styles = {
     cornerBL: { position: "absolute", bottom: 0, left: 0, width: "22px", height: "22px", borderBottom: "2px solid #c9a84c", borderLeft: "2px solid #c9a84c", borderRadius: "0 0 0 20px" },
     cornerBR: { position: "absolute", bottom: 0, right: 0, width: "22px", height: "22px", borderBottom: "2px solid #c9a84c", borderRight: "2px solid #c9a84c", borderRadius: "0 0 20px 0" },
     cardHeader: {
-        textAlign: "center", marginBottom: "24px",
+        textAlign: "center", marginBottom: "22px",
         display: "flex", flexDirection: "column", alignItems: "center", gap: "10px",
     },
     badge: {
@@ -382,31 +439,32 @@ const styles = {
         WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
         backgroundClip: "text",
     },
-    cardSub: {
-        margin: 0, fontSize: "13px",
-        color: "rgba(255,255,255,0.45)", letterSpacing: "0.5px",
+    cardSub: { margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.45)", letterSpacing: "0.5px" },
+
+    // ── Social buttons côte à côte ──
+    socialRow: {
+        display: "flex",
+        flexDirection: "column",
+        gap: "10px",
+        marginBottom: "4px",
     },
-    googleBtn: {
-        width: "100%", padding: "12px",
+    socialBtn: {
+        width: "100%", padding: "11px 16px",
         background: "rgba(255,255,255,0.05)",
         border: "1px solid rgba(255,255,255,0.15)",
         borderRadius: "10px", color: "white",
-        fontSize: "14px", fontWeight: "500", cursor: "pointer",
+        fontSize: "13px", fontWeight: "600", cursor: "pointer",
         display: "flex", alignItems: "center", justifyContent: "center",
-        gap: "10px", transition: "background 0.2s",
+        gap: "10px", transition: "all 0.2s",
         fontFamily: "Poppins, sans-serif",
     },
-    divider: { display: "flex", alignItems: "center", gap: "12px", margin: "18px 0" },
+    socialBtnText: { letterSpacing: "0.3px" },
+
+    divider: { display: "flex", alignItems: "center", gap: "12px", margin: "16px 0" },
     dividerLine: { flex: 1, height: "1px", background: "rgba(201,168,76,0.15)" },
     dividerText: { fontSize: "12px", color: "rgba(255,255,255,0.3)", letterSpacing: "1px" },
     form: { display: "flex", flexDirection: "column", gap: "14px" },
-
-    // Nom + prénom côte à côte
-    nameRow: {
-        display: "flex",
-        gap: "12px",
-    },
-
+    nameRow: { display: "flex", gap: "12px" },
     inputGroup: { display: "flex", flexDirection: "column", gap: "6px", flex: 1 },
     label: {
         fontSize: "11px", color: "rgba(255,255,255,0.5)",
