@@ -1,6 +1,9 @@
-import React, { useState } from "react";
+// ═══════════════════════════════════════════
+// src/pages/SignUp/SignUp.jsx — VERSION FINALE
+// ═══════════════════════════════════════════
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { emailSignUp, googleSignIn, facebookSignIn, auth } from "../../services/firebase";
+import { emailSignUp, googleSignIn, facebookSignIn, auth, onAuthStateChanged } from "../../services/firebase";
 import { updateProfile } from "firebase/auth";
 
 export default function SignUp() {
@@ -12,6 +15,18 @@ export default function SignUp() {
     const [confirm, setConfirm] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+
+    // ── Écoute l'état auth : si connecté → redirige automatiquement ──
+    // Ceci gère le retour du redirect Google/Facebook
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("✅ Auth détectée dans SignUp, redirection...");
+                navigate("/launch");
+            }
+        });
+        return () => unsubscribe();
+    }, [navigate]);
 
     // ── Email Sign Up ──
     const handleEmailSignUp = async (e) => {
@@ -28,6 +43,7 @@ export default function SignUp() {
             });
             navigate("/launch");
         } catch (err) {
+            console.error("❌ Email signup error:", err.code, err.message);
             setError("Account creation failed. Email may already be in use.");
         } finally {
             setLoading(false);
@@ -35,15 +51,18 @@ export default function SignUp() {
     };
 
     // ── Google Sign In ──
+    // signInWithRedirect redirige l'utilisateur vers Google
+    // Au retour, onAuthStateChanged dans ce composant détecte la connexion et redirige
     const handleGoogleSignIn = async () => {
         setError("");
         setLoading(true);
         try {
-            await googleSignIn();
-            navigate("/playground");
+            await googleSignIn(); // Lance le redirect → page Google s'ouvre
+            // Pas de navigate() ici : le redirect quitte la page
+            // La redirection finale est gérée par onAuthStateChanged ci-dessus
         } catch (err) {
-            setError("Google sign-in failed. Try again.");
-        } finally {
+            console.error("❌ Google signin error:", err.code, err.message);
+            setError("Google sign-in failed: " + err.message);
             setLoading(false);
         }
     };
@@ -53,16 +72,15 @@ export default function SignUp() {
         setError("");
         setLoading(true);
         try {
-            await facebookSignIn();
-            navigate("/playground");
+            await facebookSignIn(); // Lance le redirect → page Facebook s'ouvre
+            // Même logique que Google : onAuthStateChanged gère le retour
         } catch (err) {
-            // Gère le cas où l'email est déjà utilisé avec un autre provider
+            console.error("❌ Facebook signin error:", err.code, err.message);
             if (err.code === "auth/account-exists-with-different-credential") {
                 setError("An account already exists with this email. Try Google or email sign-in.");
             } else {
-                setError("Facebook sign-in failed. Try again.");
+                setError("Facebook sign-in failed: " + err.message);
             }
-        } finally {
             setLoading(false);
         }
     };
@@ -146,14 +164,15 @@ export default function SignUp() {
                                 e.currentTarget.style.boxShadow = "none";
                             }}
                         >
-                            {/* Google multicolor SVG */}
                             <svg width="18" height="18" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                                 <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                             </svg>
-                            <span style={styles.socialBtnText}>Continue with Google</span>
+                            <span style={styles.socialBtnText}>
+                                {loading ? "Redirecting..." : "Continue with Google"}
+                            </span>
                         </button>
 
                         {/* Facebook */}
@@ -174,12 +193,13 @@ export default function SignUp() {
                                 e.currentTarget.style.boxShadow = "none";
                             }}
                         >
-                            {/* Facebook SVG */}
                             <svg width="18" height="18" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
                                 <path fill="#1877F2" d="M48 24C48 10.745 37.255 0 24 0S0 10.745 0 24c0 11.979 8.776 21.908 20.25 23.708V30.937h-6.094V24H20.25v-5.288c0-6.014 3.583-9.337 9.066-9.337 2.625 0 5.372.469 5.372.469v5.906h-3.026c-2.981 0-3.912 1.85-3.912 3.75V24h6.656l-1.063 6.937H27.75v16.771C39.224 45.908 48 35.979 48 24z" />
                                 <path fill="#fff" d="M33.343 30.937 34.406 24H27.75v-4.5c0-1.9.931-3.75 3.912-3.75h3.026V9.844s-2.747-.469-5.372-.469c-5.483 0-9.066 3.323-9.066 9.337V24h-6.094v6.937H20.25v16.771a24.18 24.18 0 0 0 7.5 0V30.937h5.593z" />
                             </svg>
-                            <span style={styles.socialBtnText}>Continue with Facebook</span>
+                            <span style={styles.socialBtnText}>
+                                {loading ? "Redirecting..." : "Continue with Facebook"}
+                            </span>
                         </button>
                     </div>
 
@@ -192,7 +212,6 @@ export default function SignUp() {
 
                     {/* ── Form ── */}
                     <form onSubmit={handleEmailSignUp} style={styles.form}>
-
                         <div style={styles.nameRow}>
                             <div style={styles.inputGroup}>
                                 <label style={styles.label}>First Name</label>
@@ -210,7 +229,7 @@ export default function SignUp() {
                                 <input
                                     type="text" value={lastName}
                                     onChange={e => setLastName(e.target.value)}
-                                    placeholder="Nomad" style={styles.input}
+                                    placeholder="Explorer" style={styles.input}
                                     onFocus={e => e.target.style.borderColor = "#c9a84c"}
                                     onBlur={e => e.target.style.borderColor = "rgba(201,168,76,0.2)"}
                                 />
@@ -440,13 +459,8 @@ const styles = {
         backgroundClip: "text",
     },
     cardSub: { margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.45)", letterSpacing: "0.5px" },
-
-    // ── Social buttons côte à côte ──
     socialRow: {
-        display: "flex",
-        flexDirection: "column",
-        gap: "10px",
-        marginBottom: "4px",
+        display: "flex", flexDirection: "column", gap: "10px", marginBottom: "4px",
     },
     socialBtn: {
         width: "100%", padding: "11px 16px",
@@ -459,7 +473,6 @@ const styles = {
         fontFamily: "Poppins, sans-serif",
     },
     socialBtnText: { letterSpacing: "0.3px" },
-
     divider: { display: "flex", alignItems: "center", gap: "12px", margin: "16px 0" },
     dividerLine: { flex: 1, height: "1px", background: "rgba(201,168,76,0.15)" },
     dividerText: { fontSize: "12px", color: "rgba(255,255,255,0.3)", letterSpacing: "1px" },

@@ -11,6 +11,7 @@ import {
     FacebookAuthProvider,
     signInWithRedirect,
     getRedirectResult,
+    onAuthStateChanged,
     signOut,
 } from "firebase/auth";
 
@@ -35,10 +36,12 @@ export const db = getFirestore(app);
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
 googleProvider.setCustomParameters({ prompt: "select_account" });
-facebookProvider.setCustomParameters({ display: "popup" });
 
-// ── Récupération résultat redirect (à appeler au chargement de l'app) ──
+// ── Récupération résultat redirect ──
 export const getAuthRedirectResult = () => getRedirectResult(auth);
+
+// ── Écoute état auth ──
+export { onAuthStateChanged };
 
 // ── Email / Password ──
 export const emailSignUp = (email, password) =>

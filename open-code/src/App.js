@@ -1,10 +1,12 @@
-// src/App.js
+// ═══════════════════════════════════════════
+// src/App.js — VERSION FINALE
+// ═══════════════════════════════════════════
 import './App.css';
 import StoreProvider from './context/context';
 import { createContext, useEffect, useState } from "react";
-import { googleSignOut, getAuthRedirectResult } from "./services/firebase";
+import { auth, googleSignOut, getAuthRedirectResult, onAuthStateChanged } from "./services/firebase";
 import { ToastContainer } from "react-toastify";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, useNavigate } from "react-router-dom";
 import { RouterComponent } from "./components/router/router";
 
 export const ThemeContext = createContext(null);
@@ -23,27 +25,46 @@ const STARS_BIG = generateStars(30);
 
 function App() {
     const [internetOn, setInternetOn] = useState(window.navigator.onLine);
-    const [user, setUser] = useState();
+    const [user, setUser] = useState(null);
     const [isSessionExpireModal, setIsSessionExpireModal] = useState(false);
     const [isSessionExpire, setIsSessionExpire] = useState(false);
     const [isTimeoutId, setTimeoutId] = useState(false);
     const theme = 'dark';
     const toggleTheme = () => { };
 
-    // ── Récupération résultat après redirect Google/Facebook ──
+    // ── 1. Écoute l'état de connexion Firebase en temps réel ──
+    // Quand Google/Facebook redirect revient, Firebase déclenche onAuthStateChanged
+    // automatiquement — pas besoin de getAuthRedirectResult séparé.
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            if (firebaseUser) {
+                console.log("✅ Utilisateur connecté :", firebaseUser.email);
+                setUser(firebaseUser);
+            } else {
+                console.log("❌ Utilisateur déconnecté");
+                setUser(null);
+            }
+        });
+        // Nettoyage à la destruction du composant
+        return () => unsubscribe();
+    }, []);
+
+    // ── 2. Récupère le résultat du redirect Google/Facebook ──
+    // Nécessaire pour obtenir les tokens/credentials après le retour du redirect
     useEffect(() => {
         getAuthRedirectResult()
             .then((result) => {
                 if (result?.user) {
-                    console.log("Connecté via redirect :", result.user);
+                    console.log("✅ Connecté via redirect :", result.user.email);
                     setUser(result.user);
                 }
             })
             .catch((error) => {
-                console.error("Erreur redirect auth :", error.message);
+                console.error("❌ Erreur redirect auth :", error.code, error.message);
             });
     }, []);
 
+    // ── 3. Internet + body style ──
     useEffect(() => {
         window.addEventListener('online', () => setInternetOn(true));
         window.addEventListener('offline', () => setInternetOn(false));
@@ -52,6 +73,7 @@ function App() {
         document.body.style.overflow = 'hidden';
     }, []);
 
+    // ── 4. Session expirée ──
     useEffect(() => {
         if (isSessionExpire) {
             alert('Your session has expired. You have been signed out.');
@@ -72,6 +94,7 @@ function App() {
                 isTimeoutId={isTimeoutId}
                 setTimeoutId={setTimeoutId}
             >
+                {/* ── Fond étoilé ── */}
                 <div style={{
                     position: 'fixed', inset: 0,
                     background: 'radial-gradient(ellipse at 20% 50%, #0a1628 0%, #030714 40%, #000008 100%)',
@@ -91,8 +114,9 @@ function App() {
                         ))}
                     </svg>
                 </div>
+
                 <div id="dark" style={{ position: 'relative', zIndex: 1, height: '100vh' }}>
-                    <BrowserRouter>
+                    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                         <RouterComponent />
                     </BrowserRouter>
                 </div>
