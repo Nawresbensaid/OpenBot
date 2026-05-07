@@ -1,16 +1,9 @@
 // ═══════════════════════════════════════════
-// src/pages/SignUp/SignUp.jsx — VERSION FINALE v2
+// src/pages/SignUp/SignUp.jsx — VERSION POPUP
 // ═══════════════════════════════════════════
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-    emailSignUp,
-    googleSignIn,
-    facebookSignIn,
-    auth,
-    onAuthStateChanged,
-    getAuthRedirectResult,
-} from "../../services/firebase";
+import { emailSignUp, googleSignIn } from "../../services/firebase";
 import { updateProfile } from "firebase/auth";
 
 export default function SignUp() {
@@ -22,37 +15,6 @@ export default function SignUp() {
     const [confirm, setConfirm] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-
-    // ── Gestion du retour après redirect Google / Facebook ──
-    useEffect(() => {
-        // Étape 1 : vérifier s'il y a un résultat de redirect en attente
-        getAuthRedirectResult()
-            .then((result) => {
-                if (result?.user) {
-                    // Redirect réussi → rediriger
-                    console.log("✅ Redirect réussi :", result.user.email);
-                    navigate("/launch");
-                }
-            })
-            .catch((err) => {
-                console.error("❌ Erreur redirect :", err.code, err.message);
-                if (err.code === "auth/account-exists-with-different-credential") {
-                    setError("Un compte existe déjà avec cet email. Essayez Google ou email.");
-                } else {
-                    setError("Erreur de connexion : " + err.message);
-                }
-            });
-
-        // Étape 2 : écouter l'état auth (cas où déjà connecté)
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                console.log("✅ Utilisateur déjà connecté :", user.email);
-                navigate("/launch");
-            }
-        });
-
-        return () => unsubscribe();
-    }, [navigate]);
 
     // ── Email Sign Up ──
     const handleEmailSignUp = async (e) => {
@@ -76,39 +38,20 @@ export default function SignUp() {
         }
     };
 
-    // ── Google Sign In (redirect) ──
+    // ── Google Sign In (popup) ──
     const handleGoogleSignIn = async () => {
         setError("");
         setLoading(true);
         try {
-            await googleSignIn();
-            // La page va se recharger après redirect
-            // onAuthStateChanged + getAuthRedirectResult gèrent le retour
+            const result = await googleSignIn();
+            if (result?.user) navigate("/launch");
         } catch (err) {
             console.error("❌ Google signin:", err.code, err.message);
             setError("Google sign-in failed: " + err.message);
+        } finally {
             setLoading(false);
         }
     };
-
-    // ── Facebook Sign In (redirect) ──
-    const handleFacebookSignIn = async () => {
-        setError("");
-        setLoading(true);
-        try {
-            await facebookSignIn();
-            // Même logique que Google
-        } catch (err) {
-            console.error("❌ Facebook signin:", err.code, err.message);
-            if (err.code === "auth/account-exists-with-different-credential") {
-                setError("An account already exists with this email. Try Google or email.");
-            } else {
-                setError("Facebook sign-in failed: " + err.message);
-            }
-            setLoading(false);
-        }
-    };
-
     return (
         <div style={styles.page}>
             <div style={styles.arabesqueLayer1} />
@@ -195,34 +138,7 @@ export default function SignUp() {
                                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                             </svg>
                             <span style={styles.socialBtnText}>
-                                {loading ? "Redirection..." : "Continue with Google"}
-                            </span>
-                        </button>
-
-                        {/* Facebook */}
-                        <button
-                            style={{ ...styles.socialBtn, borderColor: "rgba(24,119,242,0.3)", background: "rgba(24,119,242,0.06)" }}
-                            onClick={handleFacebookSignIn}
-                            disabled={loading}
-                            onMouseEnter={e => {
-                                e.currentTarget.style.background = "rgba(24,119,242,0.16)";
-                                e.currentTarget.style.borderColor = "rgba(24,119,242,0.6)";
-                                e.currentTarget.style.transform = "translateY(-2px)";
-                                e.currentTarget.style.boxShadow = "0 6px 24px rgba(24,119,242,0.25)";
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.background = "rgba(24,119,242,0.06)";
-                                e.currentTarget.style.borderColor = "rgba(24,119,242,0.3)";
-                                e.currentTarget.style.transform = "translateY(0)";
-                                e.currentTarget.style.boxShadow = "none";
-                            }}
-                        >
-                            <svg width="18" height="18" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
-                                <path fill="#1877F2" d="M48 24C48 10.745 37.255 0 24 0S0 10.745 0 24c0 11.979 8.776 21.908 20.25 23.708V30.937h-6.094V24H20.25v-5.288c0-6.014 3.583-9.337 9.066-9.337 2.625 0 5.372.469 5.372.469v5.906h-3.026c-2.981 0-3.912 1.85-3.912 3.75V24h6.656l-1.063 6.937H27.75v16.771C39.224 45.908 48 35.979 48 24z" />
-                                <path fill="#fff" d="M33.343 30.937 34.406 24H27.75v-4.5c0-1.9.931-3.75 3.912-3.75h3.026V9.844s-2.747-.469-5.372-.469c-5.483 0-9.066 3.323-9.066 9.337V24h-6.094v6.937H20.25v16.771a24.18 24.18 0 0 0 7.5 0V30.937h5.593z" />
-                            </svg>
-                            <span style={styles.socialBtnText}>
-                                {loading ? "Redirection..." : "Continue with Facebook"}
+                                {loading ? "Signing in..." : "Continue with Google"}
                             </span>
                         </button>
                     </div>
@@ -410,8 +326,7 @@ const styles = {
         filter: "blur(70px)", pointerEvents: "none", zIndex: 0,
     },
     svgBg: {
-        position: "absolute", inset: 0,
-        width: "100%", height: "100%",
+        position: "absolute", inset: 0, width: "100%", height: "100%",
         pointerEvents: "none", zIndex: 0,
     },
     dune: {
