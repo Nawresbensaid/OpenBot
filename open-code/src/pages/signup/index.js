@@ -1,9 +1,16 @@
 // ═══════════════════════════════════════════
-// src/pages/SignUp/SignUp.jsx — VERSION FINALE
+// src/pages/SignUp/SignUp.jsx — VERSION FINALE v2
 // ═══════════════════════════════════════════
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { emailSignUp, googleSignIn, facebookSignIn, auth, onAuthStateChanged } from "../../services/firebase";
+import {
+    emailSignUp,
+    googleSignIn,
+    facebookSignIn,
+    auth,
+    onAuthStateChanged,
+    getAuthRedirectResult,
+} from "../../services/firebase";
 import { updateProfile } from "firebase/auth";
 
 export default function SignUp() {
@@ -16,15 +23,34 @@ export default function SignUp() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // ── Écoute l'état auth : si connecté → redirige automatiquement ──
-    // Ceci gère le retour du redirect Google/Facebook
+    // ── Gestion du retour après redirect Google / Facebook ──
     useEffect(() => {
+        // Étape 1 : vérifier s'il y a un résultat de redirect en attente
+        getAuthRedirectResult()
+            .then((result) => {
+                if (result?.user) {
+                    // Redirect réussi → rediriger
+                    console.log("✅ Redirect réussi :", result.user.email);
+                    navigate("/launch");
+                }
+            })
+            .catch((err) => {
+                console.error("❌ Erreur redirect :", err.code, err.message);
+                if (err.code === "auth/account-exists-with-different-credential") {
+                    setError("Un compte existe déjà avec cet email. Essayez Google ou email.");
+                } else {
+                    setError("Erreur de connexion : " + err.message);
+                }
+            });
+
+        // Étape 2 : écouter l'état auth (cas où déjà connecté)
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             if (user) {
-                console.log("✅ Auth détectée dans SignUp, redirection...");
+                console.log("✅ Utilisateur déjà connecté :", user.email);
                 navigate("/launch");
             }
         });
+
         return () => unsubscribe();
     }, [navigate]);
 
@@ -43,41 +69,39 @@ export default function SignUp() {
             });
             navigate("/launch");
         } catch (err) {
-            console.error("❌ Email signup error:", err.code, err.message);
+            console.error("❌ Email signup:", err.code, err.message);
             setError("Account creation failed. Email may already be in use.");
         } finally {
             setLoading(false);
         }
     };
 
-    // ── Google Sign In ──
-    // signInWithRedirect redirige l'utilisateur vers Google
-    // Au retour, onAuthStateChanged dans ce composant détecte la connexion et redirige
+    // ── Google Sign In (redirect) ──
     const handleGoogleSignIn = async () => {
         setError("");
         setLoading(true);
         try {
-            await googleSignIn(); // Lance le redirect → page Google s'ouvre
-            // Pas de navigate() ici : le redirect quitte la page
-            // La redirection finale est gérée par onAuthStateChanged ci-dessus
+            await googleSignIn();
+            // La page va se recharger après redirect
+            // onAuthStateChanged + getAuthRedirectResult gèrent le retour
         } catch (err) {
-            console.error("❌ Google signin error:", err.code, err.message);
+            console.error("❌ Google signin:", err.code, err.message);
             setError("Google sign-in failed: " + err.message);
             setLoading(false);
         }
     };
 
-    // ── Facebook Sign In ──
+    // ── Facebook Sign In (redirect) ──
     const handleFacebookSignIn = async () => {
         setError("");
         setLoading(true);
         try {
-            await facebookSignIn(); // Lance le redirect → page Facebook s'ouvre
-            // Même logique que Google : onAuthStateChanged gère le retour
+            await facebookSignIn();
+            // Même logique que Google
         } catch (err) {
-            console.error("❌ Facebook signin error:", err.code, err.message);
+            console.error("❌ Facebook signin:", err.code, err.message);
             if (err.code === "auth/account-exists-with-different-credential") {
-                setError("An account already exists with this email. Try Google or email sign-in.");
+                setError("An account already exists with this email. Try Google or email.");
             } else {
                 setError("Facebook sign-in failed: " + err.message);
             }
@@ -171,7 +195,7 @@ export default function SignUp() {
                                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                             </svg>
                             <span style={styles.socialBtnText}>
-                                {loading ? "Redirecting..." : "Continue with Google"}
+                                {loading ? "Redirection..." : "Continue with Google"}
                             </span>
                         </button>
 
@@ -198,7 +222,7 @@ export default function SignUp() {
                                 <path fill="#fff" d="M33.343 30.937 34.406 24H27.75v-4.5c0-1.9.931-3.75 3.912-3.75h3.026V9.844s-2.747-.469-5.372-.469c-5.483 0-9.066 3.323-9.066 9.337V24h-6.094v6.937H20.25v16.771a24.18 24.18 0 0 0 7.5 0V30.937h5.593z" />
                             </svg>
                             <span style={styles.socialBtnText}>
-                                {loading ? "Redirecting..." : "Continue with Facebook"}
+                                {loading ? "Redirection..." : "Continue with Facebook"}
                             </span>
                         </button>
                     </div>
@@ -260,7 +284,6 @@ export default function SignUp() {
                             />
                         </div>
 
-                        {/* Barre de force */}
                         {password.length > 0 && (
                             <div style={styles.strengthBar}>
                                 <div style={{
@@ -459,9 +482,7 @@ const styles = {
         backgroundClip: "text",
     },
     cardSub: { margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.45)", letterSpacing: "0.5px" },
-    socialRow: {
-        display: "flex", flexDirection: "column", gap: "10px", marginBottom: "4px",
-    },
+    socialRow: { display: "flex", flexDirection: "column", gap: "10px", marginBottom: "4px" },
     socialBtn: {
         width: "100%", padding: "11px 16px",
         background: "rgba(255,255,255,0.05)",

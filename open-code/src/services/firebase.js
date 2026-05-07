@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════
-// src/services/firebase.js — VERSION FINALE
+// src/services/firebase.js — VERSION FINALE v2
 // ═══════════════════════════════════════════
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
@@ -35,13 +35,15 @@ export const db = getFirestore(app);
 // ── Providers ──
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
+
 googleProvider.setCustomParameters({ prompt: "select_account" });
+facebookProvider.setCustomParameters({ display: "popup", auth_type: "rerequest" });
 
-// ── Récupération résultat redirect ──
-export const getAuthRedirectResult = () => getRedirectResult(auth);
-
-// ── Écoute état auth ──
+// ── Auth state listener ──
 export { onAuthStateChanged };
+
+// ── Redirect result ──
+export const getAuthRedirectResult = () => getRedirectResult(auth);
 
 // ── Email / Password ──
 export const emailSignUp = (email, password) =>
@@ -51,11 +53,11 @@ export const emailSignIn = (email, password) =>
 
 // ── Google ──
 export const googleSignIn = () => signInWithRedirect(auth, googleProvider);
-export const googleSigIn = () => signInWithRedirect(auth, googleProvider); // alias compatibilité
+export const googleSigIn = () => signInWithRedirect(auth, googleProvider); // alias
 
 // ── Facebook ──
 export const facebookSignIn = () => signInWithRedirect(auth, facebookProvider);
 
 // ── Déconnexion ──
 export const logOut = () => signOut(auth);
-export const googleSignOut = () => signOut(auth); // alias compatibilité
+export const googleSignOut = () => signOut(auth); // alias
