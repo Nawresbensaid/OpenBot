@@ -96,6 +96,7 @@ const Styles = () => (
         @keyframes orbPulse    { 0%,100%{box-shadow:0 0 30px rgba(201,168,76,.35),0 0 60px rgba(201,168,76,.12)} 50%{box-shadow:0 0 55px rgba(201,168,76,.7),0 0 110px rgba(201,168,76,.25)} }
         @keyframes hudPulse    { 0%,100%{opacity:.35} 50%{opacity:.9} }
         @keyframes blink       { 0%,100%{opacity:1} 50%{opacity:.1} }
+        @keyframes winFadeIn   { from{opacity:0;transform:scale(.94)} to{opacity:1;transform:scale(1)} }
 
         .gold-shimmer {
             background: linear-gradient(90deg,#c9a84c,#f0d080,#fff8e1,#f0d080,#c9a84c);
@@ -271,24 +272,362 @@ const Styles = () => (
         /* Deco stars */
         .deco-star { position: fixed; z-index: 2; pointer-events: none; animation: upulse 3s ease-in-out infinite; color: #c9a84c; }
 
-        /* ── Fullscreen overlay ── */
-        .fs-overlay {
-            position: fixed; inset: 0; z-index: 9999;
-            background: #000;
+        /* ── Floating Window ── */
+        .float-win {
+            position: fixed;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(201,168,76,.45);
+            box-shadow:
+                0 0 0 1px rgba(0,0,0,.8),
+                0 12px 60px rgba(0,0,0,.85),
+                0 0 40px rgba(201,168,76,.1),
+                inset 0 1px 0 rgba(201,168,76,.15);
+            background: #050200;
+            animation: winFadeIn .18s ease-out;
+        }
+        .float-win-titlebar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: .38rem .7rem;
+            cursor: grab;
+            flex-shrink: 0;
+            background: linear-gradient(135deg,rgba(201,168,76,.14) 0%,rgba(8,4,1,.95) 60%,rgba(201,168,76,.06) 100%);
+            border-bottom: 1px solid rgba(201,168,76,.22);
+            user-select: none;
+            position: relative;
+        }
+        .float-win-titlebar::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg,transparent,rgba(201,168,76,.5) 30%,rgba(240,208,80,.7) 50%,rgba(201,168,76,.5) 70%,transparent);
+        }
+        .float-win-titlebar:active { cursor: grabbing; }
+        /* ── Traffic light buttons ── */
+        .float-win-btns {
+            display: flex; align-items: center; gap: 7px;
+        }
+        .float-win-btn {
+            width: 22px; height: 22px; border-radius: 50%; border: none;
+            cursor: pointer; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
+            font-size: .7rem; line-height: 1;
+            transition: all .18s; position: relative;
         }
-        .fs-overlay img { width: 100%; height: 100%; object-fit: contain; display: block; }
-        .fs-close-btn {
-            position: absolute; top: 16px; right: 16px; z-index: 10000;
-            background: rgba(201,168,76,.15); border: 1px solid rgba(201,168,76,.4);
-            color: #f0d080; border-radius: 8px; padding: .4rem .9rem;
-            font-family: 'Cinzel',serif; font-size: .75rem; font-weight: 600;
-            letter-spacing: .06em; cursor: pointer; backdrop-filter: blur(8px);
-            transition: all .2s;
+        .float-win-btn:hover  { transform: scale(1.18); filter: brightness(1.25); }
+        .float-win-btn:active { transform: scale(.9); }
+
+        /* Tooltip visible au survol */
+        .float-win-btn::after {
+            content: attr(data-tip);
+            position: absolute; bottom: calc(100% + 7px); left: 50%;
+            transform: translateX(-50%) scale(.85); opacity: 0;
+            pointer-events: none; transition: all .15s;
+            background: rgba(6,3,0,.92); color: #f0d080;
+            font-family: 'Nunito', sans-serif; font-size: .52rem; font-weight: 800;
+            white-space: nowrap; padding: 3px 8px; border-radius: 6px;
+            border: 1px solid rgba(201,168,76,.3);
+            box-shadow: 0 4px 12px rgba(0,0,0,.6);
         }
-        .fs-close-btn:hover { background: rgba(201,168,76,.28); transform: scale(1.05); }
+        .float-win-btn::before {
+            content: '';
+            position: absolute; bottom: calc(100% + 2px); left: 50%;
+            transform: translateX(-50%) scale(.85); opacity: 0;
+            pointer-events: none; transition: all .15s;
+            border: 4px solid transparent;
+            border-top-color: rgba(201,168,76,.35);
+        }
+        .float-win-btn:hover::after  { opacity: 1; transform: translateX(-50%) scale(1); }
+        .float-win-btn:hover::before { opacity: 1; transform: translateX(-50%) scale(1); }
+
+        .float-win-btn-close { background: #ff5f57; box-shadow: 0 0 8px rgba(255,95,87,.5); color: rgba(120,0,0,0); }
+        .float-win-btn-close:hover { color: rgba(120,0,0,.85); }
+        .float-win-btn-min   { background: #f0a500; box-shadow: 0 0 8px rgba(240,165,0,.5);  color: rgba(100,60,0,0); }
+        .float-win-btn-min:hover   { color: rgba(100,60,0,.85); }
+        .float-win-btn-max   { background: #4ddc64; box-shadow: 0 0 8px rgba(77,220,100,.5); color: rgba(0,80,0,0); }
+        .float-win-btn-max:hover   { color: rgba(0,80,0,.85); }
+        .float-win-resize {
+            position: absolute; bottom: 0; right: 0;
+            width: 20px; height: 20px; cursor: nwse-resize; z-index: 5;
+        }
+        .float-win-resize::before {
+            content: '';
+            position: absolute; bottom: 3px; right: 3px;
+            width: 10px; height: 10px;
+            border-right: 2px solid rgba(201,168,76,.5);
+            border-bottom: 2px solid rgba(201,168,76,.5);
+            border-radius: 0 0 3px 0;
+        }
+        .float-win-resize::after {
+            content: '';
+            position: absolute; bottom: 6px; right: 6px;
+            width: 5px; height: 5px;
+            border-right: 1.5px solid rgba(201,168,76,.3);
+            border-bottom: 1.5px solid rgba(201,168,76,.3);
+        }
     `}</style>
 );
+
+// ═══════════════════════════════════════════
+// FLOATING WINDOW COMPONENT
+// ═══════════════════════════════════════════
+const FloatingWindow = ({ win, onUpdate, onClose, streamSrc, onStreamError }) => {
+    const isMinimized = win.h <= 42;
+    const isMaximized = win.w >= window.innerWidth - 50 && win.h >= window.innerHeight - 50;
+    const imgRef = useRef(null);
+    const [zoom, setZoom] = useState(1); // zoom 0.5 → 3
+
+    // ── MJPEG stream loader ──
+    useEffect(() => {
+        if (isMinimized) return;
+        const img = imgRef.current;
+        if (!img) return;
+        img.src = streamSrc;
+        const watchdog = setInterval(() => {
+            if (img && img.naturalWidth === 0)
+                img.src = streamSrc + '?t=' + Date.now();
+        }, 3000);
+        return () => clearInterval(watchdog);
+    }, [isMinimized, streamSrc]);
+
+    // ── Échap → ferme (ou dézoom d'abord si zoomé) ──
+    useEffect(() => {
+        const onKey = (e) => {
+            if (e.key === 'Escape') {
+                if (zoom > 1) { setZoom(1); }
+                else { onClose(); }
+            }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [zoom, onClose]);
+
+    // ── Molette souris sur le stream = zoom ──
+    const onWheel = (e) => {
+        e.preventDefault();
+        setZoom(z => Math.min(3, Math.max(0.4, z + (e.deltaY < 0 ? 0.12 : -0.12))));
+    };
+
+    // ── Drag ──
+    const startDrag = (e) => {
+        if (e.target.closest('.float-win-btn') || e.target.closest('.float-win-resize') || e.target.closest('.float-win-zoom')) return;
+        e.preventDefault();
+        const startX = e.clientX - win.x;
+        const startY = e.clientY - win.y;
+        const onMove = (ev) => onUpdate(f => ({ ...f, x: ev.clientX - startX, y: ev.clientY - startY }));
+        const onUp = () => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+    };
+
+    // ── Double-clic titlebar = toggle maximize ──
+    const onTitleDblClick = (e) => {
+        if (e.target.closest('.float-win-btn')) return;
+        if (isMaximized) restore();
+        else maximize();
+    };
+
+    // ── Resize (coin bas-droit) ──
+    const startResize = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const startX = e.clientX, startY = e.clientY;
+        const startW = win.w, startH = win.h;
+        const onMove = (ev) => onUpdate(f => ({
+            ...f,
+            w: Math.max(320, startW + ev.clientX - startX),
+            h: Math.max(260, startH + ev.clientY - startY),
+        }));
+        const onUp = () => {
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+        };
+        window.addEventListener('mousemove', onMove);
+        window.addEventListener('mouseup', onUp);
+    };
+
+    // ── Actions ──
+    const maximize = () => onUpdate(f => ({
+        ...f,
+        _prevX: f.x, _prevY: f.y, _prevW: f.w, _prevH: isMinimized ? (f._prevH || 480) : f.h,
+        x: 0, y: 0,
+        w: window.innerWidth,
+        h: window.innerHeight,
+    }));
+
+    const restore = () => onUpdate(f => ({
+        ...f,
+        x: f._prevX ?? 80, y: f._prevY ?? 80,
+        w: f._prevW || 720, h: f._prevH || 480,
+    }));
+
+    const minimize = () => onUpdate(f => ({
+        ...f,
+        _prevH: isMinimized ? (f._prevH || 480) : f.h,
+        h: 42,
+    }));
+
+    const zoomIn = () => setZoom(z => Math.min(3, +(z + 0.2).toFixed(1)));
+    const zoomOut = () => setZoom(z => Math.max(0.4, +(z - 0.2).toFixed(1)));
+    const zoomReset = () => setZoom(1);
+
+    return (
+        <div
+            className="float-win"
+            style={{
+                left: win.x, top: win.y, width: win.w, height: win.h,
+                transition: isMaximized ? 'all .22s cubic-bezier(.4,0,.2,1)' : 'none',
+            }}
+        >
+            {/* ── Titlebar ── */}
+            <div
+                className="float-win-titlebar"
+                onMouseDown={startDrag}
+                onDoubleClick={onTitleDblClick}
+            >
+                {/* ── Icon-only buttons with tooltip ── */}
+                <div className="float-win-btns">
+                    <button
+                        className="float-win-btn float-win-btn-close"
+                        onClick={onClose}
+                        data-tip="Fermer (Échap)"
+                    >✕</button>
+                    <button
+                        className="float-win-btn float-win-btn-min"
+                        onClick={isMinimized ? restore : minimize}
+                        data-tip={isMinimized ? 'Restaurer' : 'Réduire'}
+                    >{isMinimized ? '▲' : '▬'}</button>
+                    <button
+                        className="float-win-btn float-win-btn-max"
+                        onClick={isMaximized ? restore : maximize}
+                        data-tip={isMaximized ? 'Restaurer' : 'Agrandir'}
+                    >{isMaximized ? '❐' : '⛶'}</button>
+                </div>
+
+                {/* Title */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}>
+                    <span style={{ fontFamily: "'Cinzel',serif", fontSize: '.62rem', color: 'rgba(201,168,76,.65)', letterSpacing: '.1em' }}>
+                        VUE SCÈNE
+                    </span>
+                    <span style={{
+                        fontSize: '.42rem', background: 'rgba(201,168,76,.12)',
+                        border: '1px solid rgba(201,168,76,.25)', borderRadius: '4px',
+                        padding: '1px 5px', color: 'rgba(201,168,76,.5)',
+                        fontFamily: "'Space Mono',monospace", letterSpacing: '.06em',
+                    }}>LIVE</span>
+                </div>
+
+                {/* Size info + ESC hint */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                    <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.38rem', color: 'rgba(201,168,76,.22)', background: 'rgba(201,168,76,.07)', border: '1px solid rgba(201,168,76,.15)', borderRadius: 3, padding: '1px 4px' }}>ESC</span>
+                    <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.4rem', color: 'rgba(201,168,76,.28)' }}>
+                        {Math.round(win.w)}×{Math.round(win.h)}
+                    </span>
+                </div>
+            </div>
+
+            {/* ── Content (hidden when minimized) ── */}
+            {!isMinimized && (
+                <div
+                    style={{ flex: 1, position: 'relative', overflow: 'hidden', background: '#020100', minHeight: 0 }}
+                    onWheel={onWheel}
+                >
+                    {/* REC badge */}
+                    <div style={{
+                        position: 'absolute', top: 8, left: 9, zIndex: 4,
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        background: 'rgba(0,0,0,.65)', padding: '2px 8px',
+                        borderRadius: 20, backdropFilter: 'blur(6px)',
+                    }}>
+                        <div style={{
+                            width: 5, height: 5, borderRadius: '50%',
+                            background: '#ff3333', boxShadow: '0 0 6px #ff3333',
+                            animation: 'blink 1s ease-in-out infinite',
+                        }} />
+                        <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.45rem', color: 'rgba(255,255,255,.85)', fontWeight: 700, letterSpacing: '.06em' }}>REC</span>
+                    </div>
+
+                    {/* ── ZOOM CONTROLS ── */}
+                    <div className="float-win-zoom" style={{
+                        position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)',
+                        zIndex: 5, display: 'flex', alignItems: 'center', gap: '4px',
+                        background: 'rgba(0,0,0,.7)', backdropFilter: 'blur(8px)',
+                        border: '1px solid rgba(201,168,76,.25)', borderRadius: 20,
+                        padding: '3px 10px',
+                    }}>
+                        <button
+                            onClick={zoomOut}
+                            style={{ background: 'none', border: 'none', color: '#c9a84c', cursor: 'pointer', fontSize: '1rem', lineHeight: 1, padding: '0 2px', fontWeight: 700 }}
+                            title="Zoom −"
+                        >−</button>
+                        <span
+                            onClick={zoomReset}
+                            style={{ fontFamily: "'Space Mono',monospace", fontSize: '.5rem', color: zoom !== 1 ? '#f0d080' : 'rgba(201,168,76,.5)', cursor: 'pointer', minWidth: 28, textAlign: 'center', userSelect: 'none' }}
+                            title="Réinitialiser zoom"
+                        >
+                            {Math.round(zoom * 100)}%
+                        </span>
+                        <button
+                            onClick={zoomIn}
+                            style={{ background: 'none', border: 'none', color: '#c9a84c', cursor: 'pointer', fontSize: '1rem', lineHeight: 1, padding: '0 2px', fontWeight: 700 }}
+                            title="Zoom +"
+                        >+</button>
+                    </div>
+
+                    {/* CRT overlay */}
+                    <div style={{
+                        position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3,
+                        background: 'repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.035) 3px,rgba(0,0,0,.035) 4px)',
+                    }} />
+
+                    {/* Corner decorations */}
+                    {[
+                        { top: 0, left: 0, borderWidth: '1.5px 0 0 1.5px' },
+                        { top: 0, right: 0, borderWidth: '1.5px 1.5px 0 0' },
+                        { bottom: 0, left: 0, borderWidth: '0 0 1.5px 1.5px' },
+                        { bottom: 0, right: 0, borderWidth: '0 1.5px 1.5px 0' },
+                    ].map((s, i) => (
+                        <div key={i} style={{
+                            position: 'absolute', width: 16, height: 16, zIndex: 4,
+                            borderStyle: 'solid', borderColor: 'rgba(201,168,76,.4)',
+                            pointerEvents: 'none', ...s,
+                        }} />
+                    ))}
+
+                    {/* MJPEG stream — with zoom transform */}
+                    <img
+                        ref={imgRef}
+                        alt="Vue Scène"
+                        style={{
+                            width: '100%', height: '100%',
+                            objectFit: 'contain', display: 'block',
+                            transform: `scale(${zoom})`,
+                            transformOrigin: 'center center',
+                            transition: 'transform .15s ease',
+                        }}
+                        onError={() => {
+                            onStreamError();
+                            setTimeout(() => {
+                                if (imgRef.current) imgRef.current.src = streamSrc + '?t=' + Date.now();
+                            }, 2000);
+                        }}
+                    />
+                </div>
+            )}
+
+            {/* ── Resize handle ── */}
+            {!isMinimized && (
+                <div className="float-win-resize" onMouseDown={startResize} />
+            )}
+        </div>
+    );
+};
 
 // ═══════════════════════════════════════════
 // PLAYGROUND
@@ -300,31 +639,29 @@ function Playground() {
     const [wsUrl, setWsUrl] = useState('ws://197.5.193.210:8765');
     const [wsLog, setWsLog] = useState('⏳ Démarrage de Webots…');
     const [showQr, setShowQr] = useState(false);
-    const [isFs, setIsFs] = useState(false);
+
+    // ── Floating Window State ──
+    const [floatWin, setFloatWin] = useState({
+        open: false,
+        x: 80,
+        y: 80,
+        w: 720,
+        h: 480,
+        _prevH: 480,
+    });
 
     const wsRef = useRef(null);
     const keysRef = useRef({});
     const reconnTimerRef = useRef(null);
     const userIdRef = useRef('user_' + Math.random().toString(36).slice(2, 8));
-    const camRef = useRef(null);
 
     const G = (a) => `rgba(201,168,76,${a})`;
     const SC = simStatus === 'online' ? '#4ddc64' : simStatus === 'connecting' ? '#f0a500' : '#c9a84c';
     const SL = simStatus === 'online' ? 'CONNECTÉ' : simStatus === 'connecting' ? 'CONNEXION...' : 'OFFLINE';
 
-    // ── Plein écran natif ──
-    const toggleFs = () => {
-        if (!isFs) {
-            camRef.current?.requestFullscreen?.();
-        } else {
-            document.exitFullscreen?.();
-        }
-    };
-    useEffect(() => {
-        const fn = () => setIsFs(!!document.fullscreenElement);
-        document.addEventListener('fullscreenchange', fn);
-        return () => document.removeEventListener('fullscreenchange', fn);
-    }, []);
+    // ── Open / Close floating window ──
+    const openFloat = () => setFloatWin(f => ({ ...f, open: true }));
+    const closeFloat = () => setFloatWin(f => ({ ...f, open: false }));
 
     // ── Lancement Webots via backend ──
     useEffect(() => {
@@ -421,15 +758,11 @@ function Playground() {
             const c = km[e.key];
             if (c && c !== 'stop') sendCmd('stop');
         };
-        // Escape ferme le fullscreen overlay custom (si utilisé)
-        const esc = (e) => { if (e.key === 'Escape') setIsFs(false); };
         window.addEventListener('keydown', dn);
         window.addEventListener('keyup', up);
-        window.addEventListener('keydown', esc);
         return () => {
             window.removeEventListener('keydown', dn);
             window.removeEventListener('keyup', up);
-            window.removeEventListener('keydown', esc);
         };
     }); // eslint-disable-line
 
@@ -547,17 +880,15 @@ function Playground() {
                 <div key={i} className="deco-star" style={s}>{icon}</div>
             ))}
 
-            {/* ══ FULLSCREEN OVERLAY ══ */}
-            {isFs && (
-                <div className="fs-overlay">
-                    <img
-                        src={STREAM_SCENE + '?t=' + Date.now()}
-                        alt="Vue Scène — Plein écran"
-                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                        onError={() => setWsLog('⚠️ Stream non disponible')}
-                    />
-                    <button className="fs-close-btn" onClick={toggleFs}>✕ Fermer</button>
-                </div>
+            {/* ══ FLOATING WINDOW ══ */}
+            {floatWin.open && (
+                <FloatingWindow
+                    win={floatWin}
+                    onUpdate={setFloatWin}
+                    onClose={closeFloat}
+                    streamSrc={STREAM_SCENE}
+                    onStreamError={() => setWsLog('⚠️ Stream non disponible')}
+                />
             )}
 
             {/* ══ APP LAYOUT ══ */}
@@ -671,18 +1002,22 @@ function Playground() {
                                     </div>
                                 ) : (
                                     /* ── Camera frame ── */
-                                    <div ref={camRef} className="cam-frame">
+                                    <div className="cam-frame">
                                         {/* REC */}
                                         <div className="rec-badge">
                                             <div className="rec-dot" />
                                             <span className="rec-text">REC</span>
                                         </div>
 
-                                        {/* Label + fullscreen btn */}
+                                        {/* Label + open float btn */}
                                         <div className="cam-label">
                                             <span>🎬 Vue Scène</span>
-                                            <button className="btn-fs" onClick={toggleFs} title="Plein écran">
-                                                {isFs ? '✕' : '⛶'}
+                                            <button
+                                                className="btn-fs"
+                                                onClick={openFloat}
+                                                title="Ouvrir dans une fenêtre"
+                                            >
+                                                ⛶
                                             </button>
                                         </div>
 

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════
-// src/services/firebase.js — VERSION FINALE v2
+// src/services/firebase.js — VERSION POPUP
 // ═══════════════════════════════════════════
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
@@ -9,8 +9,7 @@ import {
     signInWithEmailAndPassword,
     GoogleAuthProvider,
     FacebookAuthProvider,
-    signInWithRedirect,
-    getRedirectResult,
+    signInWithPopup,
     onAuthStateChanged,
     signOut,
 } from "firebase/auth";
@@ -25,7 +24,7 @@ const firebaseConfig = {
     appId: "1:632057387503:web:cef5e13c9c9845aeb5be1a",
 };
 
-// ── Initialisation UNIQUE ──
+// ── Initialisation ──
 const app = initializeApp(firebaseConfig);
 
 // ── Services ──
@@ -35,15 +34,10 @@ export const db = getFirestore(app);
 // ── Providers ──
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
-
 googleProvider.setCustomParameters({ prompt: "select_account" });
-facebookProvider.setCustomParameters({ display: "popup", auth_type: "rerequest" });
 
-// ── Auth state listener ──
+// ── Auth state ──
 export { onAuthStateChanged };
-
-// ── Redirect result ──
-export const getAuthRedirectResult = () => getRedirectResult(auth);
 
 // ── Email / Password ──
 export const emailSignUp = (email, password) =>
@@ -51,12 +45,9 @@ export const emailSignUp = (email, password) =>
 export const emailSignIn = (email, password) =>
     signInWithEmailAndPassword(auth, email, password);
 
-// ── Google ──
-export const googleSignIn = () => signInWithRedirect(auth, googleProvider);
-export const googleSigIn = () => signInWithRedirect(auth, googleProvider); // alias
-
-// ── Facebook ──
-export const facebookSignIn = () => signInWithRedirect(auth, facebookProvider);
+// ── Google (POPUP) ──
+export const googleSignIn = () => signInWithPopup(auth, googleProvider);
+export const googleSigIn = () => signInWithPopup(auth, googleProvider); // alias
 
 // ── Déconnexion ──
 export const logOut = () => signOut(auth);

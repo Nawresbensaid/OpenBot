@@ -3,7 +3,11 @@
 // ═══════════════════════════════════════════
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { emailSignUp, googleSignIn } from "../../services/firebase";
+import {
+    emailSignUp,
+    googleSignIn,
+    facebookSignIn,
+} from "../../services/firebase";
 import { updateProfile } from "firebase/auth";
 
 export default function SignUp() {
@@ -38,20 +42,56 @@ export default function SignUp() {
         }
     };
 
-    // ── Google Sign In (popup) ──
+    // ── Google Sign In (POPUP) ──
+    // Le popup s'ouvre dans une nouvelle fenêtre
+    // Quand l'utilisateur choisit son compte → navigate automatique
     const handleGoogleSignIn = async () => {
         setError("");
         setLoading(true);
         try {
-            const result = await googleSignIn();
-            if (result?.user) navigate("/launch");
+            const result = await googleSignIn(); // attend la réponse du popup
+            if (result.user) {
+                console.log("✅ Google connecté :", result.user.email);
+                navigate("/launch"); // ← redirection directe ici !
+            }
         } catch (err) {
             console.error("❌ Google signin:", err.code, err.message);
-            setError("Google sign-in failed: " + err.message);
+            if (err.code === "auth/popup-closed-by-user") {
+                setError("Popup fermé. Réessayez.");
+            } else if (err.code === "auth/popup-blocked") {
+                setError("Popup bloqué par le navigateur. Autorisez les popups.");
+            } else {
+                setError("Google sign-in failed: " + err.message);
+            }
         } finally {
             setLoading(false);
         }
     };
+
+    // ── Facebook Sign In (POPUP) ──
+    const handleFacebookSignIn = async () => {
+        setError("");
+        setLoading(true);
+        try {
+            const result = await facebookSignIn();
+            if (result.user) {
+                console.log("✅ Facebook connecté :", result.user.email);
+                navigate("/launch");
+            }
+        } catch (err) {
+            console.error("❌ Facebook signin:", err.code, err.message);
+            if (err.code === "auth/account-exists-with-different-credential") {
+                setError("Un compte existe déjà avec cet email. Essayez Google ou email.");
+            } else if (err.code === "auth/popup-closed-by-user") {
+                setError("Popup fermé. Réessayez.");
+            } else {
+                setError("Facebook sign-in failed: " + err.message);
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div style={styles.page}>
             <div style={styles.arabesqueLayer1} />
@@ -100,7 +140,6 @@ export default function SignUp() {
                     <div style={styles.cornerBL} />
                     <div style={styles.cornerBR} />
 
-                    {/* Header */}
                     <div style={styles.cardHeader}>
                         <span style={styles.badge}>
                             <span style={styles.badgeDot} />
@@ -112,7 +151,6 @@ export default function SignUp() {
 
                     {/* ── Social buttons ── */}
                     <div style={styles.socialRow}>
-
                         {/* Google */}
                         <button
                             style={styles.socialBtn}
@@ -138,7 +176,34 @@ export default function SignUp() {
                                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                             </svg>
                             <span style={styles.socialBtnText}>
-                                {loading ? "Signing in..." : "Continue with Google"}
+                                {loading ? "Connexion..." : "Continue with Google"}
+                            </span>
+                        </button>
+
+                        {/* Facebook */}
+                        <button
+                            style={{ ...styles.socialBtn, borderColor: "rgba(24,119,242,0.3)", background: "rgba(24,119,242,0.06)" }}
+                            onClick={handleFacebookSignIn}
+                            disabled={loading}
+                            onMouseEnter={e => {
+                                e.currentTarget.style.background = "rgba(24,119,242,0.16)";
+                                e.currentTarget.style.borderColor = "rgba(24,119,242,0.6)";
+                                e.currentTarget.style.transform = "translateY(-2px)";
+                                e.currentTarget.style.boxShadow = "0 6px 24px rgba(24,119,242,0.25)";
+                            }}
+                            onMouseLeave={e => {
+                                e.currentTarget.style.background = "rgba(24,119,242,0.06)";
+                                e.currentTarget.style.borderColor = "rgba(24,119,242,0.3)";
+                                e.currentTarget.style.transform = "translateY(0)";
+                                e.currentTarget.style.boxShadow = "none";
+                            }}
+                        >
+                            <svg width="18" height="18" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
+                                <path fill="#1877F2" d="M48 24C48 10.745 37.255 0 24 0S0 10.745 0 24c0 11.979 8.776 21.908 20.25 23.708V30.937h-6.094V24H20.25v-5.288c0-6.014 3.583-9.337 9.066-9.337 2.625 0 5.372.469 5.372.469v5.906h-3.026c-2.981 0-3.912 1.85-3.912 3.75V24h6.656l-1.063 6.937H27.75v16.771C39.224 45.908 48 35.979 48 24z" />
+                                <path fill="#fff" d="M33.343 30.937 34.406 24H27.75v-4.5c0-1.9.931-3.75 3.912-3.75h3.026V9.844s-2.747-.469-5.372-.469c-5.483 0-9.066 3.323-9.066 9.337V24h-6.094v6.937H20.25v16.771a24.18 24.18 0 0 0 7.5 0V30.937h5.593z" />
+                            </svg>
+                            <span style={styles.socialBtnText}>
+                                {loading ? "Connexion..." : "Continue with Facebook"}
                             </span>
                         </button>
                     </div>
@@ -279,34 +344,27 @@ export default function SignUp() {
     );
 }
 
-// ═══════════════════════════════════════════
-// STYLES
-// ═══════════════════════════════════════════
 const styles = {
     page: {
-        minHeight: "100vh",
-        display: "flex", flexDirection: "column",
+        minHeight: "100vh", display: "flex", flexDirection: "column",
         background: `
             radial-gradient(ellipse at 15% 60%, #0f2050 0%, transparent 50%),
             radial-gradient(ellipse at 85% 30%, #0a1535 0%, transparent 45%),
             radial-gradient(ellipse at 50% 100%, #2a1200 0%, transparent 45%),
-            #04080f
-        `,
+            #04080f`,
         color: "white", fontFamily: "Poppins, sans-serif",
         overflow: "hidden", position: "relative",
     },
     arabesqueLayer1: {
         position: "absolute", inset: 0,
         backgroundImage: `url("https://www.transparenttextures.com/patterns/arabesque.png")`,
-        backgroundSize: "320px 320px", opacity: 0.1,
-        pointerEvents: "none", zIndex: 0,
+        backgroundSize: "320px 320px", opacity: 0.1, pointerEvents: "none", zIndex: 0,
     },
     arabesqueLayer2: {
         position: "absolute", inset: 0,
         backgroundImage: `url("https://www.transparenttextures.com/patterns/arabesque.png")`,
         backgroundSize: "160px 160px", backgroundPosition: "80px 80px",
-        opacity: 0.04, filter: "invert(1)",
-        pointerEvents: "none", zIndex: 0,
+        opacity: 0.04, filter: "invert(1)", pointerEvents: "none", zIndex: 0,
     },
     arabescueMask: {
         position: "absolute", inset: 0,
@@ -314,32 +372,21 @@ const styles = {
         pointerEvents: "none", zIndex: 0,
     },
     nebulaGold: {
-        position: "absolute", top: "5%", left: "-5%",
-        width: "500px", height: "500px", borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(201,168,76,0.09) 0%, transparent 70%)",
+        position: "absolute", top: "5%", left: "-5%", width: "500px", height: "500px",
+        borderRadius: "50%", background: "radial-gradient(circle, rgba(201,168,76,0.09) 0%, transparent 70%)",
         filter: "blur(60px)", pointerEvents: "none", zIndex: 0,
     },
     nebulaBlue: {
-        position: "absolute", top: "0%", right: "-5%",
-        width: "500px", height: "500px", borderRadius: "50%",
-        background: "radial-gradient(circle, rgba(30,80,180,0.09) 0%, transparent 70%)",
+        position: "absolute", top: "0%", right: "-5%", width: "500px", height: "500px",
+        borderRadius: "50%", background: "radial-gradient(circle, rgba(30,80,180,0.09) 0%, transparent 70%)",
         filter: "blur(70px)", pointerEvents: "none", zIndex: 0,
     },
-    svgBg: {
-        position: "absolute", inset: 0, width: "100%", height: "100%",
-        pointerEvents: "none", zIndex: 0,
-    },
-    dune: {
-        position: "absolute", bottom: 0, left: 0,
-        width: "100%", height: "300px",
-        pointerEvents: "none", zIndex: 0,
-    },
+    svgBg: { position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 },
+    dune: { position: "absolute", bottom: 0, left: 0, width: "100%", height: "300px", pointerEvents: "none", zIndex: 0 },
     navbar: {
-        position: "relative", zIndex: 10,
-        display: "flex", alignItems: "center",
+        position: "relative", zIndex: 10, display: "flex", alignItems: "center",
         justifyContent: "space-between", padding: "18px 60px",
-        background: "rgba(4,8,20,0.45)",
-        backdropFilter: "blur(24px) saturate(180%)",
+        background: "rgba(4,8,20,0.45)", backdropFilter: "blur(24px) saturate(180%)",
         WebkitBackdropFilter: "blur(24px) saturate(180%)",
         borderBottom: "1px solid rgba(201,168,76,0.15)",
         boxShadow: "0 4px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,168,76,0.08)",
@@ -356,17 +403,14 @@ const styles = {
     navLogoN: { color: "#c9a84c", fontWeight: "900" },
     navBack: { fontSize: "12px", color: "rgba(255,255,255,0.45)", cursor: "pointer", letterSpacing: "1px" },
     center: {
-        flex: 1, display: "flex",
-        alignItems: "center", justifyContent: "center",
+        flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
         padding: "30px 20px", position: "relative", zIndex: 1,
     },
     card: {
         position: "relative", width: "100%", maxWidth: "480px",
-        background: "rgba(4,8,20,0.75)",
-        backdropFilter: "blur(30px) saturate(180%)",
+        background: "rgba(4,8,20,0.75)", backdropFilter: "blur(30px) saturate(180%)",
         WebkitBackdropFilter: "blur(30px) saturate(180%)",
-        border: "1px solid rgba(201,168,76,0.25)",
-        borderRadius: "20px", padding: "36px 40px",
+        border: "1px solid rgba(201,168,76,0.25)", borderRadius: "20px", padding: "36px 40px",
         boxShadow: "0 0 60px rgba(201,168,76,0.08), 0 30px 80px rgba(0,0,0,0.6)",
         animation: "fadeUp 0.8s ease",
     },
@@ -381,32 +425,22 @@ const styles = {
     badge: {
         display: "inline-flex", alignItems: "center", gap: "7px",
         background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.35)",
-        borderRadius: "50px", padding: "4px 12px",
-        fontSize: "9px", color: "#c9a84c", letterSpacing: "2px",
+        borderRadius: "50px", padding: "4px 12px", fontSize: "9px", color: "#c9a84c", letterSpacing: "2px",
     },
-    badgeDot: {
-        width: "5px", height: "5px", borderRadius: "50%",
-        background: "#c9a84c", display: "inline-block",
-        animation: "pulse 1.5s infinite",
-    },
+    badgeDot: { width: "5px", height: "5px", borderRadius: "50%", background: "#c9a84c", display: "inline-block", animation: "pulse 1.5s infinite" },
     cardTitle: {
-        margin: 0, fontSize: "1.7rem", fontWeight: "900",
-        fontFamily: "Cinzel, serif",
+        margin: 0, fontSize: "1.7rem", fontWeight: "900", fontFamily: "Cinzel, serif",
         background: "linear-gradient(135deg, #f0d080, #c9a84c, #fff)",
-        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-        backgroundClip: "text",
+        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
     },
     cardSub: { margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.45)", letterSpacing: "0.5px" },
     socialRow: { display: "flex", flexDirection: "column", gap: "10px", marginBottom: "4px" },
     socialBtn: {
-        width: "100%", padding: "11px 16px",
-        background: "rgba(255,255,255,0.05)",
-        border: "1px solid rgba(255,255,255,0.15)",
-        borderRadius: "10px", color: "white",
+        width: "100%", padding: "11px 16px", background: "rgba(255,255,255,0.05)",
+        border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px", color: "white",
         fontSize: "13px", fontWeight: "600", cursor: "pointer",
         display: "flex", alignItems: "center", justifyContent: "center",
-        gap: "10px", transition: "all 0.2s",
-        fontFamily: "Poppins, sans-serif",
+        gap: "10px", transition: "all 0.2s", fontFamily: "Poppins, sans-serif",
     },
     socialBtnText: { letterSpacing: "0.3px" },
     divider: { display: "flex", alignItems: "center", gap: "12px", margin: "16px 0" },
@@ -415,17 +449,12 @@ const styles = {
     form: { display: "flex", flexDirection: "column", gap: "14px" },
     nameRow: { display: "flex", gap: "12px" },
     inputGroup: { display: "flex", flexDirection: "column", gap: "6px", flex: 1 },
-    label: {
-        fontSize: "11px", color: "rgba(255,255,255,0.5)",
-        letterSpacing: "1.5px", textTransform: "uppercase",
-    },
+    label: { fontSize: "11px", color: "rgba(255,255,255,0.5)", letterSpacing: "1.5px", textTransform: "uppercase" },
     input: {
         padding: "11px 14px", background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(201,168,76,0.2)",
-        borderRadius: "8px", color: "white", fontSize: "13px",
-        outline: "none", transition: "border-color 0.2s",
-        fontFamily: "Poppins, sans-serif", width: "100%",
-        boxSizing: "border-box",
+        border: "1px solid rgba(201,168,76,0.2)", borderRadius: "8px", color: "white",
+        fontSize: "13px", outline: "none", transition: "border-color 0.2s",
+        fontFamily: "Poppins, sans-serif", width: "100%", boxSizing: "border-box",
     },
     strengthBar: { display: "flex", alignItems: "center", gap: "10px" },
     strengthFill: { height: "3px", borderRadius: "2px", flex: 1, transition: "width 0.3s, background 0.3s" },
@@ -440,8 +469,7 @@ const styles = {
         background: "linear-gradient(135deg, #b8860b, #c9a84c, #f0d080)",
         border: "none", borderRadius: "8px", color: "#000",
         fontWeight: "800", letterSpacing: "1.5px", cursor: "pointer",
-        boxShadow: "0 0 25px rgba(201,168,76,0.4)",
-        transition: "transform 0.2s, box-shadow 0.2s",
+        boxShadow: "0 0 25px rgba(201,168,76,0.4)", transition: "transform 0.2s, box-shadow 0.2s",
         fontSize: "13px", fontFamily: "Cinzel, serif",
     },
     footerText: { marginTop: "18px", textAlign: "center", fontSize: "13px", color: "rgba(255,255,255,0.4)" },
