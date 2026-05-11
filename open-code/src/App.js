@@ -1,6 +1,3 @@
-// ═══════════════════════════════════════════
-// src/App.js — VERSION FINALE v2
-// ═══════════════════════════════════════════
 import './App.css';
 import StoreProvider from './context/context';
 import { createContext, useEffect, useState } from "react";
@@ -24,7 +21,7 @@ const STARS = generateStars(150);
 const STARS_BIG = generateStars(30);
 
 function App() {
-    const [internetOn, setInternetOn] = useState(window.navigator.onLine);
+    const [internetOn, setInternetOn] = useState(true); // ← true par défaut
     const [user, setUser] = useState(null);
     const [isSessionExpireModal, setIsSessionExpireModal] = useState(false);
     const [isSessionExpire, setIsSessionExpire] = useState(false);
@@ -32,32 +29,35 @@ function App() {
     const theme = 'dark';
     const toggleTheme = () => { };
 
-    // ── Écoute l'état Firebase en temps réel ──
-    // onAuthStateChanged se déclenche automatiquement après
-    // le retour d'un redirect Google ou Facebook
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
             if (firebaseUser) {
                 console.log("✅ Connecté :", firebaseUser.email);
                 setUser(firebaseUser);
+                localStorage.setItem("isSigIn", "true");
             } else {
                 console.log("❌ Non connecté");
                 setUser(null);
+                localStorage.setItem("isSigIn", "false");
             }
         });
         return () => unsubscribe();
     }, []);
 
-    // ── Internet ──
     useEffect(() => {
-        window.addEventListener('online', () => setInternetOn(true));
-        window.addEventListener('offline', () => setInternetOn(false));
-        document.body.style.backgroundColor = '#030714';
+        const goOnline = () => setInternetOn(true);
+        const goOffline = () => setInternetOn(false);
+        window.addEventListener('online', goOnline);
+        window.addEventListener('offline', goOffline);
+        document.body.style.backgroundColor = '#030108';
         document.body.style.margin = '0';
         document.body.style.overflow = 'hidden';
+        return () => {
+            window.removeEventListener('online', goOnline);
+            window.removeEventListener('offline', goOffline);
+        };
     }, []);
 
-    // ── Session expirée ──
     useEffect(() => {
         if (isSessionExpire) {
             alert('Your session has expired. You have been signed out.');
@@ -78,7 +78,7 @@ function App() {
                 isTimeoutId={isTimeoutId}
                 setTimeoutId={setTimeoutId}
             >
-                {/* ── Fond étoilé ── */}
+                {/* Fond étoilé */}
                 <div style={{
                     position: 'fixed', inset: 0,
                     background: 'radial-gradient(ellipse at 20% 50%, #0a1628 0%, #030714 40%, #000008 100%)',

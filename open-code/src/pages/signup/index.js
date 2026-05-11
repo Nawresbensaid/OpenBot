@@ -3,11 +3,7 @@
 // ═══════════════════════════════════════════
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-    emailSignUp,
-    googleSignIn,
-    facebookSignIn,
-} from "../../services/firebase";
+import { emailSignUp, googleSignIn } from "../../services/firebase";
 import { updateProfile } from "firebase/auth";
 
 export default function SignUp() {
@@ -43,16 +39,14 @@ export default function SignUp() {
     };
 
     // ── Google Sign In (POPUP) ──
-    // Le popup s'ouvre dans une nouvelle fenêtre
-    // Quand l'utilisateur choisit son compte → navigate automatique
     const handleGoogleSignIn = async () => {
         setError("");
         setLoading(true);
         try {
-            const result = await googleSignIn(); // attend la réponse du popup
+            const result = await googleSignIn();
             if (result.user) {
                 console.log("✅ Google connecté :", result.user.email);
-                navigate("/launch"); // ← redirection directe ici !
+                navigate("/launch");
             }
         } catch (err) {
             console.error("❌ Google signin:", err.code, err.message);
@@ -62,30 +56,6 @@ export default function SignUp() {
                 setError("Popup bloqué par le navigateur. Autorisez les popups.");
             } else {
                 setError("Google sign-in failed: " + err.message);
-            }
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // ── Facebook Sign In (POPUP) ──
-    const handleFacebookSignIn = async () => {
-        setError("");
-        setLoading(true);
-        try {
-            const result = await facebookSignIn();
-            if (result.user) {
-                console.log("✅ Facebook connecté :", result.user.email);
-                navigate("/launch");
-            }
-        } catch (err) {
-            console.error("❌ Facebook signin:", err.code, err.message);
-            if (err.code === "auth/account-exists-with-different-credential") {
-                setError("Un compte existe déjà avec cet email. Essayez Google ou email.");
-            } else if (err.code === "auth/popup-closed-by-user") {
-                setError("Popup fermé. Réessayez.");
-            } else {
-                setError("Facebook sign-in failed: " + err.message);
             }
         } finally {
             setLoading(false);
@@ -179,36 +149,9 @@ export default function SignUp() {
                                 {loading ? "Connexion..." : "Continue with Google"}
                             </span>
                         </button>
-
-                        {/* Facebook */}
-                        <button
-                            style={{ ...styles.socialBtn, borderColor: "rgba(24,119,242,0.3)", background: "rgba(24,119,242,0.06)" }}
-                            onClick={handleFacebookSignIn}
-                            disabled={loading}
-                            onMouseEnter={e => {
-                                e.currentTarget.style.background = "rgba(24,119,242,0.16)";
-                                e.currentTarget.style.borderColor = "rgba(24,119,242,0.6)";
-                                e.currentTarget.style.transform = "translateY(-2px)";
-                                e.currentTarget.style.boxShadow = "0 6px 24px rgba(24,119,242,0.25)";
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.background = "rgba(24,119,242,0.06)";
-                                e.currentTarget.style.borderColor = "rgba(24,119,242,0.3)";
-                                e.currentTarget.style.transform = "translateY(0)";
-                                e.currentTarget.style.boxShadow = "none";
-                            }}
-                        >
-                            <svg width="18" height="18" viewBox="0 0 48 48" style={{ flexShrink: 0 }}>
-                                <path fill="#1877F2" d="M48 24C48 10.745 37.255 0 24 0S0 10.745 0 24c0 11.979 8.776 21.908 20.25 23.708V30.937h-6.094V24H20.25v-5.288c0-6.014 3.583-9.337 9.066-9.337 2.625 0 5.372.469 5.372.469v5.906h-3.026c-2.981 0-3.912 1.85-3.912 3.75V24h6.656l-1.063 6.937H27.75v16.771C39.224 45.908 48 35.979 48 24z" />
-                                <path fill="#fff" d="M33.343 30.937 34.406 24H27.75v-4.5c0-1.9.931-3.75 3.912-3.75h3.026V9.844s-2.747-.469-5.372-.469c-5.483 0-9.066 3.323-9.066 9.337V24h-6.094v6.937H20.25v16.771a24.18 24.18 0 0 0 7.5 0V30.937h5.593z" />
-                            </svg>
-                            <span style={styles.socialBtnText}>
-                                {loading ? "Connexion..." : "Continue with Facebook"}
-                            </span>
-                        </button>
                     </div>
 
-                    {/* Divider */}
+                    {/* ── Divider ── */}
                     <div style={styles.divider}>
                         <div style={styles.dividerLine} />
                         <span style={styles.dividerText}>or</span>
@@ -328,18 +271,18 @@ export default function SignUp() {
                         </span>
                     </p>
                 </div>
-            </div>
 
-            <style>{`
-                @keyframes pulse {
-                    0%, 100% { opacity: 1; box-shadow: 0 0 6px #c9a84c; }
-                    50%       { opacity: 0.3; box-shadow: 0 0 2px #c9a84c; }
-                }
-                @keyframes fadeUp {
-                    from { opacity: 0; transform: translateY(30px); }
-                    to   { opacity: 1; transform: translateY(0); }
-                }
-            `}</style>
+                <style>{`
+                    @keyframes pulse {
+                        0%, 100% { opacity: 1; box-shadow: 0 0 6px #c9a84c; }
+                        50%       { opacity: 0.3; box-shadow: 0 0 2px #c9a84c; }
+                    }
+                    @keyframes fadeUp {
+                        from { opacity: 0; transform: translateY(30px); }
+                        to   { opacity: 1; transform: translateY(0); }
+                    }
+                `}</style>
+            </div>
         </div>
     );
 }

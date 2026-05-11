@@ -34,7 +34,13 @@ export const db = getFirestore(app);
 // ── Providers ──
 const googleProvider = new GoogleAuthProvider();
 const facebookProvider = new FacebookAuthProvider();
+
 googleProvider.setCustomParameters({ prompt: "select_account" });
+
+// ✅ Scopes Google Drive nécessaires pour uploadToGoogleDrive()
+googleProvider.addScope("https://www.googleapis.com/auth/drive.file");
+googleProvider.addScope("https://www.googleapis.com/auth/userinfo.profile");
+googleProvider.addScope("https://www.googleapis.com/auth/userinfo.email");
 
 // ── Auth state ──
 export { onAuthStateChanged };
@@ -46,9 +52,35 @@ export const emailSignIn = (email, password) =>
     signInWithEmailAndPassword(auth, email, password);
 
 // ── Google (POPUP) ──
-export const googleSignIn = () => signInWithPopup(auth, googleProvider);
-export const googleSigIn = () => signInWithPopup(auth, googleProvider); // alias
+// ✅ On sauvegarde le accessToken Google dans localStorage
+//    pour que uploadToGoogleDrive() puisse l'utiliser via getAccessToken()
+export const googleSignIn = async () => {
+    const result = await signInWithPopup(auth, googleProvider);
+
+    // Récupère le credential Google → contient le vrai accessToken OAuth2
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    const accessToken = credential?.accessToken;
+
+    if (accessToken) {
+        // ✅ Clé exacte attendue par src/services/googleDrive.js → getAccessToken()
+        localStorage.setItem("accessToken", accessToken);
+        localStorage.setItem("isSigIn", "true");
+        console.log("✅ Google accessToken sauvegardé pour Google Drive");
+    } else {
+        console.warn("⚠️ Pas de accessToken dans le credential Google");
+    }
+
+    return result;
+};
+
+// Alias (utilisé dans certains composants)
+export const googleSigIn = googleSignIn;
 
 // ── Déconnexion ──
-export const logOut = () => signOut(auth);
-export const googleSignOut = () => signOut(auth); // alias
+export const logOut = async () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("isSigIn");
+    return signOut(auth);
+};
+
+export const googleSignOut = logOut; // alias
