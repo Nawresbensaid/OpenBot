@@ -1,27 +1,48 @@
-import React, { useState, createContext } from 'react';
+import React, { createContext, useState } from 'react';
+import { getCurrentProject } from "../services/workspace";
+import { Constants, localStorageKeys } from "../utils/constants";
 
-const StoreContext = createContext();
+export const StoreContext = createContext(null);
 
-function StoreProvider({ children }) {
+export default function StoreProvider({
+    children,
+    isOnline,
+    user,
+    setUser,
+    isSessionExpireModal,
+    setIsSessionExpireModal,
+    setIsSessionExpire,
+    isTimeoutId,
+    setTimeoutId,
+}) {
+    let savedProjectName = null;
+    let savedProjectXml = null;
+    let savedFileId = null;
+    let savedFolderId = null;
 
-    // ── États OpenBot (originaux) ──────────────────────────
-    const [category, setCategory] = useState('js');
+    if (localStorage.getItem(localStorageKeys.currentProject)) {
+        savedProjectName = getCurrentProject().projectName;
+        savedProjectXml = getCurrentProject().xmlValue;
+        savedFileId = getCurrentProject()?.fileId;
+        savedFolderId = getCurrentProject().folderId;
+    }
+
+    const [projectName, setProjectName] = useState(savedProjectName ?? undefined);
     const [drawer, setDrawer] = useState(false);
+    const [logOut, setLogOut] = useState(false);
+    const [code, setCode] = useState({});
+    const [generate, setGenerateCode] = useState(false);
+    const [currentProjectXml, setCurrentProjectXml] = useState(savedProjectXml);
+    const [fileId, setFileId] = useState(savedFileId);
+    const [folderId, setFolderId] = useState(savedFolderId);
+    const [category, setCategory] = useState(Constants.qr);
+    const [workspace, setWorkspace] = useState(undefined);
     const [isError, setIsError] = useState(false);
-    const [projectName, setProjectName] = useState('');
-    const [fileId, setFileId] = useState(null);
-    const [currentProjectXml, setCurrentProjectXml] = useState('');
-    const [code, setCode] = useState('');
-    const [xmlText, setXmlText] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [isRunning, setIsRunning] = useState(false);
-    const [errorMsg, setErrorMsg] = useState('');
-    const [generateCode, setGenerateCode] = useState(false);
+    const [isSignIn, setIsSignIn] = useState(false);
+    const [isDob, setIsDob] = useState(undefined);
+    const [isAutoSyncEnabled, setIsAutoSyncEnabled] = useState(false);
 
-    // ── État Blockly ────────────────────────────
-    const [workspace, setWorkspace] = useState(null);
-
-    // ── États NomadVerse ──────────────────────────────────
+    // NomadVerse
     const [currentLevel, setCurrentLevel] = useState(1);
     const [completedLevels, setCompletedLevels] = useState([]);
     const [score, setScore] = useState(0);
@@ -36,31 +57,37 @@ function StoreProvider({ children }) {
         }
     };
 
+    const store = {
+        projectName, setProjectName,
+        drawer, setDrawer,
+        logOut, setLogOut,
+        category, setCategory,
+        code, setCode,
+        generate, setGenerateCode,
+        generateCode: generate,
+        currentProjectXml, setCurrentProjectXml,
+        fileId, setFileId,
+        folderId, setFolderId,
+        user, setUser,
+        workspace, setWorkspace,
+        isError, setIsError,
+        isOnline,
+        isSignIn, setIsSignIn,
+        isDob, setIsDob,
+        isAutoSyncEnabled, setIsAutoSyncEnabled,
+        isSessionExpireModal, setIsSessionExpireModal,
+        setIsSessionExpire,
+        isTimeoutId, setTimeoutId,
+        currentLevel, setCurrentLevel,
+        completedLevels, setCompletedLevels,
+        score, setScore,
+        stars, setStars,
+        completeLevel,
+    };
+
     return (
-        <StoreContext.Provider value={{
-            category, setCategory,
-            drawer, setDrawer,
-            isError, setIsError,
-            projectName, setProjectName,
-            fileId, setFileId,
-            currentProjectXml, setCurrentProjectXml,
-            code, setCode,
-            xmlText, setXmlText,
-            isLoading, setIsLoading,
-            isRunning, setIsRunning,
-            errorMsg, setErrorMsg,
-            generateCode, setGenerateCode,
-            workspace, setWorkspace,
-            currentLevel, setCurrentLevel,
-            completedLevels, setCompletedLevels,
-            score, setScore,
-            stars, setStars,
-            completeLevel,
-        }}>
+        <StoreContext.Provider value={store}>
             {children}
         </StoreContext.Provider>
     );
 }
-
-export { StoreContext, StoreProvider };
-export default StoreProvider;
