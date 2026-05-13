@@ -5,6 +5,7 @@ import { Header } from "../../components/navBar/header";
 import { StoreContext } from "../../context/context";
 import CodeEditor from "../../components/editor/codeEditor";
 import * as ParserModule from '../../utils/parser';
+import { Tutorial, TutorialButton } from './Tutorial';
 
 import { javascriptGenerator } from 'blockly/javascript';
 import { uploadToGoogleDrive } from '../../services/googleDrive';
@@ -75,6 +76,7 @@ const Styles = () => (
         @keyframes progressFlow{ 0%{background-position:0% 50%} 100%{background-position:200% 50%} }
         @keyframes qrPulse     { 0%,100%{box-shadow:0 0 20px rgba(201,168,76,.3)} 50%{box-shadow:0 0 45px rgba(201,168,76,.7),0 0 80px rgba(201,168,76,.2)} }
         @keyframes scanLine    { 0%{top:8px} 100%{top:calc(100% - 8px)} }
+        @keyframes qrGenPop    { 0%{opacity:0;transform:scale(.88)} 100%{opacity:1;transform:scale(1)} }
 
         .gold-shimmer {
             background: linear-gradient(90deg,#c9a84c,#f0d080,#fff8e1,#f0d080,#c9a84c);
@@ -110,6 +112,7 @@ const Styles = () => (
         .pb:active { transform:scale(.95); }
         .pb-gold  { background:rgba(201,168,76,.1); border:1px solid rgba(201,168,76,.3) !important; color:#c9a84c; }
         .pb-green { background:rgba(77,220,100,.14); border:1px solid rgba(77,220,100,.35) !important; color:#4ddc64; }
+        .pb-qr    { background:rgba(201,168,76,.15); border:1px solid rgba(201,168,76,.45) !important; color:#f0d080; font-size:.6rem; padding:.22rem .6rem; }
 
         .ws-input { flex:1; background:rgba(4,2,0,.6); border:1px solid rgba(201,168,76,.22) !important; border-radius:6px; color:#e8d88a; padding:.36rem .75rem; font-family:'Space Mono',monospace; font-size:.68rem; outline:none; backdrop-filter:blur(8px); transition:border-color .2s; }
         .ws-input:focus { border-color:rgba(201,168,76,.5) !important; }
@@ -181,11 +184,177 @@ const Styles = () => (
         .nomad-tool-btn:hover  { background:rgba(201,168,76,.18); color:#f0d080; transform:translateY(-1px); }
         .nomad-tool-btn:active { transform:scale(.9); }
         .nomad-kbd { background:rgba(201,168,76,.09); border:1px solid rgba(201,168,76,.28); border-bottom:2px solid rgba(201,168,76,.45); border-radius:5px; padding:1px 6px; font-family:'Space Mono',monospace; font-size:.46rem; color:#c9a84c; box-shadow:0 2px 5px rgba(0,0,0,.4); }
+
+        .btn-qr-standalone {
+            display:flex; align-items:center; gap:.45rem;
+            padding:.42rem 1rem; border-radius:8px; border:none; cursor:pointer;
+            font-family:'Cinzel',serif; font-size:.68rem; font-weight:700; letter-spacing:.07em;
+            color:#0a0400;
+            background:linear-gradient(105deg,#7a4500 0%,#c9a84c 40%,#f5e070 55%,#c9a84c 70%,#7a4500 100%);
+            background-size:200% auto;
+            animation:goldShimmer 3.5s linear infinite;
+            box-shadow:0 0 12px rgba(201,168,76,.25),0 3px 14px rgba(0,0,0,.5);
+            transition:transform .18s,filter .18s;
+            white-space:nowrap; flex-shrink:0;
+        }
+        .btn-qr-standalone:hover { transform:translateY(-2px) scale(1.04); filter:brightness(1.12); }
+        .btn-qr-standalone:active { transform:scale(.96); }
+
+        .qr-inline-panel {
+            flex-shrink:0; display:flex; flex-direction:column; align-items:center;
+            gap:.5rem; padding:.6rem .7rem;
+            background:rgba(2,1,0,.55); border-top:1px solid rgba(201,168,76,.18);
+            animation:qrGenPop .22s ease-out;
+        }
+        .qr-canvas-wrap {
+            background:#fff; border-radius:8px; padding:8px;
+            animation:qrPulse 2.5s ease-in-out infinite;
+            position:relative; overflow:hidden;
+        }
+        .qr-scan-line {
+            position:absolute; left:8px; right:8px; height:2px;
+            background:linear-gradient(90deg,transparent,rgba(201,168,76,.9),transparent);
+            animation:scanLine 2s ease-in-out infinite;
+            pointer-events:none; border-radius:1px;
+        }
+        .qr-action-row { display:flex; gap:.4rem; width:100%; }
+        .qr-action-btn {
+            flex:1; padding:.28rem 0; border-radius:5px; border:1px solid rgba(201,168,76,.3);
+            background:rgba(201,168,76,.07); color:#c9a84c; cursor:pointer;
+            font-family:'Cinzel',serif; font-size:.52rem; font-weight:600; letter-spacing:.05em;
+            transition:all .18s;
+        }
+        .qr-action-btn:hover { background:rgba(201,168,76,.18); color:#f0d080; }
+        .qr-step {
+            display:flex; align-items:center; gap:.4rem; width:100%;
+            padding:.18rem .45rem; border-radius:5px;
+            background:rgba(201,168,76,.04); border:1px solid rgba(201,168,76,.1);
+        }
+        .qr-step-n {
+            width:16px; height:16px; border-radius:50%; flex-shrink:0;
+            background:rgba(201,168,76,.15); border:1px solid rgba(201,168,76,.4);
+            display:flex; align-items:center; justify-content:center;
+            font-family:'Cinzel',serif; font-size:.46rem; color:#c9a84c;
+        }
+        .qr-step-t { font-family:'Space Mono',monospace; font-size:.42rem; color:rgba(201,168,76,.65); }
+        .qr-err { font-family:'Space Mono',monospace; font-size:.5rem; color:#ef4444;
+            background:rgba(239,68,68,.08); border:1px solid rgba(239,68,68,.25);
+            border-radius:5px; padding:.3rem .6rem; text-align:center; width:100%; }
+        .qr-bar-track { width:100%; height:3px; background:rgba(201,168,76,.1); border-radius:2px; overflow:hidden; }
+        .qr-bar-fill  { height:100%; border-radius:2px; transition:width .3s,background .3s; }
     `}</style>
 );
 
 // ═══════════════════════════════════════════
-// QR FLOATING WINDOW — draggable comme le simulateur
+// QR PANEL
+// ═══════════════════════════════════════════
+const QrInlinePanel = ({ code, onClose }) => {
+    const canvasRef = useRef(null);
+    const [ready, setReady] = useState(false);
+    const [err, setErr] = useState('');
+    const [downloaded, setDownloaded] = useState(false);
+    const MAX = 2953;
+
+    const payload = code.trim();
+    const pct = Math.min(100, Math.round((payload.length / MAX) * 100));
+    const over = payload.length > MAX;
+
+    const loadLib = () => new Promise((res, rej) => {
+        if (window.QRCode) return res();
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+        s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+    });
+
+    useEffect(() => {
+        if (!payload || over) { setErr(over ? `Code trop long (${payload.length}/${MAX} chars). Simplifie les blocs.` : 'Aucun code à encoder.'); return; }
+        setErr(''); setReady(false);
+        loadLib().then(() => {
+            const tmp = document.createElement('div');
+            tmp.style.display = 'none';
+            document.body.appendChild(tmp);
+            try {
+                new window.QRCode(tmp, { text: payload, width: 200, height: 200, correctLevel: window.QRCode.CorrectLevel.M });
+                setTimeout(() => {
+                    const canvas = canvasRef.current; if (!canvas) return;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 200, 200);
+                    const src = tmp.querySelector('canvas') || tmp.querySelector('img');
+                    const draw = (el) => { ctx.drawImage(el, 0, 0, 200, 200); setReady(true); document.body.removeChild(tmp); };
+                    if (src?.tagName === 'CANVAS') { draw(src); }
+                    else if (src) { const i = new Image(); i.onload = () => draw(i); i.src = src.src; }
+                }, 150);
+            } catch (e) { setErr('Erreur QR : ' + e.message); document.body.removeChild(tmp); }
+        }).catch(() => setErr('Impossible de charger la librairie QR.'));
+    }, [payload]); // eslint-disable-line
+
+    const download = () => {
+        const a = document.createElement('a');
+        a.download = 'openbot-code.png';
+        a.href = canvasRef.current.toDataURL('image/png');
+        a.click();
+        setDownloaded(true);
+        setTimeout(() => setDownloaded(false), 2000);
+    };
+
+    const STEPS = [
+        { n: '1', t: "Ouvre l'app OpenBot sur ton téléphone" },
+        { n: '2', t: 'Programs → ⊡ Scan QR' },
+        { n: '3', t: 'Scanne ce code → ▶ Run' },
+    ];
+
+    return (
+        <div className="qr-inline-panel">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                    <span style={{ fontSize: '.9rem' }}>📱</span>
+                    <span style={{ fontFamily: "'Cinzel',serif", fontSize: '.6rem', fontWeight: 600, letterSpacing: '.1em', color: '#c9a84c' }}>QR CODE OPENBOT</span>
+                </div>
+                <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(201,168,76,.5)', cursor: 'pointer', fontSize: '.85rem', lineHeight: 1, padding: '2px 4px' }}>✕</button>
+            </div>
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.42rem', color: over ? '#ef4444' : 'rgba(201,168,76,.45)' }}>{payload.length} / {MAX} chars</span>
+                    <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.42rem', color: 'rgba(201,168,76,.35)' }}>{pct}%</span>
+                </div>
+                <div className="qr-bar-track">
+                    <div className="qr-bar-fill" style={{ width: `${pct}%`, background: over ? '#ef4444' : pct > 70 ? '#f59e0b' : '#22c55e' }} />
+                </div>
+            </div>
+            {err && <div className="qr-err">{err}</div>}
+            {!err && (
+                <div className="qr-canvas-wrap">
+                    <canvas ref={canvasRef} width={200} height={200} style={{ display: ready ? 'block' : 'none', borderRadius: '5px' }} />
+                    {!ready && (
+                        <div style={{ width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '.4rem' }}>
+                            <div style={{ width: 24, height: 24, border: '2px solid rgba(201,168,76,.3)', borderTopColor: '#c9a84c', borderRadius: '50%', animation: 'uploadSpin .7s linear infinite' }} />
+                            <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.42rem', color: 'rgba(201,168,76,.5)' }}>Génération…</span>
+                        </div>
+                    )}
+                    {ready && <div className="qr-scan-line" />}
+                </div>
+            )}
+            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '.2rem' }}>
+                {STEPS.map(({ n, t }) => (
+                    <div key={n} className="qr-step">
+                        <div className="qr-step-n">{n}</div>
+                        <span className="qr-step-t">{t}</span>
+                    </div>
+                ))}
+            </div>
+            {ready && (
+                <div className="qr-action-row">
+                    <button className="qr-action-btn" onClick={download}>{downloaded ? '✓ Téléchargé !' : '↓ PNG'}</button>
+                    <button className="qr-action-btn" onClick={onClose}>✕ Fermer</button>
+                </div>
+            )}
+        </div>
+    );
+};
+
+// ═══════════════════════════════════════════
+// QR FLOATING WINDOW
 // ═══════════════════════════════════════════
 const QrFloatingWindow = ({ driveLink, onClose }) => {
     const [pos, setPos] = useState({
@@ -394,8 +563,6 @@ const NomadUploadButton = () => {
             setProgress(100);
             setCode({ driveLink, projectName: getCurrentProject().projectName });
             setCategory(Constants.qr);
-
-            // ✅ Ouvre la fenêtre QR draggable
             setQrLink(driveLink);
             setState('success');
             setTimeout(() => { setState('idle'); setProgress(0); }, 2400);
@@ -418,9 +585,7 @@ const NomadUploadButton = () => {
 
     return (
         <>
-            {/* QR Fenêtre draggable */}
             {qrLink && <QrFloatingWindow driveLink={qrLink} onClose={() => setQrLink(null)} />}
-
             <button
                 className={`nomad-upload-btn${state === 'success' ? ' is-success' : state === 'error' ? ' is-error' : ''}`}
                 onClick={handleUpload}
@@ -528,6 +693,12 @@ function Playground() {
     const [wsUrl, setWsUrl] = useState('ws://197.5.193.210:8765');
     const [wsLog, setWsLog] = useState('⏳ Démarrage de Webots…');
     const [floatWin, setFloatWin] = useState({ open: false, x: 80, y: 80, w: 720, h: 480, _prevH: 480 });
+
+    const [showQr, setShowQr] = useState(false);
+    const [currentCode, setCurrentCode] = useState('');
+
+    // ── ✅ TUTORIAL STATE ──
+    const [showTutorial, setShowTutorial] = useState(false);
 
     const wsRef = useRef(null);
     const keysRef = useRef({});
@@ -656,15 +827,25 @@ function Playground() {
                         </BlocklyComponent>
                     </div>
 
+                    {/* ── Panneau droit ── */}
                     <div style={{ width: '44%', flexShrink: 0, display: 'flex', flexDirection: 'column', background: `linear-gradient(180deg,rgba(8,4,1,.78) 0%,rgba(6,3,0,.74) 50%,rgba(10,5,1,.78) 100%)`, backdropFilter: 'blur(18px) saturate(140%)', borderLeft: `1px solid ${G(.28)}`, minHeight: 0, boxShadow: `-2px 0 40px rgba(0,0,0,.5),inset 1px 0 0 ${G(.05)}` }}>
 
-                        <div style={{ flex: '0 0 36%', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${G(.18)}`, overflow: 'hidden', minHeight: 0 }}>
+                        {/* ── ✅ Éditeur de code — data-tut ajouté ── */}
+                        <div data-tut="editor" style={{ flex: '0 0 36%', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${G(.18)}`, overflow: 'hidden', minHeight: 0 }}>
                             <div className="panel-hdr">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
                                     <span style={{ fontSize: '1rem' }}>{ispy ? '🐍' : '⚡'}</span>
                                     <span className="gold-shimmer" style={{ fontFamily: "'Cinzel',serif", fontSize: '.8rem', fontWeight: '600', letterSpacing: '.1em' }}>{ispy ? 'CODE PYTHON' : 'CODE JAVASCRIPT'}</span>
                                 </div>
-                                <div style={{ display: 'flex', gap: '.3rem' }}>
+                                <div style={{ display: 'flex', gap: '.3rem', alignItems: 'center' }}>
+                                    <button
+                                        className="pb pb-qr"
+                                        onClick={handleShowQr}
+                                        title="Générer QR code OpenBot depuis le code actuel"
+                                        style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}
+                                    >
+                                        {showQr ? '✕ QR' : '📱 QR'}
+                                    </button>
                                     <button className="pb pb-gold" onClick={() => setCategory(ispy ? 'js' : 'py')}>{ispy ? '⚡ JS' : '🐍 PY'}</button>
                                     <button className="pb pb-green" onClick={handleRun}>▶ Run</button>
                                 </div>
@@ -672,9 +853,16 @@ function Playground() {
                             <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: 'rgba(2,1,0,.32)' }}>
                                 <CodeEditor />
                             </div>
+                            {showQr && (
+                                <QrInlinePanel
+                                    code={currentCode}
+                                    onClose={() => setShowQr(false)}
+                                />
+                            )}
                         </div>
 
-                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+                        {/* ── ✅ Simulateur robot — data-tut ajouté ── */}
+                        <div data-tut="simulator" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
                             <div className="panel-hdr">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
                                     <span style={{ fontSize: '1rem' }}>🤖</span>
@@ -702,10 +890,11 @@ function Playground() {
                                 <div className="ws-log">{wsLog}</div>
                             </div>
                         </div>
+
                     </div>
                 </div>
 
-                {/* BOTTOM BAR */}
+                {/* ── BOTTOM BAR ── */}
                 <div className="nomad-bottombar">
                     <NomadUploadButton />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}>
@@ -716,7 +905,12 @@ function Playground() {
                         <button className="nomad-tool-btn" onClick={doZoomI} title="Zoom +" style={{ fontSize: '1.1rem', fontWeight: 700 }}>+</button>
                     </div>
                 </div>
+
             </div>
+
+            {/* ✅ Tutorial overlay — en dehors du flux principal */}
+            {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
+
         </div>
     );
 }
