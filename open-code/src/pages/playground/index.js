@@ -188,7 +188,10 @@ const Styles = () => (
 // QR FLOATING WINDOW — draggable comme le simulateur
 // ═══════════════════════════════════════════
 const QrFloatingWindow = ({ driveLink, onClose }) => {
-    const [pos, setPos] = useState({ x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 200 });
+    const [pos, setPos] = useState({
+        x: Math.max(40, window.innerWidth / 2 - 200),
+        y: Math.max(40, window.innerHeight / 2 - 220),
+    });
     const [minimized, setMinimized] = useState(false);
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(driveLink)}&color=000000&bgcolor=ffffff&margin=10`;
 
@@ -210,53 +213,90 @@ const QrFloatingWindow = ({ driveLink, onClose }) => {
 
     return (
         <div className="float-win" style={{ left: pos.x, top: pos.y, width: 400, height: minimized ? 42 : 'auto' }}>
-            {/* Titlebar */}
+
+            {/* ── Titlebar ── */}
             <div className="float-win-titlebar" onMouseDown={drag}>
                 <div className="float-win-btns">
-                    <button className="float-win-btn float-win-btn-close" onClick={onClose} data-tip="Fermer">✕</button>
-                    <button className="float-win-btn float-win-btn-min" onClick={() => setMinimized(m => !m)} data-tip={minimized ? 'Restaurer' : 'Réduire'}>{minimized ? '▲' : '▬'}</button>
+                    <button className="float-win-btn float-win-btn-close" onClick={onClose} data-tip="Fermer (ESC)">✕</button>
+                    <button className="float-win-btn float-win-btn-min" onClick={() => setMinimized(m => !m)} data-tip={minimized ? 'Restaurer' : 'Réduire'}>
+                        {minimized ? '▲' : '▬'}
+                    </button>
                 </div>
                 <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-                    <span style={{ fontFamily: "'Cinzel',serif", fontSize: '.62rem', color: 'rgba(201,168,76,.75)', letterSpacing: '.1em' }}>📱 QR CODE OPENBOT</span>
+                    <span style={{ fontFamily: "'Cinzel',serif", fontSize: '.62rem', color: 'rgba(201,168,76,.75)', letterSpacing: '.1em' }}>
+                        📱 QR CODE OPENBOT
+                    </span>
                 </div>
                 <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.38rem', color: 'rgba(201,168,76,.28)' }}>ESC</span>
             </div>
 
-            {/* Content */}
+            {/* ── Content ── */}
             {!minimized && (
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem 1.2rem 1.2rem', gap: '.75rem', background: 'linear-gradient(180deg,rgba(8,4,1,.96) 0%,rgba(4,2,0,.99) 100%)' }}>
+                <div style={{
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    padding: '1rem 1.2rem 1.2rem', gap: '.75rem',
+                    background: 'linear-gradient(180deg,rgba(8,4,1,.96) 0%,rgba(4,2,0,.99) 100%)',
+                }}>
 
-                    {/* QR image avec scan line animée */}
+                    {/* QR avec scan line animée */}
                     <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', animation: 'qrPulse 2.5s ease-in-out infinite' }}>
-                        <div style={{ background: 'white', borderRadius: '10px', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <img src={qrUrl} alt="QR Code OpenBot" width={220} height={220} style={{ display: 'block', borderRadius: '6px' }} />
+                        <div style={{ background: 'white', borderRadius: '10px', padding: '8px' }}>
+                            <img src={qrUrl} alt="QR Code OpenBot" width={220} height={220}
+                                style={{ display: 'block', borderRadius: '6px' }} />
                         </div>
-                        {/* Ligne de scan animée */}
-                        <div style={{ position: 'absolute', left: 8, right: 8, height: '2px', background: 'linear-gradient(90deg,transparent,rgba(201,168,76,.9),transparent)', animation: 'scanLine 2s ease-in-out infinite', pointerEvents: 'none', borderRadius: '1px' }} />
+                        {/* Ligne scan */}
+                        <div style={{
+                            position: 'absolute', left: 8, right: 8, height: '2px',
+                            background: 'linear-gradient(90deg,transparent,rgba(201,168,76,.9),transparent)',
+                            animation: 'scanLine 2s ease-in-out infinite',
+                            pointerEvents: 'none', borderRadius: '1px',
+                        }} />
                     </div>
 
                     {/* Steps */}
                     <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '.25rem' }}>
                         {[
                             { n: '1', t: "Ouvre l'app OpenBot" },
-                            { n: '2', t: 'Appuie sur Programs → ⊡ Scan' },
+                            { n: '2', t: 'Programs → ⊡ Scan' },
                             { n: '3', t: 'Scanne ce QR code' },
-                            { n: '4', t: '▶ Run → Robot bouge !' },
+                            { n: '4', t: '▶ Run → 🤖 Robot bouge !' },
                         ].map(({ n, t }) => (
-                            <div key={n} style={{ display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.2rem .5rem', background: 'rgba(201,168,76,.04)', borderRadius: '5px', border: '1px solid rgba(201,168,76,.1)' }}>
-                                <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(201,168,76,.15)', border: '1px solid rgba(201,168,76,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cinzel',serif", fontSize: '.52rem', color: '#c9a84c', flexShrink: 0 }}>{n}</div>
+                            <div key={n} style={{
+                                display: 'flex', alignItems: 'center', gap: '.5rem',
+                                padding: '.2rem .5rem',
+                                background: 'rgba(201,168,76,.04)', borderRadius: '5px',
+                                border: '1px solid rgba(201,168,76,.1)',
+                            }}>
+                                <div style={{
+                                    width: 18, height: 18, borderRadius: '50%',
+                                    background: 'rgba(201,168,76,.15)', border: '1px solid rgba(201,168,76,.4)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontFamily: "'Cinzel',serif", fontSize: '.52rem', color: '#c9a84c', flexShrink: 0,
+                                }}>{n}</div>
                                 <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.46rem', color: 'rgba(201,168,76,.65)' }}>{t}</span>
                             </div>
                         ))}
                     </div>
 
                     {/* Drive link */}
-                    <a href={driveLink} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Space Mono',monospace", fontSize: '.42rem', color: 'rgba(108,190,255,.7)', textDecoration: 'none', background: 'rgba(108,190,255,.06)', border: '1px solid rgba(108,190,255,.2)', borderRadius: '6px', padding: '.22rem .6rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', width: '100%', textAlign: 'center' }}>
-                        🔗 Voir sur Google Drive
-                    </a>
+                    <a href={driveLink} target="_blank" rel="noopener noreferrer" style={{
+                        fontFamily: "'Space Mono',monospace", fontSize: '.42rem',
+                        color: 'rgba(108,190,255,.7)', textDecoration: 'none',
+                        background: 'rgba(108,190,255,.06)', border: '1px solid rgba(108,190,255,.2)',
+                        borderRadius: '6px', padding: '.22rem .6rem',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        display: 'block', width: '100%', textAlign: 'center',
+                        boxSizing: 'border-box',
+                    }}>🔗 Voir sur Google Drive</a>
 
-                    {/* Close button */}
-                    <button onClick={onClose} style={{ width: '100%', background: 'rgba(201,168,76,.08)', border: '1px solid rgba(201,168,76,.28)', borderRadius: '7px', color: '#c9a84c', cursor: 'pointer', fontFamily: "'Cinzel',serif", fontSize: '.65rem', fontWeight: 600, padding: '.35rem 1rem', transition: 'all .18s', letterSpacing: '.06em' }}
+                    {/* Close */}
+                    <button onClick={onClose} style={{
+                        width: '100%', background: 'rgba(201,168,76,.08)',
+                        border: '1px solid rgba(201,168,76,.28)', borderRadius: '7px',
+                        color: '#c9a84c', cursor: 'pointer', fontFamily: "'Cinzel',serif",
+                        fontSize: '.65rem', fontWeight: 600, padding: '.35rem 1rem',
+                        transition: 'all .18s', letterSpacing: '.06em',
+                    }}
                         onMouseEnter={e => { e.target.style.background = 'rgba(201,168,76,.18)'; e.target.style.color = '#f0d080'; }}
                         onMouseLeave={e => { e.target.style.background = 'rgba(201,168,76,.08)'; e.target.style.color = '#c9a84c'; }}>
                         ✕ Fermer (ESC)
@@ -324,7 +364,10 @@ const NomadUploadButton = () => {
             const foreverKids = handleChildBlockInWorkspace(forever, arr);
             const foreverHasAI = foreverKids.some(k => aiBlocks.includes(k));
             let o1 = PlaygroundConstants.object_1, o2 = PlaygroundConstants.object_2;
-            if (motEnabled.length) { o1 = motEnabled[0].getFieldValue(PlaygroundConstants.labels1); o2 = motEnabled[0].getFieldValue(PlaygroundConstants.labels2); }
+            if (motEnabled.length) {
+                o1 = motEnabled[0].getFieldValue(PlaygroundConstants.labels1);
+                o2 = motEnabled[0].getFieldValue(PlaygroundConstants.labels2);
+            }
 
             if (!start.length && !forever.length && !detection.length && !varDet.length) throw new Error(Errors.error1);
             if (isAdjAI && start.length) throw new Error(Errors.error2);
@@ -495,10 +538,13 @@ function Playground() {
     const SC = simStatus === 'online' ? '#4ddc64' : simStatus === 'connecting' ? '#f0a500' : '#c9a84c';
     const SL = simStatus === 'online' ? 'CONNECTÉ' : simStatus === 'connecting' ? 'CONNEXION...' : 'OFFLINE';
 
-    const doUndo = () => { const ws = window.Blockly?.getMainWorkspace(); if (ws?.getUndoStack().length) ws.undo(false); };
-    const doRedo = () => { const ws = window.Blockly?.getMainWorkspace(); if (ws?.redoStack_?.length) ws.undo(true); };
-    const doZoomI = () => window.Blockly?.getMainWorkspace()?.zoom(1, 2, 1.5);
-    const doZoomO = () => window.Blockly?.getMainWorkspace()?.zoom(1, 2, -1.5);
+    const getWS = () => {
+        try { return require('blockly/core').getMainWorkspace(); } catch { return null; }
+    };
+    const doUndo = () => { const ws = getWS(); if (ws?.getUndoStack?.().length) ws.undo(false); };
+    const doRedo = () => { const ws = getWS(); if (ws?.redoStack_?.length) ws.undo(true); };
+    const doZoomI = () => { const ws = getWS(); if (ws?.zoom) ws.zoom(1, 2, 1.5); };
+    const doZoomO = () => { const ws = getWS(); if (ws?.zoom) ws.zoom(1, 2, -1.5); };
 
     useEffect(() => {
         const level = new URLSearchParams(window.location.search).get('level') || '1';
@@ -543,8 +589,10 @@ function Playground() {
     const sendCmd = cmd => { if (wsRef.current?.readyState === WebSocket.OPEN) { wsRef.current.send(cmd); setWsLog('✅ ' + cmd); } else setWsLog('❌ Non connecté !'); };
 
     const handleRun = () => {
-        try { const B = require('blockly/core'), { javascriptGenerator: J } = require('blockly/javascript'); ParserModule.runBlocklyCode(J.workspaceToCode(B.getMainWorkspace())); setWsLog('▶ Programme lancé !'); }
-        catch { const c = window.__currentPythonCode || ''; if (c) ParserModule.runBlocklyCode(c); }
+        try {
+            const B = require('blockly/core'), { javascriptGenerator: J } = require('blockly/javascript');
+            ParserModule.runBlocklyCode(J.workspaceToCode(B.getMainWorkspace())); setWsLog('▶ Programme lancé !');
+        } catch { const c = window.__currentPythonCode || ''; if (c) ParserModule.runBlocklyCode(c); }
     };
 
     const ispy = category === 'py';
@@ -660,14 +708,6 @@ function Playground() {
                 {/* BOTTOM BAR */}
                 <div className="nomad-bottombar">
                     <NomadUploadButton />
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexShrink: 0 }}>
-                        {[{ keys: ['↑', 'Z'], label: 'Avancer' }, { keys: ['↓', 'S'], label: 'Reculer' }, { keys: ['←', 'Q'], label: 'Gauche' }, { keys: ['→', 'D'], label: 'Droite' }, { keys: ['Espace'], label: 'Stop' }].map(({ keys, label }) => (
-                            <div key={label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                                <div style={{ display: 'flex', gap: 3 }}>{keys.map(k => <kbd key={k} className="nomad-kbd">{k}</kbd>)}</div>
-                                <span style={{ fontSize: '.37rem', color: 'rgba(201,168,76,.32)', fontFamily: "'Space Mono',monospace" }}>{label}</span>
-                            </div>
-                        ))}
-                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}>
                         <button className="nomad-tool-btn" onClick={doUndo} title="Annuler">↩</button>
                         <button className="nomad-tool-btn" onClick={doRedo} title="Rétablir">↪</button>
