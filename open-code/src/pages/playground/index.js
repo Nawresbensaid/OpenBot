@@ -717,6 +717,26 @@ function Playground() {
     const doZoomI = () => { const ws = getWS(); if (ws?.zoom) ws.zoom(1, 2, 1.5); };
     const doZoomO = () => { const ws = getWS(); if (ws?.zoom) ws.zoom(1, 2, -1.5); };
 
+    // ═══════════════════════════════════════════
+    // ✅ FIX: handleShowQr — définition manquante
+    // Lit le code courant depuis le workspace Blockly
+    // et bascule l'affichage du QR inline
+    // ═══════════════════════════════════════════
+    const handleShowQr = useCallback(() => {
+        if (!showQr) {
+            try {
+                const { javascriptGenerator: J } = require('blockly/javascript');
+                const B = require('blockly/core');
+                const ws = B.getMainWorkspace();
+                const code = ws ? J.workspaceToCode(ws) : '';
+                setCurrentCode(code);
+            } catch {
+                setCurrentCode(window.__currentPythonCode || '');
+            }
+        }
+        setShowQr(prev => !prev);
+    }, [showQr]);
+
     useEffect(() => {
         const level = new URLSearchParams(window.location.search).get('level') || '1';
         const userId = userIdRef.current;
@@ -830,7 +850,7 @@ function Playground() {
                     {/* ── Panneau droit ── */}
                     <div style={{ width: '44%', flexShrink: 0, display: 'flex', flexDirection: 'column', background: `linear-gradient(180deg,rgba(8,4,1,.78) 0%,rgba(6,3,0,.74) 50%,rgba(10,5,1,.78) 100%)`, backdropFilter: 'blur(18px) saturate(140%)', borderLeft: `1px solid ${G(.28)}`, minHeight: 0, boxShadow: `-2px 0 40px rgba(0,0,0,.5),inset 1px 0 0 ${G(.05)}` }}>
 
-                        {/* ── ✅ Éditeur de code — data-tut ajouté ── */}
+                        {/* ── Éditeur de code ── */}
                         <div data-tut="editor" style={{ flex: '0 0 36%', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${G(.18)}`, overflow: 'hidden', minHeight: 0 }}>
                             <div className="panel-hdr">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
@@ -861,7 +881,7 @@ function Playground() {
                             )}
                         </div>
 
-                        {/* ── ✅ Simulateur robot — data-tut ajouté ── */}
+                        {/* ── Simulateur robot ── */}
                         <div data-tut="simulator" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
                             <div className="panel-hdr">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
@@ -908,7 +928,7 @@ function Playground() {
 
             </div>
 
-            {/* ✅ Tutorial overlay — en dehors du flux principal */}
+            {/* Tutorial overlay */}
             {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
 
         </div>
