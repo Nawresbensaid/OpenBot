@@ -917,6 +917,7 @@ function Playground() {
                 {/* ── BOTTOM BAR ── */}
                 <div className="nomad-bottombar">
                     <NomadUploadButton />
+                    <TutorialButton onClick={() => setShowTutorial(true)} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}>
                         <button className="nomad-tool-btn" onClick={doUndo} title="Annuler">↩</button>
                         <button className="nomad-tool-btn" onClick={doRedo} title="Rétablir">↪</button>
