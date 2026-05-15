@@ -5,12 +5,12 @@ import { Header } from "../../components/navBar/header";
 import { StoreContext } from "../../context/context";
 import CodeEditor from "../../components/editor/codeEditor";
 import * as ParserModule from '../../utils/parser';
-import { Tutorial, TutorialButton } from './Tutorial';
 
 import { javascriptGenerator } from 'blockly/javascript';
 import { uploadToGoogleDrive } from '../../services/googleDrive';
 import { getCurrentProject, handleChildBlockInWorkspace } from '../../services/workspace';
 import { aiBlocks, Constants, Errors, errorToast, PlaygroundConstants } from '../../utils/constants';
+import { Tutorial, TutorialButton } from './Tutorial';
 
 const BACKEND = 'http://197.5.193.210:5000';
 const STREAM_SCENE = 'http://197.5.193.210:8766/scene';
@@ -25,12 +25,19 @@ const STAR_DATA = Array.from({ length: 240 }, () => ({
     sp: Math.random() * 0.02 + 0.004,
 }));
 
+// ── Safe dimension helper ──
+function safe(n, fallback = 0) {
+    return Number.isFinite(n) ? n : fallback;
+}
+function vw() { return safe(typeof window !== 'undefined' ? window.innerWidth : 1280, 1280); }
+function vh() { return safe(typeof window !== 'undefined' ? window.innerHeight : 800, 800); }
+
 const StarCanvas = () => {
     const ref = useRef(null);
     useEffect(() => {
         const canvas = ref.current; if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+        const resize = () => { canvas.width = vw(); canvas.height = vh(); };
         resize(); window.addEventListener('resize', resize);
         const stars = STAR_DATA.map(s => ({ ...s }));
         let raf;
@@ -185,6 +192,7 @@ const Styles = () => (
         .nomad-tool-btn:active { transform:scale(.9); }
         .nomad-kbd { background:rgba(201,168,76,.09); border:1px solid rgba(201,168,76,.28); border-bottom:2px solid rgba(201,168,76,.45); border-radius:5px; padding:1px 6px; font-family:'Space Mono',monospace; font-size:.46rem; color:#c9a84c; box-shadow:0 2px 5px rgba(0,0,0,.4); }
 
+        /* ── Bouton QR standalone ── */
         .btn-qr-standalone {
             display:flex; align-items:center; gap:.45rem;
             padding:.42rem 1rem; border-radius:8px; border:none; cursor:pointer;
@@ -200,6 +208,7 @@ const Styles = () => (
         .btn-qr-standalone:hover { transform:translateY(-2px) scale(1.04); filter:brightness(1.12); }
         .btn-qr-standalone:active { transform:scale(.96); }
 
+        /* ── QR panel inline (sous l'éditeur) ── */
         .qr-inline-panel {
             flex-shrink:0; display:flex; flex-direction:column; align-items:center;
             gap:.5rem; padding:.6rem .7rem;
@@ -242,22 +251,34 @@ const Styles = () => (
             border-radius:5px; padding:.3rem .6rem; text-align:center; width:100%; }
         .qr-bar-track { width:100%; height:3px; background:rgba(201,168,76,.1); border-radius:2px; overflow:hidden; }
         .qr-bar-fill  { height:100%; border-radius:2px; transition:width .3s,background .3s; }
+
+        /* ── Tutorial spotlight ── */
+        [data-tut] { position: relative; }
     `}</style>
 );
 
 // ═══════════════════════════════════════════
-// QR PANEL
+// QR FLOATING WINDOW — depuis le code éditeur
 // ═══════════════════════════════════════════
-const QrInlinePanel = ({ code, onClose }) => {
+const QrCodeFloatingWindow = ({ code, onClose }) => {
+    const QR_SIZE = 260;
+    const [pos, setPos] = useState({ x: safe(vw() - 420, 860), y: 80 });
+    const [minimized, setMinimized] = useState(false);
     const canvasRef = useRef(null);
     const [ready, setReady] = useState(false);
     const [err, setErr] = useState('');
     const [downloaded, setDownloaded] = useState(false);
     const MAX = 2953;
 
-    const payload = code.trim();
+    const payload = (code || '').trim();
     const pct = Math.min(100, Math.round((payload.length / MAX) * 100));
     const over = payload.length > MAX;
+
+    useEffect(() => {
+        const onKey = e => { if (e.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [onClose]);
 
     const loadLib = () => new Promise((res, rej) => {
         if (window.QRCode) return res();
@@ -268,21 +289,24 @@ const QrInlinePanel = ({ code, onClose }) => {
     });
 
     useEffect(() => {
-        if (!payload || over) { setErr(over ? `Code trop long (${payload.length}/${MAX} chars). Simplifie les blocs.` : 'Aucun code à encoder.'); return; }
+        if (!payload || over) {
+            setErr(over ? `Code trop long (${payload.length}/${MAX} chars).` : 'Aucun code à encoder.');
+            return;
+        }
         setErr(''); setReady(false);
         loadLib().then(() => {
             const tmp = document.createElement('div');
             tmp.style.display = 'none';
             document.body.appendChild(tmp);
             try {
-                new window.QRCode(tmp, { text: payload, width: 200, height: 200, correctLevel: window.QRCode.CorrectLevel.M });
+                new window.QRCode(tmp, { text: payload, width: QR_SIZE, height: QR_SIZE, correctLevel: window.QRCode.CorrectLevel.M });
                 setTimeout(() => {
                     const canvas = canvasRef.current; if (!canvas) return;
                     const ctx = canvas.getContext('2d');
-                    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 200, 200);
+                    ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, QR_SIZE, QR_SIZE);
                     const src = tmp.querySelector('canvas') || tmp.querySelector('img');
-                    const draw = (el) => { ctx.drawImage(el, 0, 0, 200, 200); setReady(true); document.body.removeChild(tmp); };
-                    if (src?.tagName === 'CANVAS') { draw(src); }
+                    const draw = el => { ctx.drawImage(el, 0, 0, QR_SIZE, QR_SIZE); setReady(true); document.body.removeChild(tmp); };
+                    if (src?.tagName === 'CANVAS') draw(src);
                     else if (src) { const i = new Image(); i.onload = () => draw(i); i.src = src.src; }
                 }, 150);
             } catch (e) { setErr('Erreur QR : ' + e.message); document.body.removeChild(tmp); }
@@ -298,55 +322,89 @@ const QrInlinePanel = ({ code, onClose }) => {
         setTimeout(() => setDownloaded(false), 2000);
     };
 
+    const drag = e => {
+        if (e.target.closest('.float-win-btn')) return;
+        e.preventDefault();
+        const sx = e.clientX - pos.x, sy = e.clientY - pos.y;
+        const mv = ev => setPos({ x: safe(ev.clientX - sx, pos.x), y: safe(ev.clientY - sy, pos.y) });
+        const up = () => { window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); };
+        window.addEventListener('mousemove', mv);
+        window.addEventListener('mouseup', up);
+    };
+
     const STEPS = [
-        { n: '1', t: "Ouvre l'app OpenBot sur ton téléphone" },
+        { n: '1', t: "Ouvre l'app OpenBot" },
         { n: '2', t: 'Programs → ⊡ Scan QR' },
-        { n: '3', t: 'Scanne ce code → ▶ Run' },
+        { n: '3', t: 'Scanne → ▶ Run → Robot bouge !' },
     ];
 
     return (
-        <div className="qr-inline-panel">
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
-                    <span style={{ fontSize: '.9rem' }}>📱</span>
-                    <span style={{ fontFamily: "'Cinzel',serif", fontSize: '.6rem', fontWeight: 600, letterSpacing: '.1em', color: '#c9a84c' }}>QR CODE OPENBOT</span>
+        <div className="float-win" style={{ left: safe(pos.x, 860), top: safe(pos.y, 80), width: 320, height: minimized ? 42 : 'auto', zIndex: 10000 }}>
+            <div className="float-win-titlebar" onMouseDown={drag}>
+                <div className="float-win-btns">
+                    <button className="float-win-btn float-win-btn-close" onClick={onClose} data-tip="Fermer">✕</button>
+                    <button className="float-win-btn float-win-btn-min" onClick={() => setMinimized(m => !m)} data-tip={minimized ? 'Restaurer' : 'Réduire'}>{minimized ? '▲' : '▬'}</button>
                 </div>
-                <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(201,168,76,.5)', cursor: 'pointer', fontSize: '.85rem', lineHeight: 1, padding: '2px 4px' }}>✕</button>
+                <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: '.4rem' }}>
+                    <span style={{ fontFamily: "'Cinzel',serif", fontSize: '.6rem', color: 'rgba(201,168,76,.8)', letterSpacing: '.1em' }}>📱 QR OPENBOT</span>
+                </div>
+                <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.36rem', color: 'rgba(201,168,76,.28)' }}>ESC</span>
             </div>
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.42rem', color: over ? '#ef4444' : 'rgba(201,168,76,.45)' }}>{payload.length} / {MAX} chars</span>
-                    <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.42rem', color: 'rgba(201,168,76,.35)' }}>{pct}%</span>
-                </div>
-                <div className="qr-bar-track">
-                    <div className="qr-bar-fill" style={{ width: `${pct}%`, background: over ? '#ef4444' : pct > 70 ? '#f59e0b' : '#22c55e' }} />
-                </div>
-            </div>
-            {err && <div className="qr-err">{err}</div>}
-            {!err && (
-                <div className="qr-canvas-wrap">
-                    <canvas ref={canvasRef} width={200} height={200} style={{ display: ready ? 'block' : 'none', borderRadius: '5px' }} />
-                    {!ready && (
-                        <div style={{ width: 200, height: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '.4rem' }}>
-                            <div style={{ width: 24, height: 24, border: '2px solid rgba(201,168,76,.3)', borderTopColor: '#c9a84c', borderRadius: '50%', animation: 'uploadSpin .7s linear infinite' }} />
-                            <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.42rem', color: 'rgba(201,168,76,.5)' }}>Génération…</span>
+
+            {!minimized && (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '.9rem 1rem 1rem', gap: '.6rem', background: 'linear-gradient(180deg,rgba(8,4,1,.97) 0%,rgba(4,2,0,1) 100%)' }}>
+                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.44rem', color: over ? '#ef4444' : 'rgba(201,168,76,.5)' }}>{payload.length} / {MAX} chars</span>
+                            <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.44rem', color: 'rgba(201,168,76,.35)' }}>{pct}%</span>
+                        </div>
+                        <div style={{ width: '100%', height: 3, background: 'rgba(201,168,76,.1)', borderRadius: 2, overflow: 'hidden' }}>
+                            <div style={{ height: '100%', width: `${pct}%`, borderRadius: 2, background: over ? '#ef4444' : pct > 70 ? '#f59e0b' : '#22c55e', transition: 'width .3s' }} />
+                        </div>
+                    </div>
+
+                    {err && (
+                        <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.48rem', color: '#ef4444', background: 'rgba(239,68,68,.08)', border: '1px solid rgba(239,68,68,.25)', borderRadius: 5, padding: '.35rem .6rem', textAlign: 'center', width: '100%' }}>{err}</div>
+                    )}
+
+                    {!err && (
+                        <div style={{ position: 'relative', background: '#fff', borderRadius: 10, padding: 10, animation: 'qrPulse 2.5s ease-in-out infinite', overflow: 'hidden', flexShrink: 0 }}>
+                            <canvas ref={canvasRef} width={QR_SIZE} height={QR_SIZE} style={{ display: ready ? 'block' : 'none', borderRadius: 6 }} />
+                            {!ready && (
+                                <div style={{ width: QR_SIZE, height: QR_SIZE, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '.5rem', background: '#fff' }}>
+                                    <div style={{ width: 28, height: 28, border: '2px solid rgba(201,168,76,.3)', borderTopColor: '#c9a84c', borderRadius: '50%', animation: 'uploadSpin .7s linear infinite' }} />
+                                    <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.44rem', color: 'rgba(0,0,0,.4)' }}>Génération…</span>
+                                </div>
+                            )}
+                            {ready && (
+                                <div style={{ position: 'absolute', left: 10, right: 10, height: 2, background: 'linear-gradient(90deg,transparent,rgba(201,168,76,.9),transparent)', animation: 'scanLine 2s ease-in-out infinite', pointerEvents: 'none', borderRadius: 1 }} />
+                            )}
                         </div>
                     )}
-                    {ready && <div className="qr-scan-line" />}
-                </div>
-            )}
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '.2rem' }}>
-                {STEPS.map(({ n, t }) => (
-                    <div key={n} className="qr-step">
-                        <div className="qr-step-n">{n}</div>
-                        <span className="qr-step-t">{t}</span>
+
+                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '.22rem' }}>
+                        {STEPS.map(({ n, t }) => (
+                            <div key={n} style={{ display: 'flex', alignItems: 'center', gap: '.45rem', padding: '.2rem .45rem', background: 'rgba(201,168,76,.04)', borderRadius: 5, border: '1px solid rgba(201,168,76,.1)' }}>
+                                <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(201,168,76,.15)', border: '1px solid rgba(201,168,76,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cinzel',serif", fontSize: '.5rem', color: '#c9a84c', flexShrink: 0 }}>{n}</div>
+                                <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.44rem', color: 'rgba(201,168,76,.65)' }}>{t}</span>
+                            </div>
+                        ))}
                     </div>
-                ))}
-            </div>
-            {ready && (
-                <div className="qr-action-row">
-                    <button className="qr-action-btn" onClick={download}>{downloaded ? '✓ Téléchargé !' : '↓ PNG'}</button>
-                    <button className="qr-action-btn" onClick={onClose}>✕ Fermer</button>
+
+                    {ready && (
+                        <div style={{ display: 'flex', gap: '.5rem', width: '100%' }}>
+                            <button onClick={download} style={{ flex: 1, padding: '.32rem 0', borderRadius: 5, border: '1px solid rgba(201,168,76,.35)', background: 'rgba(201,168,76,.08)', color: '#c9a84c', cursor: 'pointer', fontFamily: "'Cinzel',serif", fontSize: '.55rem', fontWeight: 600, letterSpacing: '.05em', transition: 'all .18s' }}
+                                onMouseEnter={e => { e.target.style.background = 'rgba(201,168,76,.2)'; e.target.style.color = '#f0d080'; }}
+                                onMouseLeave={e => { e.target.style.background = 'rgba(201,168,76,.08)'; e.target.style.color = '#c9a84c'; }}>
+                                {downloaded ? '✓ Téléchargé !' : '↓ Télécharger PNG'}
+                            </button>
+                            <button onClick={onClose} style={{ flex: 1, padding: '.32rem 0', borderRadius: 5, border: '1px solid rgba(201,168,76,.2)', background: 'rgba(201,168,76,.04)', color: 'rgba(201,168,76,.55)', cursor: 'pointer', fontFamily: "'Cinzel',serif", fontSize: '.55rem', fontWeight: 600, letterSpacing: '.05em', transition: 'all .18s' }}
+                                onMouseEnter={e => { e.target.style.background = 'rgba(201,168,76,.12)'; e.target.style.color = '#c9a84c'; }}
+                                onMouseLeave={e => { e.target.style.background = 'rgba(201,168,76,.04)'; e.target.style.color = 'rgba(201,168,76,.55)'; }}>
+                                ✕ Fermer
+                            </button>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -354,13 +412,10 @@ const QrInlinePanel = ({ code, onClose }) => {
 };
 
 // ═══════════════════════════════════════════
-// QR FLOATING WINDOW
+// QR FLOATING WINDOW — depuis Google Drive (upload)
 // ═══════════════════════════════════════════
 const QrFloatingWindow = ({ driveLink, onClose }) => {
-    const [pos, setPos] = useState({
-        x: Math.max(40, window.innerWidth / 2 - 200),
-        y: Math.max(40, window.innerHeight / 2 - 220),
-    });
+    const [pos, setPos] = useState({ x: safe(vw() / 2 - 200, 440), y: safe(vh() / 2 - 200, 200) });
     const [minimized, setMinimized] = useState(false);
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(driveLink)}&color=000000&bgcolor=ffffff&margin=10`;
 
@@ -374,98 +429,42 @@ const QrFloatingWindow = ({ driveLink, onClose }) => {
         if (e.target.closest('.float-win-btn')) return;
         e.preventDefault();
         const sx = e.clientX - pos.x, sy = e.clientY - pos.y;
-        const mv = ev => setPos({ x: ev.clientX - sx, y: ev.clientY - sy });
+        const mv = ev => setPos({ x: safe(ev.clientX - sx, pos.x), y: safe(ev.clientY - sy, pos.y) });
         const up = () => { window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); };
         window.addEventListener('mousemove', mv);
         window.addEventListener('mouseup', up);
     };
 
     return (
-        <div className="float-win" style={{ left: pos.x, top: pos.y, width: 400, height: minimized ? 42 : 'auto' }}>
-
-            {/* ── Titlebar ── */}
+        <div className="float-win" style={{ left: safe(pos.x, 440), top: safe(pos.y, 200), width: 400, height: minimized ? 42 : 'auto' }}>
             <div className="float-win-titlebar" onMouseDown={drag}>
                 <div className="float-win-btns">
-                    <button className="float-win-btn float-win-btn-close" onClick={onClose} data-tip="Fermer (ESC)">✕</button>
-                    <button className="float-win-btn float-win-btn-min" onClick={() => setMinimized(m => !m)} data-tip={minimized ? 'Restaurer' : 'Réduire'}>
-                        {minimized ? '▲' : '▬'}
-                    </button>
+                    <button className="float-win-btn float-win-btn-close" onClick={onClose} data-tip="Fermer">✕</button>
+                    <button className="float-win-btn float-win-btn-min" onClick={() => setMinimized(m => !m)} data-tip={minimized ? 'Restaurer' : 'Réduire'}>{minimized ? '▲' : '▬'}</button>
                 </div>
                 <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-                    <span style={{ fontFamily: "'Cinzel',serif", fontSize: '.62rem', color: 'rgba(201,168,76,.75)', letterSpacing: '.1em' }}>
-                        📱 QR CODE OPENBOT
-                    </span>
+                    <span style={{ fontFamily: "'Cinzel',serif", fontSize: '.62rem', color: 'rgba(201,168,76,.75)', letterSpacing: '.1em' }}>📱 QR CODE OPENBOT (Drive)</span>
                 </div>
                 <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.38rem', color: 'rgba(201,168,76,.28)' }}>ESC</span>
             </div>
-
-            {/* ── Content ── */}
             {!minimized && (
-                <div style={{
-                    display: 'flex', flexDirection: 'column', alignItems: 'center',
-                    padding: '1rem 1.2rem 1.2rem', gap: '.75rem',
-                    background: 'linear-gradient(180deg,rgba(8,4,1,.96) 0%,rgba(4,2,0,.99) 100%)',
-                }}>
-
-                    {/* QR avec scan line animée */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '1rem 1.2rem 1.2rem', gap: '.75rem', background: 'linear-gradient(180deg,rgba(8,4,1,.96) 0%,rgba(4,2,0,.99) 100%)' }}>
                     <div style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', animation: 'qrPulse 2.5s ease-in-out infinite' }}>
-                        <div style={{ background: 'white', borderRadius: '10px', padding: '8px' }}>
-                            <img src={qrUrl} alt="QR Code OpenBot" width={220} height={220}
-                                style={{ display: 'block', borderRadius: '6px' }} />
+                        <div style={{ background: 'white', borderRadius: '10px', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <img src={qrUrl} alt="QR Code OpenBot" width={220} height={220} style={{ display: 'block', borderRadius: '6px' }} />
                         </div>
-                        {/* Ligne scan */}
-                        <div style={{
-                            position: 'absolute', left: 8, right: 8, height: '2px',
-                            background: 'linear-gradient(90deg,transparent,rgba(201,168,76,.9),transparent)',
-                            animation: 'scanLine 2s ease-in-out infinite',
-                            pointerEvents: 'none', borderRadius: '1px',
-                        }} />
+                        <div style={{ position: 'absolute', left: 8, right: 8, height: '2px', background: 'linear-gradient(90deg,transparent,rgba(201,168,76,.9),transparent)', animation: 'scanLine 2s ease-in-out infinite', pointerEvents: 'none', borderRadius: '1px' }} />
                     </div>
-
-                    {/* Steps */}
-                    <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '.25rem' }}>
-                        {[
-                            { n: '1', t: "Ouvre l'app OpenBot" },
-                            { n: '2', t: 'Programs → ⊡ Scan' },
-                            { n: '3', t: 'Scanne ce QR code' },
-                            { n: '4', t: '▶ Run → 🤖 Robot bouge !' },
-                        ].map(({ n, t }) => (
-                            <div key={n} style={{
-                                display: 'flex', alignItems: 'center', gap: '.5rem',
-                                padding: '.2rem .5rem',
-                                background: 'rgba(201,168,76,.04)', borderRadius: '5px',
-                                border: '1px solid rgba(201,168,76,.1)',
-                            }}>
-                                <div style={{
-                                    width: 18, height: 18, borderRadius: '50%',
-                                    background: 'rgba(201,168,76,.15)', border: '1px solid rgba(201,168,76,.4)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontFamily: "'Cinzel',serif", fontSize: '.52rem', color: '#c9a84c', flexShrink: 0,
-                                }}>{n}</div>
-                                <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.46rem', color: 'rgba(201,168,76,.65)' }}>{t}</span>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Drive link */}
-                    <a href={driveLink} target="_blank" rel="noopener noreferrer" style={{
-                        fontFamily: "'Space Mono',monospace", fontSize: '.42rem',
-                        color: 'rgba(108,190,255,.7)', textDecoration: 'none',
-                        background: 'rgba(108,190,255,.06)', border: '1px solid rgba(108,190,255,.2)',
-                        borderRadius: '6px', padding: '.22rem .6rem',
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        display: 'block', width: '100%', textAlign: 'center',
-                        boxSizing: 'border-box',
-                    }}>🔗 Voir sur Google Drive</a>
-
-                    {/* Close */}
-                    <button onClick={onClose} style={{
-                        width: '100%', background: 'rgba(201,168,76,.08)',
-                        border: '1px solid rgba(201,168,76,.28)', borderRadius: '7px',
-                        color: '#c9a84c', cursor: 'pointer', fontFamily: "'Cinzel',serif",
-                        fontSize: '.65rem', fontWeight: 600, padding: '.35rem 1rem',
-                        transition: 'all .18s', letterSpacing: '.06em',
-                    }}
+                    {[{ n: '1', t: "Ouvre l'app OpenBot" }, { n: '2', t: 'Programs → ⊡ Scan' }, { n: '3', t: 'Scanne ce QR code' }, { n: '4', t: '▶ Run → Robot bouge !' }].map(({ n, t }) => (
+                        <div key={n} style={{ display: 'flex', alignItems: 'center', gap: '.5rem', padding: '.2rem .5rem', background: 'rgba(201,168,76,.04)', borderRadius: '5px', border: '1px solid rgba(201,168,76,.1)', width: '100%' }}>
+                            <div style={{ width: 18, height: 18, borderRadius: '50%', background: 'rgba(201,168,76,.15)', border: '1px solid rgba(201,168,76,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "'Cinzel',serif", fontSize: '.52rem', color: '#c9a84c', flexShrink: 0 }}>{n}</div>
+                            <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.46rem', color: 'rgba(201,168,76,.65)' }}>{t}</span>
+                        </div>
+                    ))}
+                    <a href={driveLink} target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'Space Mono',monospace", fontSize: '.42rem', color: 'rgba(108,190,255,.7)', textDecoration: 'none', background: 'rgba(108,190,255,.06)', border: '1px solid rgba(108,190,255,.2)', borderRadius: '6px', padding: '.22rem .6rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', width: '100%', textAlign: 'center' }}>
+                        🔗 Voir sur Google Drive
+                    </a>
+                    <button onClick={onClose} style={{ width: '100%', background: 'rgba(201,168,76,.08)', border: '1px solid rgba(201,168,76,.28)', borderRadius: '7px', color: '#c9a84c', cursor: 'pointer', fontFamily: "'Cinzel',serif", fontSize: '.65rem', fontWeight: 600, padding: '.35rem 1rem', transition: 'all .18s', letterSpacing: '.06em' }}
                         onMouseEnter={e => { e.target.style.background = 'rgba(201,168,76,.18)'; e.target.style.color = '#f0d080'; }}
                         onMouseLeave={e => { e.target.style.background = 'rgba(201,168,76,.08)'; e.target.style.color = '#c9a84c'; }}>
                         ✕ Fermer (ESC)
@@ -533,10 +532,7 @@ const NomadUploadButton = () => {
             const foreverKids = handleChildBlockInWorkspace(forever, arr);
             const foreverHasAI = foreverKids.some(k => aiBlocks.includes(k));
             let o1 = PlaygroundConstants.object_1, o2 = PlaygroundConstants.object_2;
-            if (motEnabled.length) {
-                o1 = motEnabled[0].getFieldValue(PlaygroundConstants.labels1);
-                o2 = motEnabled[0].getFieldValue(PlaygroundConstants.labels2);
-            }
+            if (motEnabled.length) { o1 = motEnabled[0].getFieldValue(PlaygroundConstants.labels1); o2 = motEnabled[0].getFieldValue(PlaygroundConstants.labels2); }
 
             if (!start.length && !forever.length && !detection.length && !varDet.length) throw new Error(Errors.error1);
             if (isAdjAI && start.length) throw new Error(Errors.error2);
@@ -605,7 +601,7 @@ const NomadUploadButton = () => {
 // ═══════════════════════════════════════════
 const FloatingWindow = ({ win, onUpdate, onClose, streamSrc, onStreamError }) => {
     const isMinimized = win.h <= 42;
-    const isMaximized = win.w >= window.innerWidth - 50 && win.h >= window.innerHeight - 50;
+    const isMaximized = win.w >= vw() - 50 && win.h >= vh() - 50;
     const imgRef = useRef(null);
     const [zoom, setZoom] = useState(1);
 
@@ -629,7 +625,7 @@ const FloatingWindow = ({ win, onUpdate, onClose, streamSrc, onStreamError }) =>
         if (e.target.closest('.float-win-btn,.float-win-resize,.float-win-zoom')) return;
         e.preventDefault();
         const sx = e.clientX - win.x, sy = e.clientY - win.y;
-        const mv = ev => onUpdate(f => ({ ...f, x: ev.clientX - sx, y: ev.clientY - sy }));
+        const mv = ev => onUpdate(f => ({ ...f, x: safe(ev.clientX - sx, f.x), y: safe(ev.clientY - sy, f.y) }));
         const up = () => { window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); };
         window.addEventListener('mousemove', mv); window.addEventListener('mouseup', up);
     };
@@ -637,17 +633,17 @@ const FloatingWindow = ({ win, onUpdate, onClose, streamSrc, onStreamError }) =>
     const resize = e => {
         e.preventDefault(); e.stopPropagation();
         const [sx, sy, sw, sh] = [e.clientX, e.clientY, win.w, win.h];
-        const mv = ev => onUpdate(f => ({ ...f, w: Math.max(320, sw + ev.clientX - sx), h: Math.max(260, sh + ev.clientY - sy) }));
+        const mv = ev => onUpdate(f => ({ ...f, w: Math.max(320, safe(sw + ev.clientX - sx, sw)), h: Math.max(260, safe(sh + ev.clientY - sy, sh)) }));
         const up = () => { window.removeEventListener('mousemove', mv); window.removeEventListener('mouseup', up); };
         window.addEventListener('mousemove', mv); window.addEventListener('mouseup', up);
     };
 
-    const maximize = () => onUpdate(f => ({ ...f, _prevX: f.x, _prevY: f.y, _prevW: f.w, _prevH: isMinimized ? (f._prevH || 480) : f.h, x: 0, y: 0, w: window.innerWidth, h: window.innerHeight }));
-    const restore = () => onUpdate(f => ({ ...f, x: f._prevX ?? 80, y: f._prevY ?? 80, w: f._prevW || 720, h: f._prevH || 480 }));
+    const maximize = () => onUpdate(f => ({ ...f, _prevX: f.x, _prevY: f.y, _prevW: f.w, _prevH: isMinimized ? (f._prevH || 480) : f.h, x: 0, y: 0, w: vw(), h: vh() }));
+    const restore = () => onUpdate(f => ({ ...f, x: safe(f._prevX, 80), y: safe(f._prevY, 80), w: safe(f._prevW, 720), h: safe(f._prevH, 480) }));
     const minimize = () => onUpdate(f => ({ ...f, _prevH: isMinimized ? (f._prevH || 480) : f.h, h: 42 }));
 
     return (
-        <div className="float-win" style={{ left: win.x, top: win.y, width: win.w, height: win.h, transition: isMaximized ? 'all .22s cubic-bezier(.4,0,.2,1)' : 'none' }}>
+        <div className="float-win" style={{ left: safe(win.x, 80), top: safe(win.y, 80), width: safe(win.w, 720), height: safe(win.h, 480), transition: isMaximized ? 'all .22s cubic-bezier(.4,0,.2,1)' : 'none' }}>
             <div className="float-win-titlebar" onMouseDown={drag} onDoubleClick={e => { if (!e.target.closest('.float-win-btn')) isMaximized ? restore() : maximize(); }}>
                 <div className="float-win-btns">
                     <button className="float-win-btn float-win-btn-close" onClick={onClose} data-tip="Fermer">✕</button>
@@ -658,7 +654,7 @@ const FloatingWindow = ({ win, onUpdate, onClose, streamSrc, onStreamError }) =>
                     <span style={{ fontFamily: "'Cinzel',serif", fontSize: '.62rem', color: 'rgba(201,168,76,.65)', letterSpacing: '.1em' }}>VUE SCÈNE</span>
                     <span style={{ fontSize: '.42rem', background: 'rgba(201,168,76,.12)', border: '1px solid rgba(201,168,76,.25)', borderRadius: '4px', padding: '1px 5px', color: 'rgba(201,168,76,.5)', fontFamily: "'Space Mono',monospace" }}>LIVE</span>
                 </div>
-                <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.4rem', color: 'rgba(201,168,76,.28)' }}>{Math.round(win.w)}×{Math.round(win.h)}</span>
+                <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.4rem', color: 'rgba(201,168,76,.28)' }}>{Math.round(safe(win.w, 720))}×{Math.round(safe(win.h, 480))}</span>
             </div>
             {!isMinimized && (
                 <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: '#020100', minHeight: 0 }} onWheel={onWheel}>
@@ -694,11 +690,19 @@ function Playground() {
     const [wsLog, setWsLog] = useState('⏳ Démarrage de Webots…');
     const [floatWin, setFloatWin] = useState({ open: false, x: 80, y: 80, w: 720, h: 480, _prevH: 480 });
 
+    // ── État QR inline ──
     const [showQr, setShowQr] = useState(false);
     const [currentCode, setCurrentCode] = useState('');
 
-    // ── ✅ TUTORIAL STATE ──
+    // ── État Tutorial ──
     const [showTutorial, setShowTutorial] = useState(false);
+
+    // ── Refs pour le tutorial spotlight ──
+    const blocklyRef = useRef(null);
+    const editorRef = useRef(null);
+    const simulatorRef = useRef(null);
+    const bottomBarRef = useRef(null);
+    const uploadRef = useRef(null);
 
     const wsRef = useRef(null);
     const keysRef = useRef({});
@@ -709,33 +713,28 @@ function Playground() {
     const SC = simStatus === 'online' ? '#4ddc64' : simStatus === 'connecting' ? '#f0a500' : '#c9a84c';
     const SL = simStatus === 'online' ? 'CONNECTÉ' : simStatus === 'connecting' ? 'CONNEXION...' : 'OFFLINE';
 
-    const getWS = () => {
-        try { return require('blockly/core').getMainWorkspace(); } catch { return null; }
-    };
-    const doUndo = () => { const ws = getWS(); if (ws?.getUndoStack?.().length) ws.undo(false); };
-    const doRedo = () => { const ws = getWS(); if (ws?.redoStack_?.length) ws.undo(true); };
-    const doZoomI = () => { const ws = getWS(); if (ws?.zoom) ws.zoom(1, 2, 1.5); };
-    const doZoomO = () => { const ws = getWS(); if (ws?.zoom) ws.zoom(1, 2, -1.5); };
+    const doUndo = () => { const ws = window.Blockly?.getMainWorkspace(); if (ws?.getUndoStack().length) ws.undo(false); };
+    const doRedo = () => { const ws = window.Blockly?.getMainWorkspace(); if (ws?.redoStack_?.length) ws.undo(true); };
+    const doZoomI = () => window.Blockly?.getMainWorkspace()?.zoom(1, 2, 1.5);
+    const doZoomO = () => window.Blockly?.getMainWorkspace()?.zoom(1, 2, -1.5);
 
-    // ═══════════════════════════════════════════
-    // ✅ FIX: handleShowQr — définition manquante
-    // Lit le code courant depuis le workspace Blockly
-    // et bascule l'affichage du QR inline
-    // ═══════════════════════════════════════════
+    // ── Génère le QR depuis le code actuel de l'éditeur ──
     const handleShowQr = useCallback(() => {
-        if (!showQr) {
-            try {
-                const { javascriptGenerator: J } = require('blockly/javascript');
-                const B = require('blockly/core');
-                const ws = B.getMainWorkspace();
-                const code = ws ? J.workspaceToCode(ws) : '';
-                setCurrentCode(code);
-            } catch {
-                setCurrentCode(window.__currentPythonCode || '');
-            }
+        try {
+            const B = require('blockly/core');
+            const { javascriptGenerator: J } = require('blockly/javascript');
+            const ws = B.getMainWorkspace();
+            let code = J.workspaceToCode(ws).replace(/\/\/.*$/gm, '').trim();
+            const start = ws.getBlocksByType(PlaygroundConstants.start);
+            const forever = ws.getBlocksByType(PlaygroundConstants.forever);
+            if (start.length) code += '\nstart();';
+            if (forever.length) code += '\nforever();';
+            setCurrentCode(code);
+        } catch {
+            setCurrentCode(window.__currentPythonCode || '');
         }
-        setShowQr(prev => !prev);
-    }, [showQr]);
+        setShowQr(v => !v);
+    }, []);
 
     useEffect(() => {
         const level = new URLSearchParams(window.location.search).get('level') || '1';
@@ -780,13 +779,23 @@ function Playground() {
     const sendCmd = cmd => { if (wsRef.current?.readyState === WebSocket.OPEN) { wsRef.current.send(cmd); setWsLog('✅ ' + cmd); } else setWsLog('❌ Non connecté !'); };
 
     const handleRun = () => {
-        try {
-            const B = require('blockly/core'), { javascriptGenerator: J } = require('blockly/javascript');
-            ParserModule.runBlocklyCode(J.workspaceToCode(B.getMainWorkspace())); setWsLog('▶ Programme lancé !');
-        } catch { const c = window.__currentPythonCode || ''; if (c) ParserModule.runBlocklyCode(c); }
+        try { const B = require('blockly/core'), { javascriptGenerator: J } = require('blockly/javascript'); ParserModule.runBlocklyCode(J.workspaceToCode(B.getMainWorkspace())); setWsLog('▶ Programme lancé !'); }
+        catch { const c = window.__currentPythonCode || ''; if (c) ParserModule.runBlocklyCode(c); }
     };
 
     const ispy = category === 'py';
+
+    // Expose refs to Tutorial via window (simple bridge, no prop drilling)
+    useEffect(() => {
+        window.__tutorialRefs = {
+            blockly: blocklyRef,
+            editor: editorRef,
+            simulator: simulatorRef,
+            bottomBar: bottomBarRef,
+            upload: uploadRef,
+        };
+        return () => { window.__tutorialRefs = null; };
+    }, []);
 
     const HUD_CORNERS = [
         { top: '16px', left: '16px', borderWidth: '1.5px 0 0 1.5px', animationDelay: '0s' },
@@ -806,12 +815,17 @@ function Playground() {
             <Styles />
             <StarCanvas />
 
+            {/* ── Arrière-plans ── */}
             <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: `radial-gradient(ellipse at 50% 105%,rgba(180,90,0,.6) 0%,transparent 48%),radial-gradient(ellipse at 12% 58%,rgba(201,168,76,.1) 0%,transparent 44%),radial-gradient(ellipse at 88% 18%,rgba(40,20,80,.28) 0%,transparent 44%),#030108` }} />
             <div style={{ position: 'fixed', top: '-8%', left: '-4%', width: '680px', height: '680px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(201,168,76,.1) 0%,transparent 70%)', filter: 'blur(90px)', zIndex: 0, pointerEvents: 'none' }} />
             <div style={{ position: 'fixed', top: '-4%', right: '-4%', width: '580px', height: '580px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(80,40,160,.18) 0%,transparent 70%)', filter: 'blur(100px)', zIndex: 0, pointerEvents: 'none' }} />
             <div style={{ position: 'fixed', bottom: '-4%', left: '18%', width: '960px', height: '420px', borderRadius: '50%', background: 'radial-gradient(circle,rgba(200,100,0,.35) 0%,transparent 70%)', filter: 'blur(110px)', zIndex: 0, pointerEvents: 'none' }} />
             <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', backgroundImage: `url("https://www.transparenttextures.com/patterns/arabesque.png")`, backgroundSize: '260px 260px', opacity: .08 }} />
 
+            {HUD_CORNERS.map((s, i) => <div key={i} className="hud-corner" style={s} />)}
+            {DECO_STARS.map(({ icon, ...s }, i) => <div key={i} className="deco-star" style={s}>{icon}</div>)}
+
+            {/* ── Orbe décorative ── */}
             <div style={{ position: 'fixed', top: '4%', right: '3%', zIndex: 2, pointerEvents: 'none', animation: 'ufloat 11s ease-in-out infinite' }}>
                 <div style={{ width: '68px', height: '68px', borderRadius: '50%', background: 'radial-gradient(circle at 32% 28%,#fff8e1,#f0d080,#a86c00)', animation: 'orbPulse 4s ease-in-out infinite', position: 'relative' }}>
                     <div style={{ position: 'absolute', top: '-16px', left: '-16px', width: '100px', height: '100px', borderRadius: '50%', border: '1px solid rgba(201,168,76,.2)' }} />
@@ -825,9 +839,8 @@ function Playground() {
                 <path d="M0,168 C320,135 540,172 790,152 C990,136 1180,168 1440,148 L1440,200 L0,200 Z" fill="rgba(180,80,0,.13)" />
             </svg>
 
-            {HUD_CORNERS.map((s, i) => <div key={i} className="hud-corner" style={s} />)}
-            {DECO_STARS.map(({ icon, ...s }, i) => <div key={i} className="deco-star" style={s}>{icon}</div>)}
-
+            {/* ── Fenêtres flottantes ── */}
+            {showQr && <QrCodeFloatingWindow code={currentCode} onClose={() => setShowQr(false)} />}
             {floatWin.open && (
                 <FloatingWindow win={floatWin} onUpdate={setFloatWin}
                     onClose={() => setFloatWin(f => ({ ...f, open: false }))}
@@ -835,14 +848,26 @@ function Playground() {
                     onStreamError={() => setWsLog('⚠️ Stream non disponible')} />
             )}
 
+            {/* ══════════════════════════════════════════
+                LAYOUT PRINCIPAL
+            ══════════════════════════════════════════ */}
             <div style={{ position: 'relative', zIndex: 10, height: '100vh', display: 'flex', flexDirection: 'column' }}>
                 <Header />
+
                 <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
 
-                    <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+                    {/* ── Zone Blockly ── data-tut="blockly" ── */}
+                    <div
+                        ref={blocklyRef}
+                        data-tut="blockly"
+                        style={{ flex: 1, position: 'relative', overflow: 'hidden' }}
+                    >
                         <div className="ws-scan" />
-                        <BlocklyComponent readOnly={false} move={{ scrollbars: true, drag: true, wheel: true }}
-                            initialXml={`<xml xmlns="http://www.w3.org/1999/xhtml"><Block type="start" x="0" y="100"/><Block type="forever" x="250" y="100"/></xml>`}>
+                        <BlocklyComponent
+                            readOnly={false}
+                            move={{ scrollbars: true, drag: true, wheel: true }}
+                            initialXml={`<xml xmlns="http://www.w3.org/1999/xhtml"><Block type="start" x="0" y="100"/><Block type="forever" x="250" y="100"/></xml>`}
+                        >
                             <Toolbox />
                         </BlocklyComponent>
                     </div>
@@ -850,8 +875,12 @@ function Playground() {
                     {/* ── Panneau droit ── */}
                     <div style={{ width: '44%', flexShrink: 0, display: 'flex', flexDirection: 'column', background: `linear-gradient(180deg,rgba(8,4,1,.78) 0%,rgba(6,3,0,.74) 50%,rgba(10,5,1,.78) 100%)`, backdropFilter: 'blur(18px) saturate(140%)', borderLeft: `1px solid ${G(.28)}`, minHeight: 0, boxShadow: `-2px 0 40px rgba(0,0,0,.5),inset 1px 0 0 ${G(.05)}` }}>
 
-                        {/* ── Éditeur de code ── */}
-                        <div data-tut="editor" style={{ flex: '0 0 36%', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${G(.18)}`, overflow: 'hidden', minHeight: 0 }}>
+                        {/* ── Éditeur de code ── data-tut="editor" ── */}
+                        <div
+                            ref={editorRef}
+                            data-tut="editor"
+                            style={{ flex: '0 0 36%', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${G(.18)}`, overflow: 'hidden', minHeight: 0 }}
+                        >
                             <div className="panel-hdr">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
                                     <span style={{ fontSize: '1rem' }}>{ispy ? '🐍' : '⚡'}</span>
@@ -873,16 +902,14 @@ function Playground() {
                             <div style={{ flex: 1, position: 'relative', overflow: 'hidden', background: 'rgba(2,1,0,.32)' }}>
                                 <CodeEditor />
                             </div>
-                            {showQr && (
-                                <QrInlinePanel
-                                    code={currentCode}
-                                    onClose={() => setShowQr(false)}
-                                />
-                            )}
                         </div>
 
-                        {/* ── Simulateur robot ── */}
-                        <div data-tut="simulator" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}>
+                        {/* ── Simulateur robot ── data-tut="simulator" ── */}
+                        <div
+                            ref={simulatorRef}
+                            data-tut="simulator"
+                            style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minHeight: 0 }}
+                        >
                             <div className="panel-hdr">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
                                     <span style={{ fontSize: '1rem' }}>🤖</span>
@@ -910,14 +937,17 @@ function Playground() {
                                 <div className="ws-log">{wsLog}</div>
                             </div>
                         </div>
-
                     </div>
                 </div>
 
-                {/* ── BOTTOM BAR ── */}
-                <div className="nomad-bottombar">
-                    <NomadUploadButton />
+                {/* ── BOTTOM BAR ── data-tut="bottomBar" ── */}
+                <div
+                    ref={bottomBarRef}
+                    data-tut="bottomBar"
+                    className="nomad-bottombar"
+                >
                     <TutorialButton onClick={() => setShowTutorial(true)} />
+
                     <div style={{ display: 'flex', alignItems: 'center', gap: '.3rem' }}>
                         <button className="nomad-tool-btn" onClick={doUndo} title="Annuler">↩</button>
                         <button className="nomad-tool-btn" onClick={doRedo} title="Rétablir">↪</button>
@@ -925,13 +955,16 @@ function Playground() {
                         <button className="nomad-tool-btn" onClick={doZoomO} title="Zoom −" style={{ fontSize: '1.1rem', fontWeight: 700 }}>−</button>
                         <button className="nomad-tool-btn" onClick={doZoomI} title="Zoom +" style={{ fontSize: '1.1rem', fontWeight: 700 }}>+</button>
                     </div>
-                </div>
 
+                    {/* ── Upload ── data-tut="upload" ── */}
+                    <div ref={uploadRef} data-tut="upload">
+                        <NomadUploadButton />
+                    </div>
+                </div>
             </div>
 
-            {/* Tutorial overlay */}
+            {/* ── Tutorial overlay ── */}
             {showTutorial && <Tutorial onClose={() => setShowTutorial(false)} />}
-
         </div>
     );
 }
