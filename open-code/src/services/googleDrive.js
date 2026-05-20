@@ -318,29 +318,12 @@ export function SharingFileFromGoogleDrive(fileId, isJSFile) {
 
 
 /**
- * function to get shareable link of Google Drive file
+ * ✅ MODIFIÉE — retourne le lien de téléchargement direct pour OpenBot
+ * Format : https://drive.google.com/uc?export=download&id=FILE_ID
+ * L'app OpenBot scanne ce QR et télécharge directement le .js
  */
-export async function getShareableLink(fileId, folderId) {
-    const accessToken = getAccessToken();
-    const params = {
-        method: 'GET',
-        headers: { 'Authorization': 'Bearer ' + accessToken }
-    };
-    return await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?parents=${folderId}&fields=webViewLink&supportsAllDrives=true`, params)
-        .then(response => {
-            if (!response.ok) throw new Error('An error occurred.');
-            return response.json();
-        })
-        .then(data => {
-            // Nettoyer l'URL — éviter double ?usp=
-            const link = data.webViewLink
-                .replace('/view?usp=drivesdk', '')
-                .replace('/view', '')
-                .replace('?usp=drivesdk', '')
-                .replace('?usp=sharing', '');
-            return link + '?usp=sharing';
-        })
-        .catch(error => console.error(error));
+export async function getShareableLink(fileId) {
+    return `https://drive.google.com/uc?export=download&id=${fileId}`;
 }
 
 

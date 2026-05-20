@@ -2,7 +2,7 @@
 
 function LevelCard({ level, isActive, onSelect, isCompleted }) {
     const isLocked = !level.unlocked;
-    const diffColor = { 'Débutant': '#4caf50', 'Intermédiaire': '#f0a500', 'Avancé': '#e53935' };
+    const diffColor = { 'Beginner': '#4caf50', 'Intermediate': '#f0a500', 'Advanced': '#e53935' };
     const col = diffColor[level.difficulty] || '#f0a500';
 
     return (
@@ -22,7 +22,7 @@ function LevelCard({ level, isActive, onSelect, isCompleted }) {
             onMouseEnter={e => { if (!isLocked) { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(240,165,0,.35)'; } }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = isLocked ? 'none' : '0 0 16px rgba(240,165,0,.12)'; }}
         >
-            {/* Overlay semi-transparent */}
+            {/* Semi-transparent overlay */}
             <div style={{
                 position: 'absolute', inset: 0,
                 background: isActive
@@ -33,7 +33,7 @@ function LevelCard({ level, isActive, onSelect, isCompleted }) {
                 backdropFilter: 'blur(2px)',
             }} />
 
-            {/* Coins décoratifs */}
+            {/* Decorative corners */}
             {[
                 { top: 0, left: 0, borderTop: '2px solid #f0a500', borderLeft: '2px solid #f0a500' },
                 { top: 0, right: 0, borderTop: '2px solid #f0a500', borderRight: '2px solid #f0a500' },
@@ -41,10 +41,10 @@ function LevelCard({ level, isActive, onSelect, isCompleted }) {
                 { bottom: 0, right: 0, borderBottom: '2px solid #f0a500', borderRight: '2px solid #f0a500' },
             ].map((s, i) => <div key={i} style={{ position: 'absolute', width: 10, height: 10, zIndex: 2, ...s }} />)}
 
-            {/* Contenu */}
+            {/* Content */}
             <div style={{ position: 'relative', zIndex: 1, padding: '10px 12px 12px', background: 'rgba(0,0,0,.45)' }}>
 
-                {/* Badge level + lock */}
+                {/* Level badge + lock */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                     <span style={{
                         fontFamily: "'Cinzel',serif", fontSize: '.55rem',
@@ -53,7 +53,7 @@ function LevelCard({ level, isActive, onSelect, isCompleted }) {
                         padding: '2px 7px', borderRadius: 2,
                     }}>LEVEL {level.id}</span>
                     {isLocked && <span style={{ fontSize: '.85rem', opacity: .6 }}>🔒</span>}
-                    {isActive && <span style={{ fontSize: '.6rem', color: '#f0a500', fontFamily: "'Cinzel',serif" }}>▶ EN COURS</span>}
+                    {isActive && <span style={{ fontSize: '.6rem', color: '#f0a500', fontFamily: "'Cinzel',serif" }}>▶ IN PROGRESS</span>}
                     {isCompleted && <span style={{ fontSize: '.6rem', color: '#4caf50', fontFamily: "'Cinzel',serif" }}>✅</span>}
                 </div>
 
@@ -78,14 +78,14 @@ function LevelCard({ level, isActive, onSelect, isCompleted }) {
                     </span>
                 </div>
 
-                {/* Nom */}
+                {/* Name */}
                 <div style={{
                     fontFamily: "'Cinzel',serif", fontSize: '.78rem', fontWeight: 700,
                     color: isLocked ? 'rgba(255,200,80,.35)' : '#ffd700',
                     letterSpacing: '.07em', marginBottom: 2, textTransform: 'uppercase',
                 }}>{level.name}</div>
 
-                {/* Nom arabe */}
+                {/* Arabic name */}
                 {level.nameAr && (
                     <div style={{ fontFamily: "'Amiri',serif", fontSize: '.7rem', color: 'rgba(255,200,80,.4)', direction: 'rtl', marginBottom: 4 }}>
                         {level.nameAr}
@@ -109,7 +109,7 @@ function LevelCard({ level, isActive, onSelect, isCompleted }) {
 
                 <div style={{ height: 1, background: 'linear-gradient(to right,transparent,rgba(240,165,0,.3),transparent)', marginBottom: 6 }} />
 
-                {/* Difficulté + étoiles */}
+                {/* Difficulty + stars */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{
                         fontFamily: "'Nunito',sans-serif", fontSize: '.55rem',

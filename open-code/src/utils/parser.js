@@ -1,10 +1,13 @@
 // ═══════════════════════════════════════
-// 🤖 PARSER.JS — OpenBot → Webots Bridge (CORRIGÉ)
+// 🤖 PARSER.JS — OpenBot → Webots Bridge
 // src/utils/parser.js
 // ═══════════════════════════════════════
 
 let _ws = null;
 window.__sensorData = { dist: 999, speed: 0, gyro: 0, accel: 0, voltage: 0 };
+
+// ═══ STOP TOKEN ═══
+let _abortController = null;
 
 export function initParser(ws) {
     _ws = ws;
@@ -29,6 +32,16 @@ export function initParser(ws) {
     });
 }
 
+// ═══ STOP PUBLIC — appelé depuis Playground ═══
+export function stopBlocklyCode() {
+    if (_abortController) {
+        _abortController.abort();
+        _abortController = null;
+        console.log("⏹ stopBlocklyCode : programme annulé");
+    }
+    send("STOP");
+}
+
 function send(cmd) {
     if (_ws && _ws.readyState === WebSocket.OPEN) {
         console.log("📤 SEND:", cmd);
@@ -47,10 +60,20 @@ const moveLeft = (s = 192) => send("LEFT:" + s);
 const moveRight = (s = 192) => send("RIGHT:" + s);
 const stopRobot = () => send("STOP");
 
-// ═══ TIMING ═══
-const pause = (ms = 1000) => new Promise(r => setTimeout(r, ms));
-const wait = (ms = 1000) => new Promise(r => setTimeout(r, ms));
-const delay = (ms = 1000) => new Promise(r => setTimeout(r, ms));
+// ═══ TIMING interruptible ═══
+const _pauseInternal = (ms = 1000, signal) => new Promise((res, rej) => {
+    if (signal?.aborted) return rej(new DOMException('Aborted', 'AbortError'));
+    const t = setTimeout(res, ms);
+    signal?.addEventListener('abort', () => {
+        clearTimeout(t);
+        rej(new DOMException('Aborted', 'AbortError'));
+    });
+});
+
+// Aliases publics (sans signal)
+const pause = (ms = 1000) => _pauseInternal(ms);
+const wait = (ms = 1000) => _pauseInternal(ms);
+const delay = (ms = 1000) => _pauseInternal(ms);
 
 // ═══ BOUCLES ═══
 const repeat = (n, fn) => { for (let i = 0; i < Math.min(n, 20); i++) fn(); };
@@ -200,34 +223,17 @@ const displayToast = (msg) => console.log("📺 toast:", msg);
 const showText = (msg) => displayString(msg);
 
 // ═══ AI ═══
-// FIX [9] : disableAI désactive aussi follow_mode
-const disableAI = () => {
-    send("AUTOPILOT:0");
-    send("FOLLOW:0");
-    send("STOP");
-};
+const disableAI = () => { send("AUTOPILOT:0"); send("FOLLOW:0"); send("STOP"); };
 
-// FIX [6] : objectTracking envoie FOLLOW:1 à Webots
-// Webots gère la logique sonar — JS reçoit juste les callbacks
 const objectTracking = (model, onDetect, onLost) => {
     send("FOLLOW:1");
-    // Polling local pour les callbacks Blockly (onDetect / onLost)
     const dist = window.__sensorData.dist ?? 999;
-    if (dist < 80) {
-        if (typeof onDetect === 'function') onDetect();
-    } else {
-        if (typeof onLost === 'function') onLost();
-    }
+    if (dist < 80) { if (typeof onDetect === 'function') onDetect(); }
+    else { if (typeof onLost === 'function') onLost(); }
 };
 
 const autopilot = (model) => send("AUTOPILOT:1");
-
-const navigateForwardAndLeft = (fwd, left, model) => {
-    // fwd et left sont normalisés 0-1 depuis Blockly
-    send(`NAVIGATE:${fwd},${left}`);
-};
-
-// FIX [7] : seuil 100cm documenté — acceptable pour simulation
+const navigateForwardAndLeft = (fwd, left) => send(`NAVIGATE:${fwd},${left}`);
 const variableDetection = (obj, model) => (window.__sensorData.dist ?? 999) < 100;
 const multipleObjectTracking = (m, o1, o2, fn) => { };
 const multipleAIDetection = (m, o, fn1, fn2) => { };
@@ -238,19 +244,12 @@ const stopTracking = () => { send("AUTOPILOT:0"); send("FOLLOW:0"); send("STOP")
 const isDetected = () => (window.__sensorData.dist ?? 999) < 100;
 const getDetectedClass = () => null;
 
-// FIX [10] : fonctions follow/detect ajoutées pour les blocs Blockly
-const followPerson = () => {
-    send("FOLLOW:1");
-    console.log("👁️ followPerson → FOLLOW:1");
-};
+const followPerson = () => { send("FOLLOW:1"); console.log("👁️ followPerson → FOLLOW:1"); };
 
 const onPersonDetected = (onDetect, onLost, lostFrames = 90) => {
     const dist = window.__sensorData.dist ?? 999;
-    if (dist < 100) {
-        if (typeof onDetect === 'function') onDetect();
-    } else {
-        if (typeof onLost === 'function') onLost();
-    }
+    if (dist < 100) { if (typeof onDetect === 'function') onDetect(); }
+    else { if (typeof onLost === 'function') onLost(); }
 };
 
 const onDetected = (onDetect, onLost) => onPersonDetected(onDetect, onLost);
@@ -275,9 +274,16 @@ const log = msg => console.log("📝 log:", msg);
 const print = msg => console.log("📝 print:", msg);
 
 // ═══════════════════════════════════════════════
-// ═══ EXÉCUTER LE CODE BLOCKLY ═══════════════════
+// ═══ EXÉCUTER LE CODE BLOCKLY ══════════════════
 // ═══════════════════════════════════════════════
 export function runBlocklyCode(code) {
+    // Annule toute exécution précédente
+    if (_abortController) {
+        _abortController.abort();
+    }
+    _abortController = new AbortController();
+    const signal = _abortController.signal;
+
     try {
         console.log("▶ Code Blockly reçu:\n", code);
 
@@ -294,7 +300,6 @@ export function runBlocklyCode(code) {
             .replace(/(?<!await\s)wait\s*\(/g, 'await wait(')
             .replace(/(?<!await\s)delay\s*\(/g, 'await delay(');
 
-        // Fix : displaySensorData('fn()') → displaySensorData(fn())
         safeCode = safeCode.replace(
             /displaySensorData\(\s*['"]([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\s*\)\s*['"]\s*\)/g,
             'displaySensorData($1())'
@@ -306,7 +311,11 @@ export function runBlocklyCode(code) {
 
         console.log("✅ Code après fix:\n", safeCode);
 
-        // FIX [10] : followPerson, onPersonDetected, onDetected, onLost ajoutés
+        // Versions interruptibles de pause/wait/delay capturant le signal
+        const _pauseS = (ms = 1000) => _pauseInternal(ms, signal);
+        const _waitS = (ms = 1000) => _pauseInternal(ms, signal);
+        const _delayS = (ms = 1000) => _pauseInternal(ms, signal);
+
         const fn = new Function( // eslint-disable-line no-new-func
             'moveForward', 'moveBackward', 'turnLeft', 'turnRight', 'moveLeft', 'moveRight', 'stopRobot',
             'wait', 'pause', 'delay', 'repeat',
@@ -336,7 +345,6 @@ export function runBlocklyCode(code) {
             'variableDetection', 'multipleObjectTracking', 'multipleAIDetection',
             'detectObject', 'getDetection', 'startTracking', 'stopTracking',
             'isDetected', 'getDetectedClass',
-            // FIX [10] : nouveaux paramètres IA
             'followPerson', 'onPersonDetected', 'onDetected', 'onLost',
             'controllerMode', 'driveModeControls', 'speedControl',
             'log', 'print',
@@ -344,10 +352,14 @@ export function runBlocklyCode(code) {
             return (async () => {
                 try {
                     ${safeCode}
-                    if (typeof start   === 'function') { console.log("▶ start()");   await start();   console.log("✅ start() terminé"); }
+                    if (typeof start   === 'function') { console.log("▶ start()");    await start();   console.log("✅ start() terminé"); }
                     if (typeof forever === 'function') { console.log("🔁 forever()"); await forever(); console.log("✅ forever() terminé"); }
                 } catch(e) {
-                    console.error("❌ Erreur Blockly:", e);
+                    if (e.name === 'AbortError') {
+                        console.log("⏹ Programme arrêté proprement.");
+                    } else {
+                        console.error("❌ Erreur Blockly:", e);
+                    }
                 }
             })();
             `
@@ -355,7 +367,7 @@ export function runBlocklyCode(code) {
 
         fn(
             moveForward, moveBackward, turnLeft, turnRight, moveLeft, moveRight, stopRobot,
-            wait, pause, delay, repeat,
+            _waitS, _pauseS, _delayS, repeat,
             getDistance, getSonar, getSpeed, getObstacle, getSensor,
             getUltrasonicDistance, getSonarDistance, getLeftWheelSpeed, getRightWheelSpeed,
             getBatteryLevel, getSignalStrength,
@@ -382,7 +394,6 @@ export function runBlocklyCode(code) {
             variableDetection, multipleObjectTracking, multipleAIDetection,
             detectObject, getDetection, startTracking, stopTracking,
             isDetected, getDetectedClass,
-            // FIX [10]
             followPerson, onPersonDetected, onDetected, onLost,
             controllerMode, driveModeControls, speedControl,
             log, print

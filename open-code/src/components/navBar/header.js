@@ -1,146 +1,216 @@
 import React, { useContext, useState } from 'react';
-import { ThemeContext } from "../../App";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { StoreContext } from "../../context/context";
 import { PathName } from "../../utils/constants";
+import { useGameScore } from '../../utils/useGameScore';
 
-export function Header() {
-    const { theme, toggleTheme } = useContext(ThemeContext);
-    const { projectName, setProjectName, user } = useContext(StoreContext);
-    const [open, setOpen] = useState(false);
-    const location = useLocation();
+const CITATIONS = [
+    "Code your robot, explore the world.",
+    "Every line of code is a step toward the future.",
+    "Robots obey those who dare to program.",
+    "Error = learning. Keep coding.",
+    "A good algorithm is worth a thousand words.",
+    "Think. Code. Test. Repeat.",
+    "Your robot is waiting for your instructions.",
+    "Perseverance is the best algorithm.",
+]
+
+function GameHUD() {
+    const { score, level, xp, xpNeeded, scoreAnim } = useGameScore();
+    const xpPct = Math.min(100, Math.round((xp / xpNeeded) * 100));
+    const G = a => `rgba(232,160,85,${a})`;
 
     return (
         <div style={{
-            height: '4.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 1.5rem',
-            background: 'rgba(2,5,16,.92)',
-            borderBottom: '1px solid rgba(108,190,255,.15)',
-            backdropFilter: 'blur(24px)',
-            position: 'relative',
-            zIndex: 20,
+            display: 'flex', alignItems: 'stretch',
+            background: 'rgba(12,6,1,.8)',
+            border: `1px solid ${G(.2)}`,
+            borderRadius: 8,
+            overflow: 'hidden',
             flexShrink: 0,
         }}>
-            <style>{`
-                @keyframes logo-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
-                .nav-icon-btn:hover { background:rgba(108,190,255,.22)!important; transform:translateY(-1px); }
-                .nav-sign-btn:hover { transform:translateY(-2px); box-shadow:0 6px 25px rgba(108,190,255,.55)!important; }
-                .nav-project:hover { background:rgba(251,191,36,.12)!important; border-color:rgba(251,191,36,.35)!important; }
-            `}</style>
-
-            {/* ── GAUCHE : Logo ── */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '.8rem' }}>
-                <div style={{
-                    width: '42px', height: '42px', borderRadius: '50%',
-                    background: 'conic-gradient(from 0deg, #6cbefd, #a78bfa, #f472b6, #6cbefd)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 0 18px rgba(108,190,255,.5)',
-                    animation: 'logo-spin 8s linear infinite',
-                    flexShrink: 0,
+            {/* SCORE */}
+            <div style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                padding: '0 12px',
+                borderRight: `1px solid ${G(.12)}`,
+                gap: 1,
+            }}>
+                <span style={{ fontSize: 10, color: G(.4), fontFamily: "'Cinzel',serif", letterSpacing: '.1em' }}>SCORE</span>
+                <span style={{
+                    fontSize: 20, fontWeight: 400, color: '#e8a055',
+                    fontFamily: "'Space Mono',monospace",
+                    animation: scoreAnim ? 'hdrBump .35s ease' : 'none',
                 }}>
-                    <span style={{ fontSize: '1.3rem', animation: 'logo-spin 8s linear infinite reverse' }}>🤖</span>
-                </div>
-                <div>
-                    <div style={{
-                        fontFamily: "'Fredoka One',cursive",
-                        fontSize: '1.5rem',
-                        background: 'linear-gradient(135deg,#6cbefd,#a78bfa,#f472b6)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        letterSpacing: '.06em',
-                        lineHeight: 1,
-                    }}>NomadVerse</div>
-                    <div style={{
-                        fontSize: '.58rem',
-                        color: 'rgba(200,221,240,.4)',
-                        letterSpacing: '.15em',
-                        textTransform: 'uppercase',
-                        fontWeight: 700,
-                    }}>Your code. Your robot. Your world</div>
-                </div>
+                    {score}
+                </span>
             </div>
 
-            {/* ── CENTRE : Nom du projet ── */}
-            {location.pathname === PathName.playGround && (
-                <div
-                    onClick={() => setOpen(!open)}
-                    className="nav-project"
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: '.5rem',
-                        fontFamily: "'Fredoka One',cursive", fontSize: '1.05rem',
-                        color: '#fbbf24',
-                        textShadow: '0 0 18px rgba(251,191,36,.4)',
-                        letterSpacing: '.08em',
-                        background: 'rgba(251,191,36,.07)',
-                        border: '1px solid rgba(251,191,36,.18)',
-                        padding: '.35rem 1.2rem', borderRadius: '50px',
-                        cursor: 'pointer', transition: 'all .2s',
-                    }}
-                >
-                    🪐 <span>{projectName || 'mon-projet'}</span>
-                    <span style={{ fontSize: '.8rem', opacity: .5 }}>▾</span>
-                </div>
-            )}
-
-            {/* ── DROITE : Score + Niveau ── */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '.8rem' }}>
-
-                {/* Score */}
-                <div style={{
-                    display: 'flex', alignItems: 'center', gap: '.5rem',
-                    padding: '.35rem 1.1rem', borderRadius: '20px',
-                    background: 'rgba(52,211,153,.08)',
-                    border: '1px solid rgba(52,211,153,.22)',
-                }}>
-                    <span style={{ fontSize: '1.1rem' }}>🏆</span>
-                    <div>
-                        <div style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.65rem', color: 'rgba(200,221,240,.4)', letterSpacing: '.1em' }}>SCORE:</div>
+            {/* LEVEL */}
+            <div style={{
+                display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                padding: '5px 12px', gap: 3, minWidth: 110,
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 10, color: G(.4), fontFamily: "'Cinzel',serif", letterSpacing: '.1em' }}>LEVEL</span>
+                    <div style={{ display: 'flex', gap: 2 }}>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <span key={i} style={{ fontSize: 12, color: i < level ? '#e8a055' : G(.15) }}>★</span>
+                        ))}
                     </div>
+                    <span style={{ fontSize: 17, color: '#e8a055', fontFamily: "'Space Mono',monospace" }}>{level}</span>
                 </div>
-
-                {/* Niveau avec étoiles dynamiques */}
-                <div style={{
-                    display: 'flex', alignItems: 'center', gap: '.5rem',
-                    padding: '.35rem 1.1rem', borderRadius: '20px',
-                    background: 'rgba(251,191,36,.08)',
-                    border: '1px solid rgba(251,191,36,.22)',
-                }}>
-                    <span style={{ fontSize: '1.1rem' }}>🌟</span>
-                    <div>
-                        <div style={{ fontFamily: "'Fredoka One',cursive", fontSize: '.65rem', color: 'rgba(200,221,240,.4)', letterSpacing: '.1em' }}>LEVEL</div>
-                        <div style={{ display: 'flex', gap: '1px' }}>
-                            {['⭐', '☆', '☆', '☆', '☆'].map((s, i) => (
-                                <span key={i} style={{ fontSize: '.7rem', lineHeight: 1 }}>{s}</span>
-                            ))}
-                        </div>
-                    </div>
+                <div style={{ width: '100%', height: 3, background: G(.1), borderRadius: 1, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${xpPct}%`, background: 'linear-gradient(90deg,#6a3200,#e8a055)', borderRadius: 1, transition: 'width .5s' }} />
                 </div>
-
-                {/* Avatar / profil */}
-                {user?.photoURL ? (
-                    <img
-                        src={user.photoURL}
-                        alt="profil"
-                        style={{
-                            width: '38px', height: '38px', borderRadius: '50%',
-                            border: '2px solid rgba(108,190,255,.4)',
-                            cursor: 'pointer',
-                            boxShadow: '0 0 12px rgba(108,190,255,.3)',
-                        }}
-                    />
-                ) : (
-                    <div style={{
-                        width: '38px', height: '38px', borderRadius: '50%',
-                        background: 'linear-gradient(135deg,#6cbefd,#a78bfa)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '1.2rem', cursor: 'pointer',
-                        boxShadow: '0 0 12px rgba(108,190,255,.3)',
-                    }}>👨‍🚀</div>
-                )}
+                <span style={{ fontSize: 9, color: G(.28), fontFamily: "'Space Mono',monospace" }}>{xp} / {xpNeeded} XP</span>
             </div>
         </div>
+    );
+}
+
+export function Header() {
+    const { user } = useContext(StoreContext);
+    const location = useLocation();
+    const isPlayground = location.pathname === PathName.playGround;
+
+    const [citIdx, setCitIdx] = useState(() => Math.floor(Math.random() * CITATIONS.length));
+    const [citKey, setCitKey] = useState(0);
+    const nextCit = () => { setCitIdx(i => (i + 1) % CITATIONS.length); setCitKey(k => k + 1); };
+
+    const G = a => `rgba(232,160,85,${a})`;
+
+    const initials = user?.displayName
+        ? user.displayName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+        : 'N';
+
+    return (
+        <>
+            <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600&family=Space+Mono:wght@400&family=Nunito:wght@400;600&display=swap');
+                @keyframes hdrShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
+                @keyframes hdrBlink   { 0%,100%{opacity:1} 50%{opacity:.2} }
+                @keyframes hdrCitFade { from{opacity:0;transform:translateY(2px)} to{opacity:1;transform:none} }
+                @keyframes hdrBump    { 0%{transform:scale(1)} 40%{transform:scale(1.3)} 100%{transform:scale(1)} }
+            `}</style>
+
+            <div style={{
+                height: 58,
+                display: 'flex',
+                alignItems: 'center',
+                padding: '0 14px',
+                gap: 10,
+                background: 'rgba(10,5,1,.98)',
+                borderBottom: `1px solid ${G(.15)}`,
+                position: 'relative',
+                zIndex: 20,
+                flexShrink: 0,
+            }}>
+                {/* Ligne dorée bas */}
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, background: `linear-gradient(90deg,transparent,${G(.4)} 30%,${G(.6)} 50%,${G(.4)} 70%,transparent)`, pointerEvents: 'none' }} />
+
+                {/* ── LOGO ── */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexShrink: 0 }}>
+                    <div style={{
+                        width: 34, height: 34, borderRadius: 8, flexShrink: 0,
+                        background: 'linear-gradient(135deg,#1c0a00,#3d1a00)',
+                        border: `1px solid ${G(.25)}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 17,
+                    }}>🤖</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
+                        <span style={{
+                            fontFamily: "'Cinzel',serif", fontSize: 20, fontWeight: 800,
+                            background: `linear-gradient(90deg,#b09060,#e8a055,#f0ddb8,#e8a055,#b09060)`,
+                            backgroundSize: '200% auto',
+                            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text',
+                            animation: 'hdrShimmer 5s linear infinite',
+                        }}>NomadVerse</span>
+                        <span style={{
+                            fontSize: 15, color: G(.28), letterSpacing: '.05em',
+                            fontFamily: "'Nunito',sans-serif", marginTop: 2,
+                        }}>YOUR CODE · YOUR ROBOT · YOUR WORLD</span>
+                    </div>
+                </div>
+
+                {/* Séparateur */}
+                <div style={{ width: 1, height: 22, background: G(.1), flexShrink: 0 }} />
+
+                {/* ── CITATION ── */}
+                {isPlayground ? (
+                    <div style={{
+                        flex: 1, minWidth: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        gap: 6, padding: '0 4px',
+                    }}>
+                        <span style={{ fontSize: 11, color: G(.25), flexShrink: 0 }}>✦</span>
+                        <span key={citKey} style={{
+                            fontFamily: "'Cinzel',serif", fontSize: 11, fontStyle: 'italic',
+                            color: G(.45), letterSpacing: '.02em',
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                            animation: 'hdrCitFade .35s ease',
+                        }}>"{CITATIONS[citIdx]}"</span>
+                        <button onClick={nextCit} style={{
+                            flexShrink: 0, background: G(.05), border: `1px solid ${G(.1)}`,
+                            borderRadius: 5, width: 20, height: 20,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', color: G(.4), fontSize: 12, transition: 'all .18s',
+                        }}
+                            onMouseEnter={e => { e.currentTarget.style.background = G(.12); e.currentTarget.style.color = '#e8a055'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = G(.05); e.currentTarget.style.color = G(.35); }}
+                        >↻</button>
+                    </div>
+                ) : <div style={{ flex: 1 }} />}
+
+                {/* Séparateur */}
+                <div style={{ width: 1, height: 22, background: G(.1), flexShrink: 0 }} />
+
+                {/* ── HUD SCORE + LEVEL ── */}
+                {isPlayground && <GameHUD />}
+
+                {/* Séparateur */}
+                <div style={{ width: 1, height: 22, background: G(.1), flexShrink: 0 }} />
+
+                {/* ── NOTIF ── */}
+                <div style={{
+                    width: 32, height: 32, borderRadius: 8, flexShrink: 0,
+                    background: G(.04), border: `1px solid ${G(.1)}`,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', fontSize: 15, position: 'relative', transition: 'all .18s',
+                }}
+                    onMouseEnter={e => e.currentTarget.style.background = G(.12)}
+                    onMouseLeave={e => e.currentTarget.style.background = G(.04)}
+                    title="Notifications">
+                    🔔
+                    <div style={{
+                        position: 'absolute', top: 5, right: 5,
+                        width: 7, height: 7, borderRadius: '50%',
+                        background: '#e8a055', border: `1.5px solid rgba(10,5,1,.98)`,
+                        animation: 'hdrBlink 2.5s ease-in-out infinite',
+                    }} />
+                </div>
+
+                {/* ── AVATAR ── */}
+                <div style={{
+                    width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                    background: 'linear-gradient(135deg,#2a0860,#6a20b0)',
+                    border: '1.5px solid rgba(150,80,240,.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', fontSize: 13, fontWeight: 400, color: '#e0c0ff',
+                    fontFamily: "'Nunito',sans-serif", overflow: 'hidden',
+                    transition: 'all .18s',
+                }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(180,120,255,.6)'; e.currentTarget.style.transform = 'scale(1.06)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(150,80,240,.3)'; e.currentTarget.style.transform = 'scale(1)'; }}
+                    title="Mon profil">
+                    {user?.photoURL
+                        ? <img src={user.photoURL} alt="profil" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                        : initials
+                    }
+                </div>
+
+            </div>
+        </>
     );
 }

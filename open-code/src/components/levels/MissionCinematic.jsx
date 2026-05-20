@@ -23,14 +23,14 @@ export default function MissionCinematic({ level, onComplete }) {
     const intervalRef = useRef(null);
     const rafRef = useRef(null);
     const loadingLineRef = useRef(0);
-    const [loadingLine, setLoadingLine] = useState('DÉROULEMENT DU PARCHEMIN...');
+    const [loadingLine, setLoadingLine] = useState('UNROLLING THE SCROLL...');
 
     const LOADING_LINES = [
-        'DÉROULEMENT DU PARCHEMIN...',
-        'SCEAU DU SULTANAT APPOSÉ...',
-        'LECTURE DE LA MISSIVE...',
-        'DÉCRYPTAGE DES ARABESQUES...',
-        'PARCHEMIN PRÊT',
+        'UNROLLING THE SCROLL...',
+        'SULTANATE SEAL APPLIED...',
+        'READING THE MISSIVE...',
+        'DECIPHERING THE ARABESQUES...',
+        'SCROLL READY',
     ];
 
     const videoSrc = getVideo(level.id);
@@ -186,7 +186,7 @@ export default function MissionCinematic({ level, onComplete }) {
                 <div style={{ position: 'absolute', inset: 0, zIndex: 50, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <video ref={videoRef} src={videoSrc} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onEnded={handleVideoEnd} muted={false} playsInline />
                     <button onClick={skipVideo} style={{ position: 'absolute', bottom: '1.5rem', right: '1.5rem', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(201,168,76,0.3)', color: 'rgba(201,168,76,0.6)', fontSize: '0.65rem', padding: '5px 14px', cursor: 'pointer', fontFamily: "'Cinzel',serif", letterSpacing: 2, zIndex: 10 }}>
-                        PASSER ▶▶
+                        SKIP ▶▶
                     </button>
                     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: '120px', background: 'linear-gradient(transparent,rgba(0,0,0,0.7))', pointerEvents: 'none' }} />
                     <div style={{ position: 'absolute', bottom: '3rem', left: 0, right: 0, textAlign: 'center', pointerEvents: 'none' }}>
@@ -216,12 +216,12 @@ export default function MissionCinematic({ level, onComplete }) {
                                 <div style={{ color: '#c9a84c66', fontSize: '1.1rem', letterSpacing: 8 }}>✦ ✦ ✦</div>
                                 <div style={S.transLine}>{loadingLine}</div>
                                 <div style={S.progressWrap}><div style={{ ...S.progressFill, width: `${pct}%` }} /></div>
-                                <div style={{ ...S.tag, opacity: tagVisible ? 1 : 0, transition: 'opacity 0.5s' }}>SULTANAT DE NOMADVERSE</div>
+                                <div style={{ ...S.tag, opacity: tagVisible ? 1 : 0, transition: 'opacity 0.5s' }}>SULTANATE OF NOMADVERSE</div>
                             </div>
                         )}
                         {phase === 'identity' && (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.8rem', animation: 'fadeIn 0.7s ease' }}>
-                                <div style={S.tag}>MISSIVE OFFICIELLE — NIVEAU {String(level.id).padStart(2, '0')}</div>
+                                <div style={S.tag}>OFFICIAL MISSIVE — LEVEL {String(level.id).padStart(2, '0')}</div>
                                 <div style={{ position: 'relative', width: 90, height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <svg viewBox="0 0 90 90" width="90" height="90" style={{ position: 'absolute', animation: 'spin 18s linear infinite' }}>
                                         <circle cx="45" cy="45" r="40" fill="none" stroke="#c9a84c" strokeWidth="0.8" strokeDasharray="4 3" />
@@ -239,7 +239,7 @@ export default function MissionCinematic({ level, onComplete }) {
                         )}
                         {phase === 'briefing' && (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.8rem', animation: 'fadeIn 0.7s ease' }}>
-                                <div style={S.tag}>PAROLE DU GRAND VIZIR</div>
+                                <div style={S.tag}>WORD OF THE GRAND VIZIER</div>
                                 <div style={S.divider} />
                                 <div style={S.storyText}>
                                     {storyText}
@@ -250,23 +250,23 @@ export default function MissionCinematic({ level, onComplete }) {
                         )}
                         {phase === 'objective' && (
                             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.8rem', animation: 'fadeIn 0.7s ease' }}>
-                                <div style={S.tag}>DÉCRET DE MISSION</div>
+                                <div style={S.tag}>MISSION DECREE</div>
                                 <div style={S.objBox}>
-                                    <div style={S.objLabel}>Directive Principale</div>
+                                    <div style={S.objLabel}>Main Directive</div>
                                     <div style={S.objVal}>{level.description} — <strong style={{ color: '#c9a84c' }}>{level.hint}</strong></div>
                                 </div>
-                                <div style={S.hintBox}>✦ Indice : {level.hint}</div>
+                                <div style={S.hintBox}>✦ Hint: {level.hint}</div>
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                                     {starsToShow.map((lit, i) => <StarIcon key={i} lit={lit} />)}
                                 </div>
                                 <button style={S.btnLaunch} onClick={onComplete}>
-                                    ✦ ACCEPTER LA MISSION ✦
+                                    ✦ ACCEPT THE MISSION ✦
                                 </button>
                             </div>
                         )}
                     </div>
                     {phase !== 'objective' && (
-                        <button style={S.skipBtn} onClick={skipToEnd}>PASSER ▶▶</button>
+                        <button style={S.skipBtn} onClick={skipToEnd}>SKIP ▶▶</button>
                     )}
                 </>
             )}

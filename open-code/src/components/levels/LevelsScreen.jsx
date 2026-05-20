@@ -1,7 +1,7 @@
 // src/components/levels/LevelsScreen.jsx
 import { LEVELS } from '../../data/levels';
 
-const diffColor = { 'Débutant': '#4caf50', 'Intermédiaire': '#f0a500', 'Avancé': '#e53935' };
+const diffColor = { 'Beginner': '#4caf50', 'Intermediate': '#f0a500', 'Advanced': '#e53935' };
 
 const Stars = ({ count }) => (
     <div style={{ display: 'flex', gap: 2 }}>
@@ -36,7 +36,7 @@ const LevelCard = ({ level, onClick, isCompleted, isActive }) => {
             onMouseEnter={e => { if (!isLocked) { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 8px 28px rgba(240,165,0,.28)'; } }}
             onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = isLocked ? 'none' : '0 0 16px rgba(240,165,0,.12)'; }}
         >
-            {/* Coins */}
+            {/* Corners */}
             {[
                 { top: 0, left: 0, borderTop: '2px solid #f0a500', borderLeft: '2px solid #f0a500' },
                 { top: 0, right: 0, borderTop: '2px solid #f0a500', borderRight: '2px solid #f0a500' },
@@ -44,7 +44,7 @@ const LevelCard = ({ level, onClick, isCompleted, isActive }) => {
                 { bottom: 0, right: 0, borderBottom: '2px solid #f0a500', borderRight: '2px solid #f0a500' },
             ].map((s, i) => <div key={i} style={{ position: 'absolute', width: 10, height: 10, ...s }} />)}
 
-            {/* Badge level */}
+            {/* Level badge */}
             <div style={{
                 position: 'absolute', top: 8, left: 8, zIndex: 2,
                 background: 'linear-gradient(135deg,rgba(240,165,0,.2),rgba(240,165,0,.08))',
@@ -57,7 +57,7 @@ const LevelCard = ({ level, onClick, isCompleted, isActive }) => {
             </div>
 
             {isLocked && <div style={{ position: 'absolute', top: 8, right: 8, fontSize: '.9rem', opacity: .45, zIndex: 2 }}>🔒</div>}
-            {isActive && <div style={{ position: 'absolute', top: 8, right: 8, fontSize: '.7rem', color: '#f0a500', fontFamily: "'Cinzel',serif", zIndex: 2 }}>▶ EN COURS</div>}
+            {isActive && <div style={{ position: 'absolute', top: 8, right: 8, fontSize: '.7rem', color: '#f0a500', fontFamily: "'Cinzel',serif", zIndex: 2 }}>▶ IN PROGRESS</div>}
 
             {/* Image */}
             <div style={{
@@ -77,7 +77,7 @@ const LevelCard = ({ level, onClick, isCompleted, isActive }) => {
                 </span>
             </div>
 
-            {/* Contenu */}
+            {/* Content */}
             <div style={{ padding: '10px 12px 12px' }}>
                 <div style={{
                     fontFamily: "'Cinzel',serif", fontSize: '.78rem', fontWeight: 700,
@@ -114,7 +114,7 @@ const LevelCard = ({ level, onClick, isCompleted, isActive }) => {
                 </div>
 
                 {isCompleted && (
-                    <div style={{ marginTop: 6, fontSize: '.55rem', color: '#4caf50', fontFamily: "'Cinzel',serif", letterSpacing: 1 }}>✅ COMPLÉTÉ</div>
+                    <div style={{ marginTop: 6, fontSize: '.55rem', color: '#4caf50', fontFamily: "'Cinzel',serif", letterSpacing: 1 }}>✅ COMPLETED</div>
                 )}
 
                 <div style={{
@@ -151,7 +151,7 @@ function LevelsScreen({ onSelectLevel, onBack, completedLevels = [], activeMissi
                 background: 'linear-gradient(160deg,#080c1a 0%,#0d1528 50%,#060a14 100%)',
             }} />
 
-            {/* Grille de fond */}
+            {/* Background grid */}
             <div style={{
                 position: 'fixed', inset: 0, pointerEvents: 'none',
                 backgroundImage: 'linear-gradient(rgba(240,165,0,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(240,165,0,.025) 1px,transparent 1px)',
@@ -170,14 +170,14 @@ function LevelsScreen({ onSelectLevel, onBack, completedLevels = [], activeMissi
 
             <div style={{ maxWidth: 1120, margin: '0 auto', padding: '36px 28px 56px', position: 'relative' }}>
 
-                {/* Bouton retour */}
+                {/* Back button */}
                 <button onClick={onBack} style={{
                     position: 'absolute', left: 28, top: 0,
                     background: 'transparent', border: '1px solid rgba(240,165,0,.4)',
                     color: '#f0a500', fontFamily: "'Cinzel',serif",
                     fontSize: '.68rem', letterSpacing: '.15em',
                     padding: '5px 13px', cursor: 'pointer', borderRadius: 2,
-                }}>← RETOUR</button>
+                }}>← BACK</button>
 
                 {/* Header */}
                 <div style={{ textAlign: 'center', marginBottom: 40 }}>
@@ -192,10 +192,10 @@ function LevelsScreen({ onSelectLevel, onBack, completedLevels = [], activeMissi
                         fontFamily: "'Cinzel',serif", fontSize: '.7rem',
                         color: 'rgba(255,200,80,.38)', letterSpacing: '.4em',
                         marginTop: 8, textTransform: 'uppercase',
-                    }}>UN MONDE D'IA ET D'HISTOIRE</p>
+                    }}>A WORLD OF AI AND HISTORY</p>
                 </div>
 
-                {/* Grille 3x2 levels */}
+                {/* 3x2 level grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
                     {LEVELS.map((level, i) => (
                         <div key={level.id} style={{ animation: `ls-fadeIn .45s ${i * .08}s ease both` }}>

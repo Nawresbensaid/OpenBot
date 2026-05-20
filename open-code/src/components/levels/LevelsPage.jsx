@@ -9,7 +9,7 @@ function LevelsPage() {
     return (
         <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
             <h1 style={{ fontFamily: "'Fredoka One'", color: '#6cbefd', textAlign: 'center' }}>
-                🗺️ Choisir un level
+                🗺️ Choose a level
             </h1>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginTop: '2rem' }}>
                 {LEVELS.map(level => (

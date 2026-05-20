@@ -9,37 +9,49 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 
 /**
  * functional component for qr code
- * @returns {JSX.Element}
- * @constructor
+ * Le QR encode le lien Drive de téléchargement direct
+ * Format : https://drive.google.com/uc?export=download&id=FILE_ID
+ * → l'app OpenBot scanne ce QR, télécharge le .js et l'exécute sur le robot
  */
 const QrCode = () => {
-    const [blockCode, setBlockCode] = useState(undefined);
-    const { code, generateCode: generate } = useContext(StoreContext);
+    const [qrValue, setQrValue] = useState(undefined);
+    const { code, generateCode: generate, driveLink } = useContext(StoreContext);
     const themes = useTheme();
     const isMobile = useMediaQuery(themes.breakpoints.down('md'));
 
     useEffect(() => {
-        const qrCodeEncoder = () => {
-            setBlockCode(JSON.stringify(code));
-        };
-        qrCodeEncoder();
-    }, [code, generate]);
+        if (driveLink) {
+            // ✅ Cas 1 : fichier uploadé sur Drive → QR = lien téléchargement direct
+            setQrValue(driveLink);
+            console.log('📲 QR encode le lien Drive:', driveLink);
+        } else if (code) {
+            // ⚠️ Cas 2 : pas encore uploadé → QR encode le code brut (fallback)
+            setQrValue(JSON.stringify(code));
+            console.log('⚠️ QR encode le code brut (pas encore uploadé sur Drive)');
+        }
+    }, [code, generate, driveLink]);
 
-
-    const qrcode = (
+    const qrcode = qrValue ? (
         <QRCodeCanvas
             id="qrCode"
-            value={blockCode}
+            value={qrValue}
             size={isMobile ? 130 : 200}
             bgColor={colors.whiteFont}
             includeMargin={true}
             imageSettings={{ src: icon }}
         />
+    ) : null;
 
-    );
     return (
         <div className="qrcode__container">
-            <div style={isMobile ? qrStyles.mobileMain : qrStyles.main}>{qrcode}</div>
+            <div style={isMobile ? qrStyles.mobileMain : qrStyles.main}>
+                {qrcode}
+                {driveLink && (
+                    <p style={{ fontSize: 10, textAlign: 'center', marginTop: 4, wordBreak: 'break-all', color: '#555' }}>
+                        {driveLink}
+                    </p>
+                )}
+            </div>
         </div>
     );
 };

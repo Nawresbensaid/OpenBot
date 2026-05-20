@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Fredoka+One&family=Nunito:wght@400;700;800;900&family=Space+Mono:wght@400;700&display=swap');
 
-/* ===== APP.CSS — THÈME NOMADVERSE DÉSERT ARABESQUE ===== */
+/* ===== APP.CSS — THÈME NOMADVERSE AMBER DOUX ===== */
 
 * {
     margin: 0;
@@ -11,7 +11,7 @@
 body,
 #root {
     background: transparent !important;
-    color: #e8d88a !important;
+    color: #e8c9a0 !important;
     min-height: 100vh;
 }
 
@@ -54,17 +54,17 @@ nav,
 [class*="Header"],
 [class*="appBar"],
 [class*="AppBar"] {
-    background: linear-gradient(90deg, #0a0600 0%, #1a0e02 50%, #0a0600 100%) !important;
-    border-bottom: 2px solid rgba(201, 168, 76, 0.3) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
+    background: linear-gradient(90deg, #0e0905 0%, #1a0e05 50%, #0e0905 100%) !important;
+    border-bottom: 1.5px solid rgba(210, 160, 80, 0.25) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5) !important;
 }
 
 /* ── Logo ── */
 [class*="logo"],
 [class*="Logo"] {
-    color: #c9a84c !important;
+    color: #d4a85c !important;
     font-family: 'Cinzel', serif !important;
-    text-shadow: 0 0 20px rgba(201, 168, 76, 0.6) !important;
+    text-shadow: 0 0 20px rgba(210, 160, 80, 0.45) !important;
     font-size: 1.4rem !important;
 }
 
@@ -74,9 +74,9 @@ button,
 [class*="Btn"],
 [class*="button"],
 [class*="Button"] {
-    background: linear-gradient(135deg, rgba(201, 168, 76, 0.12), rgba(160, 120, 30, 0.08)) !important;
-    color: #e8d88a !important;
-    border: 1px solid rgba(201, 168, 76, 0.28) !important;
+    background: linear-gradient(135deg, rgba(210, 160, 80, 0.10), rgba(180, 120, 40, 0.07)) !important;
+    color: #e8c9a0 !important;
+    border: 1px solid rgba(210, 160, 80, 0.24) !important;
     border-radius: 6px !important;
     font-family: 'Gilroy-Bold', sans-serif !important;
     transition: all 0.2s ease !important;
@@ -85,66 +85,68 @@ button,
 
 button:hover,
 [class*="btn"]:hover {
-    background: linear-gradient(135deg, rgba(201, 168, 76, 0.22), rgba(160, 120, 30, 0.16)) !important;
-    border-color: rgba(201, 168, 76, 0.55) !important;
-    box-shadow: 0 4px 15px rgba(201, 168, 76, 0.2) !important;
+    background: linear-gradient(135deg, rgba(210, 160, 80, 0.18), rgba(180, 120, 40, 0.13)) !important;
+    border-color: rgba(210, 160, 80, 0.48) !important;
+    box-shadow: 0 4px 15px rgba(210, 160, 80, 0.15) !important;
     transform: translateY(-1px) !important;
 }
 
-/* ── Bouton Upload Code ── */
+/* ── Bouton Upload ── */
 [class*="upload"],
 [class*="Upload"] {
-    background: linear-gradient(135deg, #8a5800, #c9a84c) !important;
-    color: #0a0400 !important;
+    background: linear-gradient(135deg, #7a3800, #c47840) !important;
+    color: #0e0905 !important;
     border: none !important;
-    box-shadow: 0 4px 15px rgba(201, 168, 76, 0.35) !important;
+    box-shadow: 0 4px 15px rgba(210, 160, 80, 0.28) !important;
 }
 
-/* ── Panels ── */
+/* ── Panels / Cards ── */
 [class*="panel"],
 [class*="Panel"],
 [class*="card"],
 [class*="Card"] {
-    background: rgba(8, 5, 1, 0.82) !important;
-    border: 1px solid rgba(201, 168, 76, 0.18) !important;
+    background: rgba(10, 6, 2, 0.80) !important;
+    border: 1px solid rgba(210, 160, 80, 0.15) !important;
     border-radius: 8px !important;
     backdrop-filter: blur(10px) !important;
 }
 
-/* ── Textes ── */
+/* ── Titres ── */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-    color: #f0d080 !important;
+    color: #e8955a !important;
     font-family: 'Cinzel', serif !important;
 }
 
+/* ── Textes courants ── */
 p,
 span,
 label {
-    color: #c8b878 !important;
+    color: #c8a880 !important;
 }
 
+/* ── Liens ── */
 a {
-    color: #c9a84c !important;
+    color: #d4a85c !important;
     text-decoration: none !important;
 }
 
 a:hover {
-    color: #f0d080 !important;
-    text-shadow: 0 0 10px rgba(201, 168, 76, 0.6) !important;
+    color: #e8955a !important;
+    text-shadow: 0 0 10px rgba(210, 160, 80, 0.45) !important;
 }
 
 /* ── Inputs ── */
 input,
 textarea,
 select {
-    background: rgba(8, 5, 1, 0.88) !important;
-    color: #e8d88a !important;
-    border: 1.5px solid rgba(201, 168, 76, 0.25) !important;
+    background: rgba(10, 6, 2, 0.85) !important;
+    color: #e8c9a0 !important;
+    border: 1.5px solid rgba(210, 160, 80, 0.22) !important;
     border-radius: 6px !important;
     font-family: 'Gilroy-Medium', sans-serif !important;
     padding: 8px 12px !important;
@@ -152,9 +154,9 @@ select {
 
 input:focus,
 textarea:focus {
-    border-color: rgba(201, 168, 76, 0.6) !important;
+    border-color: rgba(210, 160, 80, 0.52) !important;
     outline: none !important;
-    box-shadow: 0 0 0 3px rgba(201, 168, 76, 0.1) !important;
+    box-shadow: 0 0 0 3px rgba(210, 160, 80, 0.08) !important;
 }
 
 /* ── Scrollbar ── */
@@ -164,28 +166,28 @@ textarea:focus {
 }
 
 ::-webkit-scrollbar-track {
-    background: rgba(8, 5, 1, 0.5);
+    background: rgba(10, 6, 2, 0.5);
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(201, 168, 76, 0.25);
+    background: rgba(210, 160, 80, 0.22);
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(201, 168, 76, 0.55);
+    background: rgba(210, 160, 80, 0.48);
 }
 
-/* ── Modal ── */
+/* ── Modals / Dialogs ── */
 [class*="modal"],
 [class*="Modal"],
 [class*="dialog"],
 [class*="Dialog"] {
-    background: linear-gradient(135deg, #0a0600, #060300) !important;
-    border: 1px solid rgba(201, 168, 76, 0.25) !important;
+    background: linear-gradient(135deg, #0e0905, #080501) !important;
+    border: 1px solid rgba(210, 160, 80, 0.22) !important;
     border-radius: 12px !important;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8) !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.75) !important;
 }
 
 /* ── Bottom bar ── */
@@ -195,52 +197,52 @@ textarea:focus {
 [class*="Bottom"],
 [class*="uploadBar"],
 [class*="UploadBar"] {
-    background: linear-gradient(90deg, #0a0600 0%, #1a0e02 50%, #0a0600 100%) !important;
-    border-top: 2px solid rgba(201, 168, 76, 0.2) !important;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5) !important;
+    background: linear-gradient(90deg, #0e0905 0%, #1a0e05 50%, #0e0905 100%) !important;
+    border-top: 1.5px solid rgba(210, 160, 80, 0.18) !important;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.45) !important;
 }
 
-/* ── Dropdown ── */
+/* ── Dropdowns / Menus ── */
 [class*="dropdown"],
 [class*="Dropdown"],
 [class*="menu"],
 [class*="Menu"] {
-    background: linear-gradient(135deg, #0f0900, #080500) !important;
-    border: 1px solid rgba(201, 168, 76, 0.2) !important;
+    background: linear-gradient(135deg, #120800, #0a0501) !important;
+    border: 1px solid rgba(210, 160, 80, 0.18) !important;
     border-radius: 8px !important;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7) !important;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.65) !important;
 }
 
 /* ── MUI overrides ── */
 .MuiPaper-root {
-    background: linear-gradient(135deg, #0a0600, #060300) !important;
-    color: #e8d88a !important;
+    background: linear-gradient(135deg, #0e0905, #080501) !important;
+    color: #e8c9a0 !important;
 }
 
 .MuiIconButton-root {
-    color: #c8b878 !important;
+    color: #c8a880 !important;
 }
 
 .MuiIconButton-root:hover {
-    background: rgba(201, 168, 76, 0.15) !important;
+    background: rgba(210, 160, 80, 0.12) !important;
 }
 
 .MuiSvgIcon-root {
-    color: #c8b878 !important;
+    color: #c8a880 !important;
 }
 
 .MuiTooltip-tooltip {
-    background: #0a0600 !important;
-    border: 1px solid rgba(201, 168, 76, 0.2) !important;
+    background: #0e0905 !important;
+    border: 1px solid rgba(210, 160, 80, 0.18) !important;
     border-radius: 6px !important;
     font-family: 'Gilroy-Medium', sans-serif !important;
+    color: #e8c9a0 !important;
 }
 
 /* ══════════════════════════════════════════════
-   BLOCKLY — fond désert arabesque
+   BLOCKLY — Amber Doux
    ══════════════════════════════════════════════ */
 
-/* Fond principal workspace */
 .blocklyMainBackground {
     fill: transparent !important;
 }
@@ -252,49 +254,53 @@ svg.blocklysvg,
     background-color: transparent !important;
 }
 
-/* Conteneur injection */
 .injectionDiv {
     background: transparent !important;
     background-color: transparent !important;
 }
 
-/* Grille dorée subtile au lieu de grise */
 .blocklyGrid path {
-    stroke: rgba(201, 168, 76, 0.07) !important;
+    stroke: rgba(210, 160, 80, 0.05) !important;
 }
 
-/* Scrollbars Blockly → or */
 .blocklyScrollbarHandle {
-    fill: rgba(201, 168, 76, 0.4) !important;
+    fill: rgba(210, 160, 80, 0.32) !important;
 }
 
 .blocklyScrollbarBackground {
-    fill: rgba(201, 168, 76, 0.04) !important;
+    fill: rgba(210, 160, 80, 0.03) !important;
 }
 
-/* Flyout (panneau des blocs) — fond sombre chaud */
 .blocklyFlyoutBackground {
-    fill: rgba(10, 6, 1, 0.88) !important;
+    fill: rgba(12, 7, 2, 0.90) !important;
 }
 
-/* Toolbox sidebar */
 .blocklyToolboxDiv {
-    background: rgba(8, 5, 1, 0.92) !important;
-    border-right: 1px solid rgba(201, 168, 76, 0.2) !important;
+    background: rgba(10, 6, 2, 0.92) !important;
+    border-right: 1px solid rgba(210, 160, 80, 0.16) !important;
 }
 
-/* Catégories toolbox */
 .blocklyTreeLabel {
-    color: #c8b878 !important;
+    color: #c8a880 !important;
     font-family: 'Nunito', sans-serif !important;
 }
 
 .blocklyTreeRow:hover .blocklyTreeLabel {
-    color: #f0d080 !important;
+    color: #e8955a !important;
 }
 
 .blocklyTreeSelected .blocklyTreeLabel {
-    color: #f0d080 !important;
+    color: #e8955a !important;
+}
+
+.blocklyTreeRow {
+    border-left: 2px solid transparent !important;
+    transition: all 0.2s !important;
+}
+
+.blocklyTreeSelected {
+    border-left-color: rgba(210, 160, 80, 0.45) !important;
+    background: rgba(210, 160, 80, 0.06) !important;
 }
 
 /* ── Carousel ── */
@@ -302,11 +308,11 @@ svg.blocklysvg,
 [class*="Carousel"],
 [class*="carouselDiv"],
 [class*="sliderDiv"] {
-    background: rgba(8, 5, 1, 0.75) !important;
-    border: 1px solid rgba(201, 168, 76, 0.15) !important;
+    background: rgba(10, 6, 2, 0.72) !important;
+    border: 1px solid rgba(210, 160, 80, 0.13) !important;
     border-radius: 12px !important;
     backdrop-filter: blur(12px) !important;
-    color: #e8d88a !important;
+    color: #e8c9a0 !important;
 }
 
 /* ── Project cards ── */
@@ -314,13 +320,13 @@ svg.blocklysvg,
 [class*="ProjectCard"],
 [class*="cardDiv"],
 [class*="project"] {
-    background: rgba(8, 5, 1, 0.82) !important;
-    border: 1px solid rgba(201, 168, 76, 0.2) !important;
+    background: rgba(10, 6, 2, 0.80) !important;
+    border: 1px solid rgba(210, 160, 80, 0.17) !important;
     border-radius: 12px !important;
-    color: #e8d88a !important;
+    color: #e8c9a0 !important;
 }
 
-/* ── Containers home ── */
+/* ── Home containers ── */
 [class*="homeDiv"],
 [class*="HomeDiv"],
 [class*="mainDiv"],
@@ -328,7 +334,7 @@ svg.blocklysvg,
 [class*="container"],
 [class*="Container"] {
     background: transparent !important;
-    color: #e8d88a !important;
+    color: #e8c9a0 !important;
 }
 
 /* ── Héritage couleurs ── */
@@ -349,20 +355,20 @@ div {
 /* ── MUI Cards ── */
 .MuiCard-root,
 .MuiPaper-root {
-    background: rgba(8, 5, 1, 0.88) !important;
-    border: 1px solid rgba(201, 168, 76, 0.2) !important;
-    color: #e8d88a !important;
+    background: rgba(10, 6, 2, 0.86) !important;
+    border: 1px solid rgba(210, 160, 80, 0.17) !important;
+    color: #e8c9a0 !important;
 }
 
 /* ── Backgrounds inline sombres ── */
 [style*="background-color: rgb(32, 32, 32)"],
 [style*="background-color:#202020"],
 [style*="backgroundColor: #202020"] {
-    background: radial-gradient(ellipse at 30% 40%, #1a0e02 0%, #060300 45%, #020100 100%) !important;
+    background: radial-gradient(ellipse at 30% 40%, #1a0e05 0%, #080401 45%, #030100 100%) !important;
 }
 
 /* ══════════════════════════════════════════════
-   KEYFRAMES globaux NomadVerse
+   KEYFRAMES globaux NomadVerse — Amber Doux
    ══════════════════════════════════════════════ */
 @keyframes goldShimmer {
     0% {
@@ -378,13 +384,13 @@ div {
 
     0%,
     100% {
-        opacity: 0.4;
+        opacity: 0.35;
         transform: scale(1);
     }
 
     50% {
-        opacity: 1;
-        transform: scale(1.15);
+        opacity: 0.90;
+        transform: scale(1.12);
     }
 }
 
@@ -392,10 +398,34 @@ div {
 
     0%,
     100% {
-        opacity: 0.35;
+        opacity: 0.28;
     }
 
     50% {
-        opacity: 0.9;
+        opacity: 0.80;
+    }
+}
+
+@keyframes amberGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 12px rgba(210, 160, 80, 0.20);
+    }
+
+    50% {
+        box-shadow: 0 0 28px rgba(210, 160, 80, 0.45);
+    }
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

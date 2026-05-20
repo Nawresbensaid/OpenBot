@@ -42,6 +42,10 @@ export default function StoreProvider({
     const [isDob, setIsDob] = useState(undefined);
     const [isAutoSyncEnabled, setIsAutoSyncEnabled] = useState(false);
 
+    // ✅ Lien Drive téléchargement direct — utilisé par le QR code
+    // Format : https://drive.google.com/uc?export=download&id=FILE_ID
+    const [driveLink, setDriveLink] = useState(null);
+
     // NomadVerse
     const [currentLevel, setCurrentLevel] = useState(1);
     const [completedLevels, setCompletedLevels] = useState([]);
@@ -83,6 +87,8 @@ export default function StoreProvider({
         score, setScore,
         stars, setStars,
         completeLevel,
+        // ✅ driveLink exposé dans le context
+        driveLink, setDriveLink,
     };
 
     return (

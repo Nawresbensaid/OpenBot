@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════
-// src/pages/SignUp/SignUp.jsx — VERSION POPUP
+// src/pages/SignUp/SignUp.jsx
 // ═══════════════════════════════════════════
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -16,7 +16,11 @@ export default function SignUp() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // ── Email Sign Up ──
+    // ── Toujours vers l'intro cinématique après inscription ──
+    const redirectAfterAuth = () => {
+        navigate('/intro-cinematic');
+    };
+
     const handleEmailSignUp = async (e) => {
         e.preventDefault();
         setError("");
@@ -29,7 +33,7 @@ export default function SignUp() {
             await updateProfile(userCredential.user, {
                 displayName: `${firstName.trim()} ${lastName.trim()}`
             });
-            navigate("/launch");
+            redirectAfterAuth();
         } catch (err) {
             console.error("❌ Email signup:", err.code, err.message);
             setError("Account creation failed. Email may already be in use.");
@@ -38,15 +42,13 @@ export default function SignUp() {
         }
     };
 
-    // ── Google Sign In (POPUP) ──
     const handleGoogleSignIn = async () => {
         setError("");
         setLoading(true);
         try {
             const result = await googleSignIn();
             if (result.user) {
-                console.log("✅ Google connecté :", result.user.email);
-                navigate("/launch");
+                redirectAfterAuth();
             }
         } catch (err) {
             console.error("❌ Google signin:", err.code, err.message);
@@ -119,9 +121,7 @@ export default function SignUp() {
                         <p style={styles.cardSub}>Create your explorer account</p>
                     </div>
 
-                    {/* ── Social buttons ── */}
                     <div style={styles.socialRow}>
-                        {/* Google */}
                         <button
                             style={styles.socialBtn}
                             onClick={handleGoogleSignIn}
@@ -151,14 +151,12 @@ export default function SignUp() {
                         </button>
                     </div>
 
-                    {/* ── Divider ── */}
                     <div style={styles.divider}>
                         <div style={styles.dividerLine} />
                         <span style={styles.dividerText}>or</span>
                         <div style={styles.dividerLine} />
                     </div>
 
-                    {/* ── Form ── */}
                     <form onSubmit={handleEmailSignUp} style={styles.form}>
                         <div style={styles.nameRow}>
                             <div style={styles.inputGroup}>
@@ -298,93 +296,31 @@ const styles = {
         color: "white", fontFamily: "Poppins, sans-serif",
         overflow: "hidden", position: "relative",
     },
-    arabesqueLayer1: {
-        position: "absolute", inset: 0,
-        backgroundImage: `url("https://www.transparenttextures.com/patterns/arabesque.png")`,
-        backgroundSize: "320px 320px", opacity: 0.1, pointerEvents: "none", zIndex: 0,
-    },
-    arabesqueLayer2: {
-        position: "absolute", inset: 0,
-        backgroundImage: `url("https://www.transparenttextures.com/patterns/arabesque.png")`,
-        backgroundSize: "160px 160px", backgroundPosition: "80px 80px",
-        opacity: 0.04, filter: "invert(1)", pointerEvents: "none", zIndex: 0,
-    },
-    arabescueMask: {
-        position: "absolute", inset: 0,
-        background: "radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(4,8,15,0.65) 70%)",
-        pointerEvents: "none", zIndex: 0,
-    },
-    nebulaGold: {
-        position: "absolute", top: "5%", left: "-5%", width: "500px", height: "500px",
-        borderRadius: "50%", background: "radial-gradient(circle, rgba(201,168,76,0.09) 0%, transparent 70%)",
-        filter: "blur(60px)", pointerEvents: "none", zIndex: 0,
-    },
-    nebulaBlue: {
-        position: "absolute", top: "0%", right: "-5%", width: "500px", height: "500px",
-        borderRadius: "50%", background: "radial-gradient(circle, rgba(30,80,180,0.09) 0%, transparent 70%)",
-        filter: "blur(70px)", pointerEvents: "none", zIndex: 0,
-    },
+    arabesqueLayer1: { position: "absolute", inset: 0, backgroundImage: `url("https://www.transparenttextures.com/patterns/arabesque.png")`, backgroundSize: "320px 320px", opacity: 0.1, pointerEvents: "none", zIndex: 0 },
+    arabesqueLayer2: { position: "absolute", inset: 0, backgroundImage: `url("https://www.transparenttextures.com/patterns/arabesque.png")`, backgroundSize: "160px 160px", backgroundPosition: "80px 80px", opacity: 0.04, filter: "invert(1)", pointerEvents: "none", zIndex: 0 },
+    arabescueMask: { position: "absolute", inset: 0, background: "radial-gradient(ellipse at 50% 50%, transparent 20%, rgba(4,8,15,0.65) 70%)", pointerEvents: "none", zIndex: 0 },
+    nebulaGold: { position: "absolute", top: "5%", left: "-5%", width: "500px", height: "500px", borderRadius: "50%", background: "radial-gradient(circle, rgba(201,168,76,0.09) 0%, transparent 70%)", filter: "blur(60px)", pointerEvents: "none", zIndex: 0 },
+    nebulaBlue: { position: "absolute", top: "0%", right: "-5%", width: "500px", height: "500px", borderRadius: "50%", background: "radial-gradient(circle, rgba(30,80,180,0.09) 0%, transparent 70%)", filter: "blur(70px)", pointerEvents: "none", zIndex: 0 },
     svgBg: { position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none", zIndex: 0 },
     dune: { position: "absolute", bottom: 0, left: 0, width: "100%", height: "300px", pointerEvents: "none", zIndex: 0 },
-    navbar: {
-        position: "relative", zIndex: 10, display: "flex", alignItems: "center",
-        justifyContent: "space-between", padding: "18px 60px",
-        background: "rgba(4,8,20,0.45)", backdropFilter: "blur(24px) saturate(180%)",
-        WebkitBackdropFilter: "blur(24px) saturate(180%)",
-        borderBottom: "1px solid rgba(201,168,76,0.15)",
-        boxShadow: "0 4px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,168,76,0.08)",
-    },
-    navTopLine: {
-        position: "absolute", top: 0, left: "10%", right: "10%", height: "1px",
-        background: "linear-gradient(to right, transparent, rgba(201,168,76,0.5), transparent)",
-    },
-    navLogo: {
-        fontSize: "17px", fontFamily: "Cinzel, serif", fontWeight: "700",
-        letterSpacing: "3px", color: "rgba(255,255,255,0.92)",
-        display: "flex", alignItems: "center", gap: "10px", cursor: "pointer",
-    },
+    navbar: { position: "relative", zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 60px", background: "rgba(4,8,20,0.45)", backdropFilter: "blur(24px) saturate(180%)", WebkitBackdropFilter: "blur(24px) saturate(180%)", borderBottom: "1px solid rgba(201,168,76,0.15)", boxShadow: "0 4px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,168,76,0.08)" },
+    navTopLine: { position: "absolute", top: 0, left: "10%", right: "10%", height: "1px", background: "linear-gradient(to right, transparent, rgba(201,168,76,0.5), transparent)" },
+    navLogo: { fontSize: "17px", fontFamily: "Cinzel, serif", fontWeight: "700", letterSpacing: "3px", color: "rgba(255,255,255,0.92)", display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" },
     navLogoN: { color: "#c9a84c", fontWeight: "900" },
     navBack: { fontSize: "12px", color: "rgba(255,255,255,0.45)", cursor: "pointer", letterSpacing: "1px" },
-    center: {
-        flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-        padding: "30px 20px", position: "relative", zIndex: 1,
-    },
-    card: {
-        position: "relative", width: "100%", maxWidth: "480px",
-        background: "rgba(4,8,20,0.75)", backdropFilter: "blur(30px) saturate(180%)",
-        WebkitBackdropFilter: "blur(30px) saturate(180%)",
-        border: "1px solid rgba(201,168,76,0.25)", borderRadius: "20px", padding: "36px 40px",
-        boxShadow: "0 0 60px rgba(201,168,76,0.08), 0 30px 80px rgba(0,0,0,0.6)",
-        animation: "fadeUp 0.8s ease",
-    },
+    center: { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "30px 20px", position: "relative", zIndex: 1 },
+    card: { position: "relative", width: "100%", maxWidth: "480px", background: "rgba(4,8,20,0.75)", backdropFilter: "blur(30px) saturate(180%)", WebkitBackdropFilter: "blur(30px) saturate(180%)", border: "1px solid rgba(201,168,76,0.25)", borderRadius: "20px", padding: "36px 40px", boxShadow: "0 0 60px rgba(201,168,76,0.08), 0 30px 80px rgba(0,0,0,0.6)", animation: "fadeUp 0.8s ease" },
     cornerTL: { position: "absolute", top: 0, left: 0, width: "22px", height: "22px", borderTop: "2px solid #c9a84c", borderLeft: "2px solid #c9a84c", borderRadius: "20px 0 0 0" },
     cornerTR: { position: "absolute", top: 0, right: 0, width: "22px", height: "22px", borderTop: "2px solid #c9a84c", borderRight: "2px solid #c9a84c", borderRadius: "0 20px 0 0" },
     cornerBL: { position: "absolute", bottom: 0, left: 0, width: "22px", height: "22px", borderBottom: "2px solid #c9a84c", borderLeft: "2px solid #c9a84c", borderRadius: "0 0 0 20px" },
     cornerBR: { position: "absolute", bottom: 0, right: 0, width: "22px", height: "22px", borderBottom: "2px solid #c9a84c", borderRight: "2px solid #c9a84c", borderRadius: "0 0 20px 0" },
-    cardHeader: {
-        textAlign: "center", marginBottom: "22px",
-        display: "flex", flexDirection: "column", alignItems: "center", gap: "10px",
-    },
-    badge: {
-        display: "inline-flex", alignItems: "center", gap: "7px",
-        background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.35)",
-        borderRadius: "50px", padding: "4px 12px", fontSize: "9px", color: "#c9a84c", letterSpacing: "2px",
-    },
+    cardHeader: { textAlign: "center", marginBottom: "22px", display: "flex", flexDirection: "column", alignItems: "center", gap: "10px" },
+    badge: { display: "inline-flex", alignItems: "center", gap: "7px", background: "rgba(201,168,76,0.12)", border: "1px solid rgba(201,168,76,0.35)", borderRadius: "50px", padding: "4px 12px", fontSize: "9px", color: "#c9a84c", letterSpacing: "2px" },
     badgeDot: { width: "5px", height: "5px", borderRadius: "50%", background: "#c9a84c", display: "inline-block", animation: "pulse 1.5s infinite" },
-    cardTitle: {
-        margin: 0, fontSize: "1.7rem", fontWeight: "900", fontFamily: "Cinzel, serif",
-        background: "linear-gradient(135deg, #f0d080, #c9a84c, #fff)",
-        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-    },
+    cardTitle: { margin: 0, fontSize: "1.7rem", fontWeight: "900", fontFamily: "Cinzel, serif", background: "linear-gradient(135deg, #f0d080, #c9a84c, #fff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" },
     cardSub: { margin: 0, fontSize: "13px", color: "rgba(255,255,255,0.45)", letterSpacing: "0.5px" },
     socialRow: { display: "flex", flexDirection: "column", gap: "10px", marginBottom: "4px" },
-    socialBtn: {
-        width: "100%", padding: "11px 16px", background: "rgba(255,255,255,0.05)",
-        border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px", color: "white",
-        fontSize: "13px", fontWeight: "600", cursor: "pointer",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        gap: "10px", transition: "all 0.2s", fontFamily: "Poppins, sans-serif",
-    },
+    socialBtn: { width: "100%", padding: "11px 16px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: "10px", color: "white", fontSize: "13px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", transition: "all 0.2s", fontFamily: "Poppins, sans-serif" },
     socialBtnText: { letterSpacing: "0.3px" },
     divider: { display: "flex", alignItems: "center", gap: "12px", margin: "16px 0" },
     dividerLine: { flex: 1, height: "1px", background: "rgba(201,168,76,0.15)" },
@@ -393,28 +329,12 @@ const styles = {
     nameRow: { display: "flex", gap: "12px" },
     inputGroup: { display: "flex", flexDirection: "column", gap: "6px", flex: 1 },
     label: { fontSize: "11px", color: "rgba(255,255,255,0.5)", letterSpacing: "1.5px", textTransform: "uppercase" },
-    input: {
-        padding: "11px 14px", background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(201,168,76,0.2)", borderRadius: "8px", color: "white",
-        fontSize: "13px", outline: "none", transition: "border-color 0.2s",
-        fontFamily: "Poppins, sans-serif", width: "100%", boxSizing: "border-box",
-    },
+    input: { padding: "11px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(201,168,76,0.2)", borderRadius: "8px", color: "white", fontSize: "13px", outline: "none", transition: "border-color 0.2s", fontFamily: "Poppins, sans-serif", width: "100%", boxSizing: "border-box" },
     strengthBar: { display: "flex", alignItems: "center", gap: "10px" },
     strengthFill: { height: "3px", borderRadius: "2px", flex: 1, transition: "width 0.3s, background 0.3s" },
     strengthLabel: { fontSize: "10px", color: "rgba(255,255,255,0.4)", minWidth: "45px" },
-    error: {
-        margin: 0, fontSize: "12px", color: "#f87171", textAlign: "center",
-        background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)",
-        borderRadius: "6px", padding: "8px",
-    },
-    submitBtn: {
-        marginTop: "4px", padding: "14px",
-        background: "linear-gradient(135deg, #b8860b, #c9a84c, #f0d080)",
-        border: "none", borderRadius: "8px", color: "#000",
-        fontWeight: "800", letterSpacing: "1.5px", cursor: "pointer",
-        boxShadow: "0 0 25px rgba(201,168,76,0.4)", transition: "transform 0.2s, box-shadow 0.2s",
-        fontSize: "13px", fontFamily: "Cinzel, serif",
-    },
+    error: { margin: 0, fontSize: "12px", color: "#f87171", textAlign: "center", background: "rgba(248,113,113,0.08)", border: "1px solid rgba(248,113,113,0.2)", borderRadius: "6px", padding: "8px" },
+    submitBtn: { marginTop: "4px", padding: "14px", background: "linear-gradient(135deg, #b8860b, #c9a84c, #f0d080)", border: "none", borderRadius: "8px", color: "#000", fontWeight: "800", letterSpacing: "1.5px", cursor: "pointer", boxShadow: "0 0 25px rgba(201,168,76,0.4)", transition: "transform 0.2s, box-shadow 0.2s", fontSize: "13px", fontFamily: "Cinzel, serif" },
     footerText: { marginTop: "18px", textAlign: "center", fontSize: "13px", color: "rgba(255,255,255,0.4)" },
     link: { color: "#c9a84c", cursor: "pointer", fontWeight: "600", transition: "color 0.2s" },
 };

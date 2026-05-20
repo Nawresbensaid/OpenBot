@@ -1,4 +1,6 @@
+// ═══════════════════════════════════════════
 // src/components/router/router.js
+// ═══════════════════════════════════════════
 import { Outlet, Route, Routes, useNavigate } from 'react-router-dom';
 import Intro from "../../pages/intro";
 import Home from "../../pages/home";
@@ -8,6 +10,7 @@ import SignUp from "../../pages/signup";
 import HomeScreen from "../levels/HomeScreen";
 import LevelsScreen from "../levels/LevelsScreen";
 import MissionCinematic from "../levels/MissionCinematic";
+import IntroCinematic from "../levels/IntroCinematic";   // ← NOUVEAU
 import { LEVELS } from "../../data/levels";
 
 function NotFound() {
@@ -55,6 +58,7 @@ export const RouterComponent = () => {
                 <Route index element={<Intro />} />
                 <Route path="signin" element={<SignIn />} />
                 <Route path="signup" element={<SignUp />} />
+                <Route path="intro-cinematic" element={<IntroCinematic />} />  {/* ← NOUVEAU */}
                 <Route path="launch" element={<HomeScreenWrapper />} />
                 <Route path="home" element={<Home />} />
                 <Route path="levels" element={<LevelsScreenWrapper />} />
