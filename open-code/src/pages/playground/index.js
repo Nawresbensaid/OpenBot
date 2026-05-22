@@ -12,15 +12,17 @@ import { getCurrentProject, handleChildBlockInWorkspace } from '../../services/w
 import { aiBlocks, Constants, Errors, errorToast, PlaygroundConstants } from '../../utils/constants';
 import { Tutorial, TutorialButton } from './Tutorial';
 
-// Safe accessor — window.Blockly is set by BlocklyComponent on mount.
+// ═══════════════════════════════════════════
+// IP DU SERVEUR — modifier ici si elle change
+// ═══════════════════════════════════════════
+const BACKEND = 'http://localhost:5000';
+const STREAM_SCENE = 'http://localhost:8766/scene';
+const WEBOTS_WS = 'ws://localhost:1234';
+const DEFAULT_CMD_WS = 'ws://localhost:8765';
 function getBlocklyWorkspace() {
     try { return window.Blockly?.getMainWorkspace?.() ?? null; }
     catch (_) { return null; }
 }
-
-const BACKEND = 'http://197.5.193.210:5000';
-const STREAM_SCENE = 'http://197.5.193.210:8766/scene';
-const WEBOTS_WS = 'ws://localhost:1234';
 
 const COLS = ['#f0ddb8', '#d4b06a', '#e8a055', '#b09060', '#ffffff', '#f5ead0', '#c8a870'];
 const STAR_DATA = Array.from({ length: 200 }, () => ({
@@ -41,22 +43,16 @@ function loadWebotsView() {
         if (customElements.get('webots-view')) return resolve();
         if (document.querySelector('script[data-webots-view]')) {
             const wait = setInterval(() => { if (customElements.get('webots-view')) { clearInterval(wait); resolve(); } }, 100);
-            // safety timeout — resolve anyway after 8s
             setTimeout(() => { clearInterval(wait); resolve(); }, 8000);
             return;
         }
-        // Temporarily suppress cross-origin Script errors from this tag
         const prevOnError = window.onerror;
         const suppressUntil = { active: true };
         window.onerror = (msg, src, line, col, err) => {
-            if (suppressUntil.active && msg === 'Script error.') return true; // suppress
+            if (suppressUntil.active && msg === 'Script error.') return true;
             return prevOnError ? prevOnError(msg, src, line, col, err) : false;
         };
-        const cleanup = () => {
-            suppressUntil.active = false;
-            window.onerror = prevOnError;
-        };
-
+        const cleanup = () => { suppressUntil.active = false; window.onerror = prevOnError; };
         const s = document.createElement('script');
         s.src = 'https://cyberbotics.com/wwi/R2025a/WebotsView.js';
         s.type = 'module';
@@ -67,11 +63,7 @@ function loadWebotsView() {
             const wait = setInterval(() => { if (customElements.get('webots-view')) { clearInterval(wait); resolve(); } }, 100);
             setTimeout(() => { clearInterval(wait); resolve(); }, 8000);
         };
-        s.onerror = () => {
-            cleanup();
-            console.warn('[WebotsView] Script failed to load — using fallback');
-            resolve();
-        };
+        s.onerror = () => { cleanup(); console.warn('[WebotsView] Script failed to load — using fallback'); resolve(); };
         document.head.appendChild(s);
     });
 }
@@ -111,6 +103,17 @@ const StarCanvas = () => {
 const Styles = () => (
     <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Nunito:wght@400;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+
+        html, body, #root {
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden;
+            height: 100%;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        * { box-sizing: border-box; }
+
         @keyframes amberShimmer  { 0%{background-position:-200% center} 100%{background-position:200% center} }
         @keyframes upulse        { 0%,100%{opacity:.45;transform:scale(1)} 50%{opacity:.85;transform:scale(1.10)} }
         @keyframes ufloat        { 0%,100%{transform:translateY(0) rotate(0deg)} 50%{transform:translateY(-12px) rotate(2deg)} }
@@ -160,14 +163,6 @@ const Styles = () => (
         .run-stop-group .pb-run:hover  { filter:brightness(1.2); }
         .run-stop-group .run-stop-divider { width:1px; background:rgba(77,210,100,.20); flex-shrink:0; }
         .run-stop-group .pb-stop { font-family:'Nunito',sans-serif; font-weight:800; font-size:.65rem; padding:.25rem .75rem; border:none; cursor:pointer; transition:all .2s; letter-spacing:.03em; border-radius:0; background:rgba(220,77,77,.15); color:#ff6b6b; animation:stopPulse 1.5s ease-in-out infinite; }
-        .ws-input { flex:1; background:rgba(14,8,2,.55); border:1px solid rgba(232,160,85,.18) !important; border-radius:6px; color:#d4b06a; padding:.36rem .75rem; font-family:'Space Mono',monospace; font-size:.68rem; outline:none; backdrop-filter:blur(8px); transition:border-color .2s; }
-        .ws-input:focus { border-color:rgba(232,160,85,.44) !important; }
-        .btn-connect { font-family:'Cinzel',serif; font-size:.72rem; font-weight:600; letter-spacing:.06em; padding:.34rem .95rem; border-radius:5px; cursor:pointer; background: linear-gradient(135deg,#6a3200,#c47840,#e8a055,#c47840,#6a3200); background-size:200% auto; animation:amberShimmer 4s linear infinite; color:#1c1008; white-space:nowrap; border:none; box-shadow:0 2px 12px rgba(232,160,85,.22),inset 0 1px 0 rgba(255,255,255,.12); transition:all .2s; }
-        .btn-connect:hover { transform:translateY(-1px); filter:brightness(1.08); }
-        .gold-divider { width:100%; height:1px; flex-shrink:0; position:relative; background: linear-gradient(90deg,transparent,rgba(232,160,85,.18),rgba(232,160,85,.32),rgba(232,160,85,.18),transparent); }
-        .gold-divider::after { content:'◆'; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); font-size:.45rem; color:rgba(232,160,85,.50); background:rgba(18,10,3,.88); padding:0 6px; }
-        .status-badge { display:flex; align-items:center; gap:.35rem; padding:.22rem .65rem; border-radius:20px; font-family:'Cinzel',serif; font-size:.6rem; letter-spacing:.06em; font-weight:600; white-space:nowrap; }
-        .status-dot   { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
         .ws-log { font-size:.53rem; font-family:'Space Mono',monospace; color:rgba(212,176,106,.48); text-align:center; padding:.16rem .55rem; background:rgba(10,5,1,.45); border:1px solid rgba(232,160,85,.10) !important; border-radius:6px; width:100%; flex-shrink:0; }
         .ws-scan { position:absolute; inset:0; pointer-events:none; z-index:0; background:repeating-linear-gradient(0deg,transparent,transparent 30px,rgba(232,160,85,.004) 30px,rgba(232,160,85,.004) 31px); }
         .cam-frame { width:100%; flex:1; position:relative; overflow:hidden; border-radius:8px; border:1px solid rgba(232,160,85,.16) !important; background:rgba(8,4,1,.68); min-height:0; box-shadow:inset 0 0 36px rgba(0,0,0,.48),0 0 12px rgba(232,160,85,.04); }
@@ -204,7 +199,7 @@ const Styles = () => (
         .float-win-btn-max:hover { color:rgba(0,80,0,.82); }
         .float-win-resize { position:absolute; bottom:0; right:0; width:20px; height:20px; cursor:nwse-resize; z-index:5; }
         .float-win-resize::before { content:''; position:absolute; bottom:3px; right:3px; width:10px; height:10px; border-right:2px solid rgba(232,160,85,.38); border-bottom:2px solid rgba(232,160,85,.38); border-radius:0 0 3px 0; }
-        .nomad-bottombar { flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:.5rem 1.2rem; background:linear-gradient(180deg,rgba(16,9,3,.96) 0%,rgba(12,6,2,.98) 100%); border-top:1px solid rgba(232,160,85,.18); backdrop-filter:blur(20px); position:relative; z-index:20; gap:1rem; }
+        .nomad-bottombar { flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:.5rem 1.2rem; background:linear-gradient(180deg,rgba(16,9,3,.96) 0%,rgba(12,6,2,.98) 100%); border-top:1px solid rgba(232,160,85,.18); backdrop-filter:blur(20px); position:relative; z-index:20; gap:1rem; margin:0; }
         .nomad-bottombar::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(232,160,85,.42) 20%,rgba(212,176,106,.70) 50%,rgba(232,160,85,.42) 80%,transparent); }
         .nomad-upload-btn { position:relative; display:flex; align-items:center; gap:.6rem; padding:.5rem 1.5rem .5rem 1.15rem; border:none; border-radius:10px; cursor:pointer; font-family:'Cinzel',serif; font-size:.75rem; font-weight:700; letter-spacing:.1em; color:#1c1008; background:linear-gradient(105deg,#6a3200 0%,#c47840 30%,#e8a055 50%,#c47840 70%,#6a3200 100%); background-size:200% auto; animation:amberShimmer 3s linear infinite,uploadGlow 2.8s ease-in-out infinite; box-shadow:0 0 14px rgba(232,160,85,.22),0 4px 18px rgba(0,0,0,.50),inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(0,0,0,.18); transition:transform .18s,filter .18s; overflow:hidden; white-space:nowrap; min-width:170px; user-select:none; }
         .nomad-upload-btn:hover:not(:disabled) { transform:translateY(-2px) scale(1.03); filter:brightness(1.08); }
@@ -222,6 +217,9 @@ const Styles = () => (
         .nomad-tool-btn:hover  { background:rgba(232,160,85,.14); color:#e8a055; transform:translateY(-1px); }
         .nomad-tool-btn:active { transform:scale(.90); }
         [data-tut] { position: relative; }
+        .btn-reconnect { font-family:'Cinzel',serif; font-size:.62rem; font-weight:600; letter-spacing:.06em; padding:.28rem .8rem; border-radius:5px; cursor:pointer; background:rgba(232,160,85,.10); border:1px solid rgba(232,160,85,.32) !important; color:#e8a055; transition:all .2s; white-space:nowrap; }
+        .btn-reconnect:hover { background:rgba(232,160,85,.20); transform:translateY(-1px); }
+        .btn-reconnect:active { transform:scale(.95); }
     `}</style>
 );
 
@@ -268,7 +266,7 @@ const WebotsViewer = ({ wsUrl, fallbackSrc, onLog, onReady, onDisconnect }) => {
     if (useFallback) return <img src={fallbackSrc} alt="MJPEG" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '8px' }} onError={() => onLog('⚠️ MJPEG non disponible')} />;
     return (
         <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
-            {loading && <div className="stream-loading"><div className="stream-spinner" /><div className="stream-loading-text">Connexion 3D Webots…<br /><span style={{ opacity: .5, fontSize: '.48rem' }}>{wsUrl}</span></div></div>}
+            {loading && <div className="stream-loading"><div className="stream-spinner" /><div className="stream-loading-text">Connexion 3D Webots…</div></div>}
         </div>
     );
 };
@@ -293,7 +291,6 @@ const QrCodeFloatingWindow = ({ code, onClose }) => {
 
     const loadLib = () => new Promise((res, rej) => {
         if (window.QRCode) return res();
-        // Suppress cross-origin "Script error." during QRCode lib load
         const prevOnError = window.onerror;
         const guard = { active: true };
         window.onerror = (msg, src, line, col, err) => {
@@ -452,6 +449,11 @@ const NomadUploadButton = () => {
     const { isOnline, setGenerateCode, generate, setCode, setDrawer, workspace, setIsError, setCategory, setDriveLink } = useContext(StoreContext);
     const { addScore, POINTS } = useGameScore();
 
+    const isSignedIn = () => {
+        try { return localStorage.getItem('isSigIn') === 'true'; }
+        catch (_) { return false; }
+    };
+
     function handlingMultipleAIBlocks(start) {
         let child = [], all = [], conf = [];
         if (start.length && start[0].childBlocks_.length > 0) {
@@ -464,7 +466,7 @@ const NomadUploadButton = () => {
     const handleUpload = async () => {
         if (state === 'loading') return;
         if (!isOnline) { errorToast(Constants.InternetOffMsg); return; }
-        if (localStorage.getItem('isSigIn') !== 'true') { errorToast('Please sign-In to upload code.'); return; }
+        if (!isSignedIn()) { errorToast('Please sign-In to upload code.'); return; }
         setState('loading'); setProgress(12); setDrawer(false);
         try {
             let currentProj = getCurrentProject();
@@ -629,8 +631,6 @@ function PlaygroundInner() {
     const { addScore, POINTS } = useGameScore();
 
     const [simStatus, setSimStatus] = useState('offline');
-    const [wsUrl, setWsUrl] = useState('ws://197.5.193.210:8765');
-    const [streamWsUrl, setStreamWsUrl] = useState(WEBOTS_WS);
     const [viewMode, setViewMode] = useState('3d');
     const [wsLog, setWsLog] = useState('⏳ Démarrage de Webots…');
     const [floatWin, setFloatWin] = useState({ open: false, x: 80, y: 80, w: 720, h: 480, _prevH: 480 });
@@ -647,9 +647,11 @@ function PlaygroundInner() {
     const wsRef = useRef(null);
     const keysRef = useRef({});
     const reconnTimerRef = useRef(null);
+    const reconnAttemptsRef = useRef(0);
+    const MAX_RECONNECT = 10;
     const userIdRef = useRef('user_' + Math.random().toString(36).slice(2, 8));
-
     const mountedRef = useRef(true);
+
     useEffect(() => {
         mountedRef.current = true;
         return () => { mountedRef.current = false; };
@@ -722,21 +724,11 @@ function PlaygroundInner() {
             body: JSON.stringify({ userId, level }),
         })
             .then(r => r.json())
-            .then(d => {
-                if (cancelled) return;
-                setWsLog(d.ok || d.message ? '✅ Webots lancé !' : '⚠️ ' + (d.error || 'Erreur backend'));
-            })
-            .catch(() => {
-                if (cancelled) return;
-                setWsLog('⚠️ Backend non disponible');
-            });
+            .then(d => { if (cancelled) return; setWsLog(d.ok || d.message ? '✅ Webots lancé !' : '⚠️ ' + (d.error || 'Erreur backend')); })
+            .catch(() => { if (cancelled) return; setWsLog('⚠️ Backend non disponible'); });
         return () => {
             cancelled = true;
-            fetch(`${BACKEND}/stop`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId }),
-            }).catch(() => { });
+            fetch(`${BACKEND}/stop`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) }).catch(() => { });
         };
     }, []); // eslint-disable-line
 
@@ -744,27 +736,31 @@ function PlaygroundInner() {
         if (reconnTimerRef.current) { clearTimeout(reconnTimerRef.current); reconnTimerRef.current = null; }
         if (wsRef.current) { wsRef.current.onclose = null; wsRef.current.close(); }
         if (!mountedRef.current) return;
+        if (reconnAttemptsRef.current >= MAX_RECONNECT) {
+            setSimStatus('offline');
+            setWsLog(`❌ Échec après ${MAX_RECONNECT} tentatives. Cliquez pour réessayer.`);
+            reconnAttemptsRef.current = 0;
+            return;
+        }
         setSimStatus('connecting');
-        setWsLog('🔄 Connexion commandes robot…');
+        setWsLog(`🔄 Connexion commandes robot… (tentative ${reconnAttemptsRef.current + 1})`);
         try {
-            const ws = new WebSocket(wsUrl);
+            const ws = new WebSocket(DEFAULT_CMD_WS);
             wsRef.current = ws;
             ws.onopen = () => {
                 if (!mountedRef.current) return;
+                reconnAttemptsRef.current = 0;
                 setSimStatus('online');
                 setWsLog('✅ Robot connecté !');
                 ParserModule.initParser(ws);
                 addScore(POINTS.connect);
             };
-            ws.onerror = () => {
-                if (!mountedRef.current) return;
-                setSimStatus('offline');
-                setWsLog('❌ Erreur connexion');
-            };
+            ws.onerror = () => { if (!mountedRef.current) return; setSimStatus('offline'); setWsLog('❌ Erreur connexion'); };
             ws.onclose = () => {
                 if (!mountedRef.current) return;
+                reconnAttemptsRef.current += 1;
                 setSimStatus('offline');
-                setWsLog('⚠️ Déconnecté — reconnexion 3s…');
+                setWsLog(`⚠️ Déconnecté — reconnexion dans 3s… (${reconnAttemptsRef.current}/${MAX_RECONNECT})`);
                 reconnTimerRef.current = setTimeout(connectWebots, 3000);
             };
             ws.onmessage = e => {
@@ -774,11 +770,12 @@ function PlaygroundInner() {
             };
         } catch (e) {
             if (!mountedRef.current) return;
+            reconnAttemptsRef.current += 1;
             setSimStatus('offline');
             setWsLog('❌ ' + e.message);
             reconnTimerRef.current = setTimeout(connectWebots, 3000);
         }
-    }, [wsUrl, addScore, POINTS]); // eslint-disable-line
+    }, [addScore, POINTS]); // eslint-disable-line
 
     useEffect(() => {
         const t = setTimeout(() => connectWebots(), 2000);
@@ -812,10 +809,7 @@ function PlaygroundInner() {
         };
         window.addEventListener('keydown', dn);
         window.addEventListener('keyup', up);
-        return () => {
-            window.removeEventListener('keydown', dn);
-            window.removeEventListener('keyup', up);
-        };
+        return () => { window.removeEventListener('keydown', dn); window.removeEventListener('keyup', up); };
     }, []); // eslint-disable-line
 
     const sendCmd = cmd => {
@@ -840,18 +834,24 @@ function PlaygroundInner() {
         { top: '32%', left: '83%', fontSize: '1.3rem', animationDelay: '2.4s', icon: '💫' },
         { top: '80%', left: '22%', fontSize: '1.1rem', animationDelay: '3s', icon: '🌟' },
     ];
-
-    // ── Onglets vue : FPV supprimé ──
-    const VIEW_TABS = [
-        { id: '3d', icon: '🌐', label: '3D Orbit' },
-        { id: 'mjpeg', icon: '🎬', label: 'MJPEG' },
-    ];
+    const VIEW_TABS = [{ id: '3d', icon: '🌐', label: '3D Orbit' }, { id: 'mjpeg', icon: '🎬', label: 'MJPEG' }];
 
     return (
-        <div style={{ position: 'relative', height: '100vh', overflow: 'hidden', fontFamily: "'Nunito',sans-serif" }}>
+        <div style={{
+            position: 'relative',
+            height: '100vh',
+            overflow: 'hidden',
+            fontFamily: "'Nunito',sans-serif",
+            margin: 0,
+            padding: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0,
+        }}>
             <Styles />
             <StarCanvas />
 
+            {/* Fonds décoratifs */}
             <div style={{ position: 'fixed', inset: 0, zIndex: 0, background: `radial-gradient(ellipse at 50% 108%, rgba(196,120,64,.50) 0%, transparent 46%), radial-gradient(ellipse at 12% 55%, rgba(232,160,85,.08) 0%, transparent 42%), radial-gradient(ellipse at 88% 15%, rgba(90,189,181,.06) 0%, transparent 40%), #1c1008` }} />
             <div style={{ position: 'fixed', top: '-8%', left: '-4%', width: '640px', height: '640px', borderRadius: '50%', background: `radial-gradient(circle,${G(.08)} 0%,transparent 70%)`, filter: 'blur(88px)', zIndex: 0, pointerEvents: 'none' }} />
             <div style={{ position: 'fixed', top: '-4%', right: '-4%', width: '520px', height: '520px', borderRadius: '50%', background: `radial-gradient(circle,${GT(.06)} 0%,transparent 70%)`, filter: 'blur(96px)', zIndex: 0, pointerEvents: 'none' }} />
@@ -887,13 +887,24 @@ function PlaygroundInner() {
                     onStreamError={() => setWsLog('⚠️ Stream non disponible')} />
             )}
 
-            <div style={{ position: 'relative', zIndex: 10, height: '100vh', display: 'flex', flexDirection: 'column' }}>
+            {/* ═══ LAYOUT PRINCIPAL — zéro gap, zéro margin ═══ */}
+            <div style={{
+                position: 'relative',
+                zIndex: 10,
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 0,
+                margin: 0,
+                padding: 0,
+                minHeight: 0,
+            }}>
                 <Header />
 
-                <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+                <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0, margin: 0, padding: 0 }}>
 
-                    {/* Blockly */}
-                    <div ref={blocklyRef} data-tut="blockly" style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+                    {/* ── Blockly ── */}
+                    <div ref={blocklyRef} data-tut="blockly" style={{ flex: 1, position: 'relative', overflow: 'hidden', margin: 0, padding: 0 }}>
                         <div className="ws-scan" />
                         <BlocklyComponent readOnly={false} move={{ scrollbars: true, drag: true, wheel: true }}
                             initialXml={`<xml xmlns="http://www.w3.org/1999/xhtml"><Block type="start" x="0" y="100"/><Block type="forever" x="250" y="100"/></xml>`}>
@@ -901,8 +912,8 @@ function PlaygroundInner() {
                         </BlocklyComponent>
                     </div>
 
-                    {/* Panel droit */}
-                    <div style={{ width: '44%', flexShrink: 0, display: 'flex', flexDirection: 'column', background: `linear-gradient(180deg,rgba(22,12,4,.80) 0%,rgba(16,8,2,.76) 50%,rgba(20,10,3,.80) 100%)`, backdropFilter: 'blur(18px) saturate(130%)', borderLeft: `1px solid ${G(.22)}`, minHeight: 0, boxShadow: `-2px 0 38px rgba(0,0,0,.48),inset 1px 0 0 ${G(.04)}` }}>
+                    {/* ── Panel droit ── */}
+                    <div style={{ width: '44%', flexShrink: 0, display: 'flex', flexDirection: 'column', background: `linear-gradient(180deg,rgba(22,12,4,.80) 0%,rgba(16,8,2,.76) 50%,rgba(20,10,3,.80) 100%)`, backdropFilter: 'blur(18px) saturate(130%)', borderLeft: `1px solid ${G(.22)}`, minHeight: 0, boxShadow: `-2px 0 38px rgba(0,0,0,.48),inset 1px 0 0 ${G(.04)}`, margin: 0 }}>
 
                         {/* Code editor */}
                         <div ref={editorRef} data-tut="editor" style={{ flex: '0 0 36%', display: 'flex', flexDirection: 'column', borderBottom: `1px solid ${G(.14)}`, overflow: 'hidden', minHeight: 0 }}>
@@ -936,20 +947,20 @@ function PlaygroundInner() {
                                     <span style={{ fontSize: '1rem' }}>🤖</span>
                                     <span className="gold-shimmer" style={{ fontFamily: "'Cinzel',serif", fontSize: '.8rem', fontWeight: '600', letterSpacing: '.1em' }}>SIMULATEUR ROBOT</span>
                                 </div>
-                                <div className="status-badge" style={{ background: `${SC}12`, border: `1px solid ${SC}42`, color: SC, cursor: simStatus !== 'online' ? 'pointer' : 'default' }} onClick={simStatus !== 'online' ? connectWebots : undefined}>
-                                    <div className="status-dot" style={{ background: SC, boxShadow: `0 0 6px ${SC}` }} />{SL}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '.5rem' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '.35rem', padding: '.22rem .65rem', borderRadius: 20, fontFamily: "'Cinzel',serif", fontSize: '.6rem', letterSpacing: '.06em', fontWeight: 600, whiteSpace: 'nowrap', background: `${SC}12`, border: `1px solid ${SC}42`, color: SC }}>
+                                        <div style={{ width: 6, height: 6, borderRadius: '50%', background: SC, boxShadow: `0 0 6px ${SC}`, flexShrink: 0 }} />
+                                        {SL}
+                                    </div>
+                                    {simStatus !== 'online' && (
+                                        <button className="btn-reconnect" onClick={() => { reconnAttemptsRef.current = 0; connectWebots(); }}>
+                                            ↺ Reconnecter
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
                             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '.35rem', padding: '.45rem .55rem', background: 'rgba(10,5,1,.18)', minHeight: 0, overflow: 'hidden' }}>
-
-                                {/* URL commandes robot */}
-                                <div style={{ display: 'flex', gap: '.4rem', width: '100%', flexShrink: 0 }}>
-                                    <input className="ws-input" value={wsUrl} onChange={e => setWsUrl(e.target.value)} placeholder="ws://197.5.193.210:8765" />
-                                    <button className="btn-connect" onClick={connectWebots}>Connecter</button>
-                                </div>
-
-                                <div className="gold-divider" />
 
                                 {/* Onglets 3D / MJPEG */}
                                 <div style={{ display: 'flex', width: '100%', flexShrink: 0, gap: '.25rem' }}>
@@ -976,23 +987,17 @@ function PlaygroundInner() {
                                     </div>
                                     <div className="cam-crt" />
 
-                                    {/* Vue 3D — toujours montée */}
                                     <div style={{ position: 'absolute', inset: 0, display: viewMode === '3d' ? 'block' : 'none' }}>
-                                        <WebotsViewer wsUrl={streamWsUrl} fallbackSrc={STREAM_SCENE} onLog={setWsLog} onReady={() => { if (mountedRef.current) setSimStatus('online'); }} onDisconnect={() => { if (mountedRef.current) setSimStatus('offline'); }} />
+                                        <WebotsViewer wsUrl={WEBOTS_WS} fallbackSrc={STREAM_SCENE} onLog={setWsLog}
+                                            onReady={() => { if (mountedRef.current) setSimStatus('online'); }}
+                                            onDisconnect={() => { if (mountedRef.current) setSimStatus('offline'); }} />
                                     </div>
 
-                                    {/* Vue MJPEG */}
                                     {viewMode === 'mjpeg' && (
                                         <img src={STREAM_SCENE} alt="MJPEG"
                                             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '8px' }}
                                             onError={() => setWsLog('⚠️ MJPEG non disponible')} />
                                     )}
-                                </div>
-
-                                {/* URL streaming 3D */}
-                                <div style={{ display: 'flex', gap: '.4rem', width: '100%', flexShrink: 0 }}>
-                                    <input className="ws-input" value={streamWsUrl} onChange={e => setStreamWsUrl(e.target.value)} placeholder="ws://localhost:1234" title="URL streaming 3D Webots" />
-                                    <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.48rem', color: GT(.55), display: 'flex', alignItems: 'center', whiteSpace: 'nowrap' }}>3D</span>
                                 </div>
 
                                 <div className="ws-log">{wsLog}</div>
