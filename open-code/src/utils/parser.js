@@ -70,7 +70,7 @@ const _pauseInternal = (ms = 1000, signal) => new Promise((res, rej) => {
     });
 });
 
-// Aliases publics (sans signal)
+// Aliases publics (sans signal — le signal est injecté au moment du run)
 const pause = (ms = 1000) => _pauseInternal(ms);
 const wait = (ms = 1000) => _pauseInternal(ms);
 const delay = (ms = 1000) => _pauseInternal(ms);
@@ -161,10 +161,7 @@ function playBeep(freq = 440, duration = 0.5) {
         osc.start(ctx.currentTime); osc.stop(ctx.currentTime + duration);
     } catch (e) { console.log("🔊 Son ignoré:", e.message); }
 }
-const freqMap = {
-    slow: 330, fast: 880, stop: 220, 'dual drive': 660,
-    beep: 440, straight: 550, normal: 440, left: 400, right: 500
-};
+const freqMap = { slow: 330, fast: 880, stop: 220, 'dual drive': 660, beep: 440, straight: 550, normal: 440, left: 400, right: 500 };
 const soundType = (type) => playBeep(freqMap[type] || 440);
 const soundMode = (mode) => playBeep(freqMap[mode] || 440);
 const inputSound = (text) => { console.log("🔊 inputSound:", text); playBeep(440, 0.3); };
@@ -224,14 +221,12 @@ const showText = (msg) => displayString(msg);
 
 // ═══ AI ═══
 const disableAI = () => { send("AUTOPILOT:0"); send("FOLLOW:0"); send("STOP"); };
-
 const objectTracking = (model, onDetect, onLost) => {
     send("FOLLOW:1");
     const dist = window.__sensorData.dist ?? 999;
     if (dist < 80) { if (typeof onDetect === 'function') onDetect(); }
     else { if (typeof onLost === 'function') onLost(); }
 };
-
 const autopilot = (model) => send("AUTOPILOT:1");
 const navigateForwardAndLeft = (fwd, left) => send(`NAVIGATE:${fwd},${left}`);
 const variableDetection = (obj, model) => (window.__sensorData.dist ?? 999) < 100;
@@ -243,15 +238,12 @@ const startTracking = () => send("AUTOPILOT:1");
 const stopTracking = () => { send("AUTOPILOT:0"); send("FOLLOW:0"); send("STOP"); };
 const isDetected = () => (window.__sensorData.dist ?? 999) < 100;
 const getDetectedClass = () => null;
-
 const followPerson = () => { send("FOLLOW:1"); console.log("👁️ followPerson → FOLLOW:1"); };
-
 const onPersonDetected = (onDetect, onLost, lostFrames = 90) => {
     const dist = window.__sensorData.dist ?? 999;
     if (dist < 100) { if (typeof onDetect === 'function') onDetect(); }
     else { if (typeof onLost === 'function') onLost(); }
 };
-
 const onDetected = (onDetect, onLost) => onPersonDetected(onDetect, onLost);
 const onLost = (frames, fn) => {
     const dist = window.__sensorData.dist ?? 999;
@@ -273,9 +265,9 @@ const speedControl = (limit) => {
 const log = msg => console.log("📝 log:", msg);
 const print = msg => console.log("📝 print:", msg);
 
-// ═══════════════════════════════════════════════
-// ═══ EXÉCUTER LE CODE BLOCKLY ══════════════════
-// ═══════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════
+// ═══ EXÉCUTER LE CODE BLOCKLY ═════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════
 export function runBlocklyCode(code) {
     // Annule toute exécution précédente
     if (_abortController) {
@@ -287,19 +279,29 @@ export function runBlocklyCode(code) {
     try {
         console.log("▶ Code Blockly reçu:\n", code);
 
-        let safeCode = code
-            .replace(/while\s*\(\s*true\s*\)\s*\{/g, 'for(let __fi=0; __fi<5; __fi++){')
-            .replace(/while\s*\(true\)/g, 'for(let __fi=0; __fi<5; __fi++)');
+        let safeCode = code;
 
+        // ── 1. Rendre start() et forever() async ─────────────────────
         safeCode = safeCode
             .replace(/function\s+start\s*\(\s*\)/, 'async function start()')
             .replace(/function\s+forever\s*\(\s*\)/, 'async function forever()');
 
+        // ── 2. Remplacer while(true){...} dans forever par _foreverLoop
+        //       On extrait le corps de while(true){...} et on le passe
+        //       à _foreverLoop() qui gère l'interruptibilité + yield.
+        //
+        //       Stratégie : on cherche "while(true){" (normalisé),
+        //       on extrait tout son corps (matching d'accolades),
+        //       et on le remplace par "await _foreverLoop(async()=>{ corps })".
+        safeCode = replaceForeverLoop(safeCode);
+
+        // ── 3. Ajouter await devant pause / wait / delay ──────────────
         safeCode = safeCode
             .replace(/(?<!await\s)pause\s*\(/g, 'await pause(')
             .replace(/(?<!await\s)wait\s*\(/g, 'await wait(')
             .replace(/(?<!await\s)delay\s*\(/g, 'await delay(');
 
+        // ── 4. Fix displaySensorData / displayString avec capteurs ────
         safeCode = safeCode.replace(
             /displaySensorData\(\s*['"]([a-zA-Z_][a-zA-Z0-9_]*)\s*\(\s*\)\s*['"]\s*\)/g,
             'displaySensorData($1())'
@@ -311,7 +313,7 @@ export function runBlocklyCode(code) {
 
         console.log("✅ Code après fix:\n", safeCode);
 
-        // Versions interruptibles de pause/wait/delay capturant le signal
+        // Versions des timers capturant le signal d'annulation
         const _pauseS = (ms = 1000) => _pauseInternal(ms, signal);
         const _waitS = (ms = 1000) => _pauseInternal(ms, signal);
         const _delayS = (ms = 1000) => _pauseInternal(ms, signal);
@@ -348,14 +350,41 @@ export function runBlocklyCode(code) {
             'followPerson', 'onPersonDetected', 'onDetected', 'onLost',
             'controllerMode', 'driveModeControls', 'speedControl',
             'log', 'print',
+            '_signal',
             `
+            // ── Boucle infinie interruptible ──────────────────────────
+            // Remplace while(true){...} dans forever().
+            // bodyFn = async () => { ...corps original... }
+            // Délai minimum de 16ms par tour pour ne jamais bloquer le thread.
+            async function _foreverLoop(bodyFn) {
+                while (true) {
+                    if (_signal.aborted) throw new DOMException('Aborted', 'AbortError');
+                    const t0 = Date.now();
+                    await bodyFn();
+                    if (_signal.aborted) throw new DOMException('Aborted', 'AbortError');
+                    // Garantit au minimum 16ms entre chaque tour (≈ 1 frame)
+                    // même si le corps ne contient aucun await.
+                    const elapsed = Date.now() - t0;
+                    const minDelay = 16;
+                    await new Promise(r => setTimeout(r, elapsed < minDelay ? minDelay - elapsed : 0));
+                }
+            }
+
             return (async () => {
                 try {
                     ${safeCode}
-                    if (typeof start   === 'function') { console.log("▶ start()");    await start();   console.log("✅ start() terminé"); }
-                    if (typeof forever === 'function') { console.log("🔁 forever()"); await forever(); console.log("✅ forever() terminé"); }
+                    if (typeof start   === 'function') {
+                        console.log("▶ start()");
+                        await start();
+                        console.log("✅ start() terminé");
+                    }
+                    if (typeof forever === 'function') {
+                        console.log("🔁 forever()");
+                        await forever();
+                    }
                 } catch(e) {
-                    if (e.name === 'AbortError') {
+                    if (e.name === 'AbortError' || e.message === 'Aborted') {
+                        // Arrêt normal via stopBlocklyCode() — pas une erreur
                         console.log("⏹ Programme arrêté proprement.");
                     } else {
                         console.error("❌ Erreur Blockly:", e);
@@ -396,12 +425,61 @@ export function runBlocklyCode(code) {
             isDetected, getDetectedClass,
             followPerson, onPersonDetected, onDetected, onLost,
             controllerMode, driveModeControls, speedControl,
-            log, print
+            log, print,
+            signal
         );
 
     } catch (e) {
-        console.error("❌ Erreur runBlocklyCode:", e);
+        if (e.name === 'AbortError' || e.message === 'Aborted') {
+            console.log("⏹ runBlocklyCode arrêté.");
+        } else {
+            console.error("❌ Erreur runBlocklyCode:", e);
+        }
     }
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// ═══ HELPER : remplace while(true){...} par await _foreverLoop(...)
+// ══════════════════════════════════════════════════════════════════════
+function replaceForeverLoop(code) {
+    // Normalise les espaces autour de while(true) pour matcher facilement
+    const normalized = code.replace(/while\s*\(\s*true\s*\)\s*\{/g, 'while(true){');
+
+    // Cherche "while(true){" et extrait le corps en comptant les accolades
+    const marker = 'while(true){';
+    let result = '';
+    let i = 0;
+
+    while (i < normalized.length) {
+        const idx = normalized.indexOf(marker, i);
+        if (idx === -1) {
+            // Plus de while(true) — on ajoute le reste tel quel
+            result += normalized.slice(i);
+            break;
+        }
+
+        // Ajoute le texte avant le while(true)
+        result += normalized.slice(i, idx);
+
+        // Extrait le corps en comptant les accolades
+        let depth = 1;
+        let j = idx + marker.length; // j pointe juste après le '{'
+        while (j < normalized.length && depth > 0) {
+            if (normalized[j] === '{') depth++;
+            else if (normalized[j] === '}') depth--;
+            if (depth > 0) j++;
+            else j++; // inclut le '}' fermant
+        }
+
+        const body = normalized.slice(idx + marker.length, j - 1); // sans les accolades extérieures
+
+        // Remplace par await _foreverLoop(async () => { corps })
+        result += `await _foreverLoop(async () => {${body}})`;
+
+        i = j;
+    }
+
+    return result;
 }
 
 export {

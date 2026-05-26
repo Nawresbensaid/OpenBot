@@ -15,10 +15,11 @@ import { Tutorial, TutorialButton } from './Tutorial';
 // ═══════════════════════════════════════════
 // IP DU SERVEUR — modifier ici si elle change
 // ═══════════════════════════════════════════
-const BACKEND = 'http://localhost:5000';
-const STREAM_SCENE = 'http://localhost:8766/scene';
-const WEBOTS_WS = 'ws://localhost:1234';
-const DEFAULT_CMD_WS = 'ws://localhost:8765';
+const SERVER_IP = '197.5.193.210';
+const BACKEND = `http://${SERVER_IP}:5000`;
+const STREAM_SCENE = `http://${SERVER_IP}:8766/scene`;  // MJPEG
+const WEBOTS_WS = `ws://${SERVER_IP}:8765`;          // 3D Orbit ← port ouvert
+const DEFAULT_CMD_WS = `ws://${SERVER_IP}:8765`;          // commandes
 function getBlocklyWorkspace() {
     try { return window.Blockly?.getMainWorkspace?.() ?? null; }
     catch (_) { return null; }
@@ -38,6 +39,48 @@ function safe(n, fallback = 0) { return Number.isFinite(n) ? n : fallback; }
 function vw() { return safe(typeof window !== 'undefined' ? window.innerWidth : 1280, 1280); }
 function vh() { return safe(typeof window !== 'undefined' ? window.innerHeight : 800, 800); }
 
+// ── Patch global : intercepte les "Script error." cross-origin sur DEUX canaux :
+//   1. window.onerror          — erreurs synchrones / eval
+//   2. window.addEventListener  — React écoute 'error' ici via son propre listener
+(function installScriptErrorPatch() {
+    // Canal 1 : window.onerror
+    const prevOnerror = window.onerror;
+    window.onerror = function (msg, src, line, col, err) {
+        if (typeof msg === 'string' && msg.includes('Script error')) {
+            console.warn('[onerror suppressed]', src || '?');
+            return true;
+        }
+        return prevOnerror ? prevOnerror(msg, src, line, col, err) : false;
+    };
+
+    // Canal 2 : addEventListener('error') — c'est là que React attrape l'erreur
+    const _origAdd = window.addEventListener.bind(window);
+    window.addEventListener = function (type, listener, options) {
+        if (type === 'error') {
+            const wrapped = function (event) {
+                if (event && event.message && event.message.includes('Script error')) {
+                    console.warn('[addEventListener suppressed]', event.filename || '?');
+                    event.stopImmediatePropagation();
+                    event.preventDefault();
+                    return;
+                }
+                return listener.call(this, event);
+            };
+            listener.__scriptErrWrapped = wrapped;
+            return _origAdd(type, wrapped, options);
+        }
+        return _origAdd(type, listener, options);
+    };
+
+    const _origRemove = window.removeEventListener.bind(window);
+    window.removeEventListener = function (type, listener, options) {
+        if (type === 'error' && listener.__scriptErrWrapped) {
+            return _origRemove(type, listener.__scriptErrWrapped, options);
+        }
+        return _origRemove(type, listener, options);
+    };
+})();
+
 function loadWebotsView() {
     return new Promise((resolve) => {
         if (customElements.get('webots-view')) return resolve();
@@ -46,24 +89,16 @@ function loadWebotsView() {
             setTimeout(() => { clearInterval(wait); resolve(); }, 8000);
             return;
         }
-        const prevOnError = window.onerror;
-        const suppressUntil = { active: true };
-        window.onerror = (msg, src, line, col, err) => {
-            if (suppressUntil.active && msg === 'Script error.') return true;
-            return prevOnError ? prevOnError(msg, src, line, col, err) : false;
-        };
-        const cleanup = () => { suppressUntil.active = false; window.onerror = prevOnError; };
         const s = document.createElement('script');
         s.src = 'https://cyberbotics.com/wwi/R2025a/WebotsView.js';
         s.type = 'module';
         s.crossOrigin = 'anonymous';
         s.dataset.webotsView = '1';
         s.onload = () => {
-            cleanup();
             const wait = setInterval(() => { if (customElements.get('webots-view')) { clearInterval(wait); resolve(); } }, 100);
             setTimeout(() => { clearInterval(wait); resolve(); }, 8000);
         };
-        s.onerror = () => { cleanup(); console.warn('[WebotsView] Script failed to load — using fallback'); resolve(); };
+        s.onerror = () => { console.warn('[WebotsView] Script failed to load — using fallback'); resolve(); };
         document.head.appendChild(s);
     });
 }
@@ -291,18 +326,11 @@ const QrCodeFloatingWindow = ({ code, onClose }) => {
 
     const loadLib = () => new Promise((res, rej) => {
         if (window.QRCode) return res();
-        const prevOnError = window.onerror;
-        const guard = { active: true };
-        window.onerror = (msg, src, line, col, err) => {
-            if (guard.active && msg === 'Script error.') return true;
-            return prevOnError ? prevOnError(msg, src, line, col, err) : false;
-        };
-        const cleanup = () => { guard.active = false; window.onerror = prevOnError; };
         const s = document.createElement('script');
         s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
         s.crossOrigin = 'anonymous';
-        s.onload = () => { cleanup(); res(); };
-        s.onerror = () => { cleanup(); rej(new Error('QRCode lib load failed')); };
+        s.onload = () => res();
+        s.onerror = () => rej(new Error('QRCode lib load failed'));
         document.head.appendChild(s);
     });
 
@@ -627,7 +655,7 @@ const LevelUpOverlayInline = () => {
 // PLAYGROUND INNER
 // ═══════════════════════════════════════════
 function PlaygroundInner() {
-    const { category, setCategory, driveLink } = useContext(StoreContext);
+    const { category, setCategory, driveLink, workspace } = useContext(StoreContext);
     const { addScore, POINTS } = useGameScore();
 
     const [simStatus, setSimStatus] = useState('offline');
@@ -686,30 +714,72 @@ function PlaygroundInner() {
         setShowQr(v => !v);
     }, [driveLink]);
 
+    // ═══════════════════════════════════════════
+    // FIX : handleRun corrigé
+    // ═══════════════════════════════════════════
     const handleRun = useCallback(() => {
+        // CAS STOP
         if (isRunning) {
-            try { ParserModule.stopBlocklyCode(); } catch (e) { console.warn(e); }
+            try { ParserModule.stopBlocklyCode(); } catch (e) { console.warn('[handleRun] stop error:', e); }
             setIsRunning(false);
             setWsLog('⏹ Programme arrêté.');
+            return;
+        }
+
+        // Re-init parser avec le ws courant si connecté
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+            try { ParserModule.initParser(wsRef.current); } catch (e) { console.warn('[handleRun] initParser:', e); }
         } else {
-            try {
-                const ws = getBlocklyWorkspace();
-                if (ws) {
-                    ParserModule.runBlocklyCode(javascriptGenerator.workspaceToCode(ws));
-                    setWsLog('▶ Programme lancé !');
-                } else {
-                    const c = window.__currentPythonCode || '';
-                    if (c) ParserModule.runBlocklyCode(c);
-                }
-            } catch (e) {
-                console.warn(e);
-                const c = window.__currentPythonCode || '';
-                if (c) ParserModule.runBlocklyCode(c);
-            }
+            setWsLog('⚠️ Robot non connecté — lancement en mode simulation locale.');
+        }
+
+        // CAS RUN — workspace du contexte en priorité, sinon window.Blockly
+        const ws = workspace || getBlocklyWorkspace();
+        if (!ws) {
+            setWsLog('❌ Workspace Blockly non disponible. Réessaie dans un instant.');
+            return;
+        }
+
+        // Génération du code
+        let code = '';
+        try {
+            code = javascriptGenerator.workspaceToCode(ws).replace(/\/\/.*$/gm, '').trim();
+            const start = ws.getBlocksByType(PlaygroundConstants.start);
+            const forever = ws.getBlocksByType(PlaygroundConstants.forever);
+            if (start.length) code += '\nstart();';
+            if (forever.length) code += '\nforever();';
+        } catch (e) {
+            setWsLog('❌ Erreur génération code : ' + e.message);
+            console.warn('[handleRun] workspaceToCode error:', e);
+            return;
+        }
+
+        if (!code.trim()) {
+            setWsLog('⚠️ Aucun bloc à exécuter. Ajoute des blocs dans le workspace.');
+            return;
+        }
+
+        // Exécution — on enveloppe aussi les erreurs async/eval via un handler temporaire
+        // pour éviter qu'elles remontent vers le ErrorBoundary React.
+        const prevOnUnhandled = window.onunhandledrejection;
+        window.onunhandledrejection = (ev) => {
+            ev.preventDefault();
+            setWsLog('❌ Erreur async : ' + (ev.reason?.message || String(ev.reason)));
+            setIsRunning(false);
+            window.onunhandledrejection = prevOnUnhandled;
+        };
+
+        try {
+            ParserModule.runBlocklyCode(code);
+            setWsLog('▶ Programme lancé !');
             setIsRunning(true);
             addScore(POINTS.run);
+        } catch (e) {
+            window.onunhandledrejection = prevOnUnhandled;
+            setWsLog('❌ Erreur exécution : ' + e.message);
+            console.warn('[handleRun] runBlocklyCode error:', e);
         }
-    }, [isRunning, addScore, POINTS]);
+    }, [isRunning, workspace, addScore, POINTS]);
 
     const ispy = category === 'py';
 
@@ -751,8 +821,13 @@ function PlaygroundInner() {
                 if (!mountedRef.current) return;
                 reconnAttemptsRef.current = 0;
                 setSimStatus('online');
-                setWsLog('✅ Robot connecté !');
-                ParserModule.initParser(ws);
+                try {
+                    ParserModule.initParser(ws);
+                    setWsLog('✅ Robot connecté — parser prêt !');
+                } catch (e) {
+                    console.warn('[ws.onopen] initParser error:', e);
+                    setWsLog('✅ Robot connecté (parser init failed: ' + e.message + ')');
+                }
                 addScore(POINTS.connect);
             };
             ws.onerror = () => { if (!mountedRef.current) return; setSimStatus('offline'); setWsLog('❌ Erreur connexion'); };
@@ -887,7 +962,7 @@ function PlaygroundInner() {
                     onStreamError={() => setWsLog('⚠️ Stream non disponible')} />
             )}
 
-            {/* ═══ LAYOUT PRINCIPAL — zéro gap, zéro margin ═══ */}
+            {/* ═══ LAYOUT PRINCIPAL ═══ */}
             <div style={{
                 position: 'relative',
                 zIndex: 10,

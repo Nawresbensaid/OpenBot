@@ -10,7 +10,7 @@ const STEPS = [
     {
         id: 'welcome',
         title: 'Welcome to NomadVerse! 🤖',
-        desc: 'Here you program your robot with blocks, see the generated code in real time, and send it directly to your physical robot. This guide covers 6 key areas.',
+        desc: 'Here you program your robot with blocks, see the generated code in real time, and send it directly to your physical robot. This guide covers 7 key areas.',
         icon: '🌟',
         selector: null,
         cardSide: 'center',
@@ -51,6 +51,16 @@ const STEPS = [
         selector: '[data-tut="simulator"]',
         cardSide: 'left',
         highlight: 'Robot simulator',
+    },
+    {
+        id: 'upload',
+        title: 'Upload Code to Robot',
+        desc: 'Click the ⬆ Upload Code button at the bottom right to send your program directly to your connected robot over USB or Wi-Fi. Make sure your robot is connected first — then one click deploys your code!',
+        icon: '⬆️',
+        selector: '[data-tut="upload"]',
+        cardSide: 'top',
+        highlight: 'Upload Code',
+        showUploadHint: true,
     },
     {
         id: 'qr',
@@ -102,6 +112,14 @@ function placeCard(side, r, cardH) {
         };
     }
 
+    if (side === 'top') {
+        return {
+            top: safe(Math.max(8, rt - safeH - GAP), 8),
+            left: safe(Math.max(8, Math.min(W - CARD_W - 8, rl + rw / 2 - CARD_W / 2)), 8),
+            arrowSide: 'top',
+        };
+    }
+
     if (side === 'bottom-right') {
         return {
             top: safe(H - safeH - 56, 100),
@@ -144,10 +162,12 @@ const TutStyles = ({ cardW }) => (
     @keyframes tutFadeIn  { from{opacity:0;transform:scale(.93) translateY(6px)} to{opacity:1;transform:none} }
     @keyframes tutSlideR  { from{opacity:0;transform:translateX(-12px)} to{opacity:1;transform:none} }
     @keyframes tutSlideL  { from{opacity:0;transform:translateX(12px)}  to{opacity:1;transform:none} }
+    @keyframes tutSlideU  { from{opacity:0;transform:translateY(12px)}  to{opacity:1;transform:none} }
     @keyframes tutGlow    { 0%,100%{border-color:rgba(201,168,76,.5)} 50%{border-color:rgba(240,208,80,1)} }
     @keyframes tutScan    { 0%{top:0} 100%{top:calc(100% - 2px)} }
     @keyframes tutShimmer { 0%{background-position:-200% center} 100%{background-position:200% center} }
     @keyframes tutSpin    { 0%{transform:rotate(0deg)} 50%{transform:rotate(8deg) scale(1.1)} 100%{transform:none} }
+    @keyframes tutPulse   { 0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,.4)} 50%{box-shadow:0 0 0 8px rgba(201,168,76,0)} }
 
     .tut-close-layer { position:fixed; inset:0; z-index:99996; cursor:pointer; }
 
@@ -183,6 +203,7 @@ const TutStyles = ({ cardW }) => (
     .tut-card.ac { animation:tutFadeIn .25s ease-out; }
     .tut-card.ar { animation:tutSlideR .25s ease-out; }
     .tut-card.al { animation:tutSlideL .25s ease-out; }
+    .tut-card.au { animation:tutSlideU .25s ease-out; }
 
     .tut-hdr {
       position:relative; overflow:hidden; padding:.9rem 1.3rem .7rem;
@@ -216,6 +237,19 @@ const TutStyles = ({ cardW }) => (
       display:grid; grid-template-columns:1fr 1fr 1fr; gap:3px;
     }
     .tut-qr-txt { font-family:'Nunito',sans-serif; font-size:.75rem; color:rgba(224,200,140,.75); line-height:1.65; }
+
+    .tut-upload-hint {
+      margin-top:.8rem; border-radius:10px; padding:.65rem .85rem;
+      background:rgba(201,168,76,.05); border:1px solid rgba(201,168,76,.18);
+      display:flex; align-items:center; gap:.75rem;
+    }
+    .tut-upload-mock {
+      flex-shrink:0; width:48px; height:48px;
+      background:linear-gradient(135deg,#c9a84c,#f0d080);
+      border-radius:8px; display:flex; align-items:center; justify-content:center;
+      font-size:1.5rem; animation:tutPulse 2s ease-in-out infinite;
+    }
+    .tut-upload-txt { font-family:'Nunito',sans-serif; font-size:.75rem; color:rgba(224,200,140,.75); line-height:1.65; }
 
     .tut-div  { height:1px; margin:0 1.3rem; background:linear-gradient(90deg,transparent,rgba(201,168,76,.2),transparent); }
     .tut-foot { display:flex; align-items:center; justify-content:space-between; padding:.65rem 1.3rem .75rem; }
@@ -280,7 +314,6 @@ export const Tutorial = ({ onClose }) => {
                     const w = safe(r.width, 0);
                     const h = safe(r.height, 0);
 
-                    // ✅ FIXED: t < vh() and l < vw() (not swapped)
                     if (w > 10 && h > 10 && t >= -1 && l >= -1 && t < vh() && l < vw()) {
                         const spotData = { top: Math.max(0, t), left: Math.max(0, l), width: w, height: h };
                         setSpot(spotData);
@@ -307,7 +340,11 @@ export const Tutorial = ({ onClose }) => {
     useEffect(() => {
         clearAll();
         const s = STEPS[idx];
-        setAnimCls(s.cardSide === 'right' ? 'ar' : s.cardSide === 'left' ? 'al' : 'ac');
+        setAnimCls(
+            s.cardSide === 'right' ? 'ar' :
+                s.cardSide === 'left' ? 'al' :
+                    s.cardSide === 'top' ? 'au' : 'ac'
+        );
         setCardKey(k => k + 1);
         const t = setTimeout(() => measure(s), 80);
         timers.current.push(t);
@@ -353,7 +390,7 @@ export const Tutorial = ({ onClose }) => {
                 </div>
             )}
 
-            {/* Arrow — card LEFT of element → arrow points RIGHT from card's right edge */}
+            {/* Arrow — card LEFT of element → arrow points RIGHT */}
             {pos.arrowSide === 'left' && spot && (
                 <div
                     className="tut-arr"
@@ -367,7 +404,7 @@ export const Tutorial = ({ onClose }) => {
                 />
             )}
 
-            {/* Arrow — card RIGHT of element → arrow points LEFT from card's left edge */}
+            {/* Arrow — card RIGHT of element → arrow points LEFT */}
             {pos.arrowSide === 'right' && spot && (
                 <div
                     className="tut-arr"
@@ -377,6 +414,20 @@ export const Tutorial = ({ onClose }) => {
                         borderTop: '10px solid transparent',
                         borderBottom: '10px solid transparent',
                         borderRight: '13px solid rgba(201,168,76,.75)',
+                    }}
+                />
+            )}
+
+            {/* Arrow — card ABOVE element → arrow points DOWN */}
+            {pos.arrowSide === 'top' && spot && (
+                <div
+                    className="tut-arr"
+                    style={{
+                        top: safe(safeTop + cardH, 100),
+                        left: safe(safeLeft + CARD_W / 2 - 10, 100),
+                        borderLeft: '10px solid transparent',
+                        borderRight: '10px solid transparent',
+                        borderTop: '13px solid rgba(201,168,76,.75)',
                     }}
                 />
             )}
@@ -401,6 +452,7 @@ export const Tutorial = ({ onClose }) => {
 
                 <div className="tut-body">
                     <p className="tut-desc">{step.desc}</p>
+
                     {step.showQrHint && (
                         <div className="tut-qr-hint">
                             <div className="tut-qr-mock">
@@ -413,6 +465,18 @@ export const Tutorial = ({ onClose }) => {
                                 1. Click <b style={{ color: '#f0d080' }}>📱 QR</b> in the editor<br />
                                 2. Drag the floating window anywhere<br />
                                 3. Scan with OpenBot → <b style={{ color: '#4ddc64' }}>▶ Run</b>
+                            </div>
+                        </div>
+                    )}
+
+                    {step.showUploadHint && (
+                        <div className="tut-upload-hint">
+                            <div className="tut-upload-mock">⬆</div>
+                            <div className="tut-upload-txt">
+                                <span style={{ fontFamily: "'Space Mono',monospace", fontSize: '.52rem', color: '#c9a84c', display: 'block', marginBottom: '3px' }}>HOW TO USE</span>
+                                1. Connect your robot via USB or Wi-Fi<br />
+                                2. Click <b style={{ color: '#f0d080' }}>⬆ Upload Code</b> bottom-right<br />
+                                3. Your program deploys → <b style={{ color: '#4ddc64' }}>robot runs it!</b>
                             </div>
                         </div>
                     )}

@@ -21,6 +21,68 @@
             background-color: #202020;
         }
     </style>
+
+    <!--
+        Patch Script error. cross-origin — DOIT rester dans <head> AVANT le bundle.
+        Intercepte les erreurs cross-origin sur 3 canaux avant react-error-overlay.
+    -->
+    <script>
+        (function patchScriptError() {
+            // ─ Canal 1 : window.onerror (erreurs sync / eval / new Function)
+            const prevOnerror = window.onerror;
+            window.onerror = function (msg, src, line, col, err) {
+                if (typeof msg === 'string' && msg.includes('Script error')) {
+                    return true; // géré — ne pas propager vers React
+                }
+                return prevOnerror ? prevOnerror(msg, src, line, col, err) : false;
+            };
+
+            // ─ Canal 2 : EventTarget.prototype.addEventListener
+            // react-error-overlay s'enregistre via window.addEventListener('error', ...)
+            // On wrappe chaque listener 'error' pour filtrer en premier.
+            const _origAdd = EventTarget.prototype.addEventListener;
+            EventTarget.prototype.addEventListener = function (type, listener, options) {
+                if (type === 'error' && typeof listener === 'function') {
+                    const wrapped = function (event) {
+                        if (event &&
+                            typeof event.message === 'string' &&
+                            event.message.includes('Script error')) {
+                            event.stopImmediatePropagation();
+                            event.preventDefault();
+                            return; // bloque react-error-overlay
+                        }
+                        return listener.call(this, event);
+                    };
+                    listener.__scriptErrWrapped = wrapped;
+                    return _origAdd.call(this, type, wrapped, options);
+                }
+                return _origAdd.call(this, type, listener, options);
+            };
+
+            const _origRemove = EventTarget.prototype.removeEventListener;
+            EventTarget.prototype.removeEventListener = function (type, listener, options) {
+                if (type === 'error' && listener && listener.__scriptErrWrapped) {
+                    return _origRemove.call(this, type, listener.__scriptErrWrapped, options);
+                }
+                return _origRemove.call(this, type, listener, options);
+            };
+
+            // ─ Canal 3 : unhandledrejection (Promise rejetées cross-origin + AbortError)
+            // Phase capture (true) = s'exécute AVANT tous les autres listeners.
+            window.addEventListener('unhandledrejection', function (event) {
+                var msg = (event.reason && event.reason.message)
+                    ? event.reason.message
+                    : String(event.reason || '');
+                if (msg.includes('Script error') ||
+                    msg === 'Aborted' ||
+                    (event.reason && event.reason.name === 'AbortError')) {
+                    event.preventDefault();
+                    event.stopImmediatePropagation();
+                }
+            }, true);
+
+        })();
+    </script>
 </head>
 
 <body>
